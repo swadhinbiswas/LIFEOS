@@ -131,7 +131,24 @@ export const auth = betterAuth({
 
   // ADR-037: always wired; backend follows ADR-021's env gate (stub in dev).
   secondaryStorage,
-  rateLimit: { enabled: true, storage: "secondary-storage" },
+  // ADR-037: enabled in every environment, counters on the ADR-021 backend (stub in dev).
+  // ADR-039: Better Auth's default special rules are 3 requests / 10 s for `/sign-in*` and
+  // `/sign-up*` and 3 / 60 s for password-reset mail, keyed per client IP. The E2E suite
+  // legitimately makes several sign-ins inside one window from a single localhost IP, so the
+  // *ceiling* is env-tunable while the limiter itself stays on (dev/prod leave it unset).
+  rateLimit: {
+    enabled: true,
+    storage: "secondary-storage",
+    ...(env.AUTH_RATE_LIMIT_MAX !== undefined
+      ? {
+          customRules: {
+            "/sign-in/email": { window: 10, max: env.AUTH_RATE_LIMIT_MAX },
+            "/sign-up/email": { window: 10, max: env.AUTH_RATE_LIMIT_MAX },
+            "/request-password-reset": { window: 60, max: env.AUTH_RATE_LIMIT_MAX },
+          },
+        }
+      : {}),
+  },
 
   // Every signup gets its settings row before the first read; the settings service
   // upserts anyway, so rows for users created before this hook also heal on save.

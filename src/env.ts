@@ -46,6 +46,10 @@ const envSchema = z
       .enum(["true", "false"])
       .default("false")
       .transform((v) => v === "true"),
+    // ADR-039: optional ceiling for the auth rate-limit special rules. The limiter stays on
+    // everywhere (ADR-037); the E2E run raises the ceiling because BA's defaults (3 / 10 s for
+    // /sign-in*) assume distinct client IPs and the suite signs in several times from localhost.
+    AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().optional(),
   })
   .superRefine((env, ctx) => {
     for (const [a, b] of pairs) {

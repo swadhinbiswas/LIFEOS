@@ -791,6 +791,65 @@ stub), DB stays source of truth, explicit fail-open
 
 ---
 
+## ADR-038 — E2E warms the auth graph before browser tests (dev-only native-loader stall)
+
+- **Status:** accepted (2026-09-24)
+- **Context:** Building the ADR-029 harness, the first browser-driven sign-up after every
+  fresh `pnpm dev` took ~16 s end-to-end and overran Playwright's 10 s expectation, while a
+  replay of the same request via `curl` (no page load first) finished in ~130 ms. Temporary
+  `[diag]` timestamps plus a `--cpu-prof` capture of the dev server showed the route handler
+  body itself is ~140 ms; the event loop is instead blocked ~15.9 s _before_ handler
+  invocation, and the CPU profile attributes it to `process.report.getReport()` reached via
+  `@neon-rs/load`'s `isGlibc()`. That loader is the native binding picker of
+  `libsql` (`@libsql/client → libsql → @neon-rs/load`, per `pnpm why`), which is evaluated
+  when `src/server/db` → `src/server/auth` → the `/api/auth/**` route graph first loads. On a
+  dev server whose heap is already warm from compiling/serving the client bundle, each
+  `getReport()` call costs ~8 s and the loader calls it twice (~15.9 s); on a fresh server
+  with no browser traffic yet (curl-only), the identical probe costs milliseconds. The cost is
+  a dev-mode interaction between an unbundled native loader and a large Turbopack dev heap —
+  not app code; a production `next start` evaluates these modules once at boot on a small heap.
+- **Decision:** a dedicated `warmup` Playwright project runs before `chromium` (declared via
+  `dependencies`) and issues one cheap `GET /api/auth/get-session` through the `request`
+  fixture. Using the HTTP-only fixture (no browser) means no client chunks are compiled yet,
+  so the native loader evaluates on a small heap (measured ~0.7 s total) and every following
+  test sees a warm graph (sign-up ≈ 250 ms). Tests keep normal timeouts instead of inflating
+  them to hide a known one-time dev cost. Related harness fix: the outbox reader only runs
+  after a form's success state is visible, because a test that reads `.data/outbox` immediately
+  after clicking races the in-flight request.
+- **Consequences:** the E2E suite is deterministic and fast; the harness carries one
+  documented, side-effect-free warm-up request. `pnpm dev` stays the webServer (ADR-029) and
+  production is unaffected. If a `libsql`/`@neon-rs/load` bump removes the probe, the warm-up
+  degrades to a harmless request. Reproduce with `NODE_OPTIONS=--cpu-prof pnpm dev` and a
+  browser sign-up on a warm server; a `next build && next start` webServer is the fallback if
+  this dev-only cost ever regresses.
+
+---
+
+## ADR-039 — Auth rate limiting stays on; only the ceiling is env-tunable (E2E)
+
+- **Status:** accepted (2026-09-24)
+- **Context:** ADR-037 enabled Better Auth's rate limiter in every environment. Re-checked at
+  the pinned 1.7.5 source (`dist/api/rate-limiter/index.mjs`): BA layers special rules over the
+  global 100 / 10 s — every path starting `/sign-in`, `/sign-up`, `/change-password`,
+  `/change-email` gets `{ window: 10, max: 3 }`, and password-reset / send-verification mail
+  gets `{ window: 60, max: 3 }`, keyed per `ip + path`. The ADR-029/038 suite makes four
+  `/sign-in/email` calls (blocked-then-success in test 1, old-then-new password in test 2)
+  inside one 10 s window from the same localhost IP, so the fourth returned **429** and the
+  reset test could never finish. Adding waits would trade flakiness for minutes of sleep, and
+  switching the limiter off for tests would stop exercising it.
+- **Decision:** keep the limiter enabled with `storage: "secondary-storage"` everywhere, and
+  add one optional documented env knob — `AUTH_RATE_LIMIT_MAX` — which, when set, overrides
+  `max` (windows unchanged) for `/sign-in/email`, `/sign-up/email` and
+  `/request-password-reset` through BA's `customRules`. The Playwright `webServer` env sets it
+  to 100 (`tests/e2e/global-setup.ts`); `.env` and production leave it unset, so BA's defaults
+  apply unchanged. Counter, storage backend and fail-open behaviour are untouched.
+- **Consequences:** E2E exercises the real limiter path (increment/compare, keys) without
+  tripping per-IP defaults that assume distinct clients; production strictness is unchanged and
+  still governed by ADR-037. If a future test needs to assert a 429, it must target the default
+  rules directly (a run without `AUTH_RATE_LIMIT_MAX`) rather than loosening this further.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
