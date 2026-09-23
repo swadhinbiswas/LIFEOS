@@ -278,13 +278,273 @@
 - **Consequences:** the phase gate (spec §14) is enforced mechanically; history stays
   reviewable.
 
+## ADR-019 — Package manager: pnpm pinned via `packageManager`; root `package.json` ends the
+## up-tree yarn conflict
+
+- **Status:** accepted (2026-09-23)
+- **Context:** `pnpm` refused to run inside the repo ("This project is configured to use yarn")
+  because it walks up to `/home/swadhin/package.json`, which pins `packageManager: yarn@4.13.0`.
+  Installed pnpm here = **9.15.0**; registry latest = 12.6.0 (both verified today). The parent
+  file must not be edited (not ours).
+- **Decision:** LifeOS gets its own root `package.json` with
+  `"packageManager": "pnpm@9.15.0"` matching the installed binary — pnpm stops its upward walk at
+  this file, the yarn pin no longer applies. `pnpm-lock.yaml` is committed; CI reads the version
+  from `packageManager`. Upgrading to pnpm 12.x is deferred (no benefit now, lockfile churn risk).
+- **Consequences:** one toolchain locally and in CI; parent directory untouched.
+
+## ADR-020 — Database: local libSQL `file:` URL until Turso credentials exist (spec §17 fallback)
+
+- **Status:** accepted (2026-09-23)
+- **Context:** Phase 1 requires "Drizzle + Turso connection and migrations", but this
+  environment has no Turso account/credentials. Spec §17 says: record the blocker, pick a safe
+  fallback, keep moving.
+- **Decision:** `DATABASE_URL` accepts **`file:.data/lifeos.db`** (dev/test — `@libsql/client`
+  local file, same driver as Turso) or **`libsql://…` + `TURSO_AUTH_TOKEN`** (production). One
+  Drizzle schema and one drizzle-kit migration set run unchanged against both, because Turso is
+  libSQL server over the same client. `.env.example` documents both modes with no values.
+  Provisioning a real Turso DB is a deploy-time step recorded in the phase report.
+- **Consequences:** the full `db:generate / db:migrate / db:studio` workflow works offline today;
+  switching to Turso later is an env-var change only, no code path forks.
+
+## ADR-021 — Upstash: env-gated client with an in-memory dev fallback
+
+- **Status:** accepted (2026-09-23)
+- **Context:** Phase 1 lists an "Upstash client"; no `UPSTASH_*` credentials exist here. ADR-014
+  already fixed the policy: sliding window, explicit timeout, explicit fail-open.
+- **Decision:** `src/server/redis/client.ts` exports the real `@upstash/redis` instance when
+  `UPSTASH_REDIS_REST_URL`/`…_TOKEN` are set, otherwise an in-memory Map-backed stub with the
+  same interface (dev/self-host only, one boot-time log line). The rate limiter wraps
+  `@upstash/ratelimit` sliding window with `timeout` + `failOpen` configured explicitly per
+  ADR-014; the stub implements the same window semantics so unit tests cover the logic without
+  network. Upstash is never the source of truth (spec §7.1).
+- **Consequences:** app boots with zero cloud dependencies locally; behaviour differs only in
+  durability, not in API shape.
+
+## ADR-022 — Email: Resend when keyed, dev file-outbox otherwise (keeps verify/reset E2E-testable)
+
+- **Status:** accepted (2026-09-23)
+- **Context:** Phase 1 acceptance requires verify-email and reset-password **end-to-end**; no
+  `RESEND_API_KEY` exists in this environment.
+- **Decision:** one `sendEmail()` port with two transports: (1) **Resend** (`resend` 6.28.1) when
+  `RESEND_API_KEY` is present; (2) **dev outbox** otherwise — append
+  `{ to, subject, url, at }` JSON to `.data/outbox/` (gitignored) and log the URL server-side.
+  Better Auth's `emailVerification` and `forgotPassword` hooks both call this port. The Playwright
+  suite reads the newest outbox file and follows the real signed link, so tokens, DB writes and
+  route handlers are exercised for real — only the transport differs. Plain template strings for
+  the two mails now; React Email templates deferred until a configured mail transport actually
+  needs them (verification/reset are the only mail the MVP ships — delivery channels are post-MVP
+  per `MVP-SCOPE.md` #61).
+- **Consequences:** acceptance criteria testable today; going live = add one env var.
+
+## ADR-023 — OAuth (GitHub/Google): implemented but env-gated; buttons hidden when unconfigured
+
+- **Status:** accepted (2026-09-23)
+- **Context:** Phase 1 lists Better Auth with email + GitHub + Google; no OAuth client IDs are
+  available here; spec §1 forbids dead buttons/placeholders.
+- **Decision:** `socialProviders` are registered only when the matching client id/secret env
+  vars are complete, and the auth pages render provider buttons only for providers the server
+  reports as configured. With no creds the buttons are simply absent — never stubs. A config-level
+  test asserts "provider offered ⇔ env complete". E2E covers the email+password paths, which is
+  the exact wording of the Phase 1 acceptance line.
+- **Consequences:** no broken sign-in paths ship; adding credentials later enables the feature
+  with zero code changes.
+
+## ADR-024 — Theme architecture: `<html data-*>` + cookie first-paint + per-user
+## `user_settings.theme_overrides`, and how preset ↔ color-mode resolve
+
+- **Status:** accepted (2026-09-23)
+- **Context:** Phase 1 acceptance — *every* theme and *every* customizer option updates live and
+  survives reload; spec §4.2 ships six single-row palettes (five dark, Paper light), a separate
+  color-mode axis, one custom accent, and demands an automated WCAG contrast test; spec §3.3 —
+  "persist them per user"; spec §7.1 — Zustand for theme prefs.
+- **Decision:**
+  - **Source of truth:** `src/config/themes.ts` holds the six preset objects with the exact spec
+    hexes plus the option lists for every NexaCRM axis (font, color-mode, radius, content-layout,
+    scale, sidebar-variant, sidebar-mode) — a new preset is one object (§4.2).
+  - **Application:** attributes on `<html>` (`data-theme`, `data-color-mode`, `data-font`,
+    `data-radius`, `data-layout`, `data-scale`, `data-sidebar-variant`, `data-sidebar-mode`,
+    `data-accent`) mapped to CSS variables in `globals.css` (Tailwind v4 CSS-first); hover/active/
+    muted derived with `color-mix()` per §4.2; custom accent regenerates primary/ring/chart.
+  - **Live:** a Zustand store writes the attributes immediately (no reload).
+  - **Persistence:** cookie `lifeos-theme` (settings JSON) read by the root layout for
+    first paint — no FOUC; signed-in users additionally get `user_settings.theme_overrides`
+    (server action on change; cookie hydrated from DB after sign-in). Signed-out visitors keep
+    changes in the cookie only.
+  - **Preset ↔ mode resolution** (documented interpretation of §4.2, whose palettes are
+    fixed-mode): Paper is native-light, the other five native-dark. Selecting a preset sets the
+    color mode to its native mode. Selecting color-mode `light` renders Paper; `dark` renders the
+    selected dark preset (midnight if the selected preset is Paper); `system` follows the OS
+    (dark → selected dark preset, light → Paper), i.e. Midnight/Paper as §4.2 says. Every control
+    therefore changes the render deterministically — testable per the acceptance line.
+  - **Contrast:** a Vitest suite computes WCAG ratios for the spec's token pairs across all six
+    themes; if a listed pair misses AA, the derived token is adjusted and, where a base pair
+    itself fails, the hex is nudged minimally and documented here — AA is the hard requirement
+    (§4.2/§13).
+- **Consequences:** UI, CSS, persistence and tests all read one options matrix; no flash of the
+  wrong theme; signed-in users get their theme on every device.
+
+## ADR-025 — Phase 1 surface scope: nav, palette and help ship only implemented targets
+
+- **Status:** accepted (2026-09-23)
+- **Context:** spec §1 (no dead UI) + `MVP-SCOPE.md` cut-line rules: boards are Phase 2,
+  dashboards Phase 4, AI Phase 6 — but Phase 1 still needs a shell to accept its axe gate.
+- **Decision:** `src/config/nav.ts` lists only routes that exist in Phase 1 (Settings → Profile,
+  Appearance); later groups are added by their own phase. Signed-in `/` redirects to
+  `/settings` (real page; `/dashboard` arrives Phase 4). The command palette skeleton contains
+  only commands that work today — navigation, theme/color-mode switching, sidebar toggle, sign
+  out; no "Ask AI…" row (Phase 6), no entity search (Phase 2). The `?` help overlay and the
+  status-line hints are generated from `config/shortcuts.ts` bindings that are actually active
+  (Bubbles rule: disabled bindings self-remove), so help can never advertise a dead key.
+- **Consequences:** axe/keyboard passes never touch a stub; each later phase flips its entries
+  on in config.
+
+## ADR-026 — Session gate: Next 16 `proxy.ts` + Better Auth `getSessionCookie` for redirects only,
+## real `auth.api.getSession` everywhere data is read
+
+- **Status:** accepted (2026-09-23)
+- **Context:** Next 16 renamed middleware → `proxy` (official `file-conventions/proxy` docs
+  fetched today: "middleware file convention is deprecated"); Better Auth's own docs prescribe
+  `getSessionCookie` for redirects and warn it is **not** a security check.
+- **Decision:** `src/proxy.ts` redirects cookie-less visitors off `(app)` routes to `/sign-in`
+  and signed-in visitors off the auth pages — pure UX, cookie-presence only. Every server
+  component/route under `(app)` additionally calls `auth.api.getSession` and re-checks (the
+  security boundary, spec §10). Baseline security headers go into `next.config.ts` now; the full
+  CSP review is scheduled for the Phase 9 security pass.
+- **Consequences:** fast redirects with no DB hit at the edge of every request, and no security
+  decision resting on a heuristic cookie check.
+
+## ADR-004b — TypeScript pinned to 6.0.3 (TS 7 blocked by the typescript-eslint peer cap)
+
+- **Status:** accepted (2026-09-23) — fulfils the ADR-004 spike commitment (appended here to
+  keep this log append-only)
+- **Context:** ADR-004's spike ran twice. (1) `typescript@7.0.2` alone installs and
+  strict-compiles a sample tree fine. (2) But
+  `npm i -D typescript@7.0.2 typescript-eslint@8.70.1 eslint@10.11.0` fails with
+  **`ERESOLVE`**: `typescript-eslint@8.70.1` declares peer `typescript ">=4.8.4 <6.1.0"`
+  (verified via `npm view … peerDependencies`), so 7.x is outside the supported range —
+  exactly the lint-tooling failure ADR-004 named as the fallback trigger.
+  `eslint-config-next@16.3.6` (peer `typescript ">=3.3.1"`) accepts both.
+- **Decision:** pin **`typescript@6.0.3`** — the newest release inside typescript-eslint's
+  supported range (6.0.2/6.0.3 confirmed on the official registry today). `strict: true`
+  plus the rest of the strict set. Revisit TS 7 when typescript-eslint widens its peer range;
+  that row moves to the appendix below.
+- **Consequences:** typecheck, lint and build all run on one compiler the whole toolchain
+  declares support for; TS 7's native-compiler speed is deferred at zero functional cost.
+
+## ADR-027 — Env validation: one Zod schema in `src/env.ts`, key-only `.env.example`
+
+- **Status:** accepted (2026-09-23)
+- **Context:** spec §1/§10 (Zod at every boundary, no committed secrets, `.env.example`
+  documents keys without values) and the fallback ADRs 020–023, which only work if
+  "credential missing" is a first-class, validated state.
+- **Decision:** `src/env.ts` exports one Zod schema split into **server vars** (`DATABASE_URL`,
+  `TURSO_AUTH_TOKEN`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `UPSTASH_REDIS_REST_URL`,
+  `UPSTASH_REDIS_REST_TOKEN`, `RESEND_API_KEY`, `EMAIL_FROM`, `GITHUB_CLIENT_ID`,
+  `GITHUB_CLIENT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BILLING_ENABLED`) and
+  **public vars** (`NEXT_PUBLIC_APP_URL`), plus derived booleans
+  (`hasUpstash` / `hasResend` / `hasGithub` / `hasGoogle` / `isCloudDb`) that gate the
+  ADR-021/022/023 features. Validation runs once at module load on the server; failure throws
+  the readable Zod issue list at boot, never a mid-request stack trace. `.env.example` lists
+  every key with an empty value and a one-line comment saying where to get it. CI and E2E
+  must pass with the credential-less fallback values (file DB, no Upstash/Resend/OAuth) —
+  that is the configuration the acceptance suite actually runs in.
+- **Consequences:** one env contract shared by app, tests and E2E; missing creds degrade to
+  documented fallbacks instead of crashing; the server/public split keeps secrets out of the
+  client bundle.
+
+## ADR-028 — Sidebar semantics: variants flush/inset/floating × modes expanded/icon/full, `[` cycles
+
+- **Status:** accepted (2026-09-23)
+- **Context:** the NexaCRM customizer matrix (RESEARCH §a) ships
+  `Sidebar Variant: Flush · Inset · Floating` and `Sidebar Mode: Expanded · Icon · Full`, and
+  Phase 1 acceptance requires every option to update live and persist. Geometry was never
+  pinned down, and "Full" is ambiguous (the reference demo could not be opened — spec §0).
+- **Decision:** exact geometry, driven by the same `data-*` attributes as ADR-024:
+  - **Mode `expanded`** — 16 rem (256 px, matching NexaCRM's measured sidebar) with icon+label
+    rows. **Mode `icon`** — 48 px icon rail; every row keeps an `aria-label` + `title` so
+    labels never become unreachable. **Mode `full`** — sidebar leaves the flow entirely
+    (content full-width); `[` then opens it as a keyboard-dismissible overlay panel, `[`/`Esc`
+    closes it. This is our documented reading of NexaCRM's "Full" option, since only its name
+    was captured.
+  - **Variant `flush`** — no gap, square against the viewport edge, single border. **Variant
+    `inset`** — 8 px gap + rounded corners + border (content visually inset). **Variant
+    `floating`** — 12 px gap, rounded, border + shadow, detached card look.
+  - **`[` cycles expanded → icon → full → expanded** and persists through the same cookie →
+    `user_settings.theme_overrides` path as every other customizer axis; `Esc` closes the
+    `full` overlay; all geometry is CSS driven by the data attributes (no layout thrash in JS).
+- **Consequences:** one keyboard loop exercises all 9 combinations; the persistence E2E can
+  assert each axis independently; later phases inherit the shell unchanged.
+
+## ADR-029 — Test harness: Vitest 5 colocated under `src/`, Playwright 1.63 e2e under `tests/e2e`
+## with an isolated DB
+
+- **Status:** accepted (2026-09-23)
+- **Context:** Phase 1 explicitly ships the "CI/lint/format/test harness", spec §13 requires
+  unit + e2e + axe gates, and the Phase 1 acceptance line (auth E2E, theme persistence, axe on
+  shell routes) must be one command away.
+- **Decision:**
+  - **Unit/component:** Vitest 5.0.1 + `@vitest/coverage-v8`, jsdom environment for component
+    tests, files colocated as `src/**/*.test.ts(x)`; `pnpm test` = `vitest run`.
+  - **E2E:** Playwright 1.63.0, specs in `tests/e2e/**/*.spec.ts`, `webServer` runs
+    `build && start` (prod behaviour), with env overriding `DATABASE_URL` to
+    `tests/e2e/.e2e.db` so e2e never touches dev data. Auth flows read the ADR-022 outbox
+    file to follow the real signed verify/reset links.
+  - **Axe:** `@axe-core/playwright` scans every Phase 1 shell route (sign-in, sign-up,
+    forgot/reset/verify, `/settings`, `/settings/appearance`) **across all six presets** (§13
+    requires light+dark; six presets is the same loop, run it).
+  - **Theme persistence:** toggle each customizer axis live → assert `data-*` changed →
+    reload → assert persisted; plus a signed-in round-trip proving cookie ↔ DB hydration.
+  - **CI:** job 1 `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build`;
+    job 2 Playwright with `playwright install --with-deps chromium`.
+- **Consequences:** the acceptance suite is executable and repeatable; later phases extend the
+  same two runners rather than inventing new ones.
+
+## ADR-030 — Better Auth config: drizzle adapter mapped onto the ERD's snake_case tables with
+## integer-ms timestamps; verification required; Upstash secondary storage when present
+
+- **Status:** accepted (2026-09-23)
+- **Context:** the ERD (spec §7.3) fixes table/column names (`users`, `sessions`, `accounts`,
+  `verifications`, snake_case) and integer-millisecond timestamps, while Better Auth 1.7.5
+  defaults to its own camelCase model/column set; adapter docs were fetched today
+  (`better-auth.com/docs/concepts/database`, `…/integrations/drizzle`) and must be re-opened
+  while writing the config (spec §1: verify docs over memory).
+- **Decision:** one `betterAuth()` config using `drizzleAdapter(db, { provider: "sqlite" })`
+  with **explicit `modelName`/`field` overrides** mapping every Better Auth model and column
+  onto the ERD names, and its number-for-dates option so timestamps land as integer ms (flag
+  name to be confirmed against the adapter docs at implementation — noted in code comment).
+  `emailAndPassword.enabled`, **`requireEmailVerification: true`** (spec §10 hardening; the
+  acceptance flow verifies before sign-in), database `sessions` as source of truth with
+  **secondary storage in Upstash only when `hasUpstash`** (ADR-021) for speed (spec §7.1),
+  built-in auth rate limits enabled (research R13) with the same env gating, verification and
+  reset mail routed through the ADR-022 `sendEmail()` port, and `socialProviders` built
+  conditionally from `hasGithub`/`hasGoogle` (ADR-023). The Better Auth route handler lives at
+  `app/api/auth/[...all]/route.ts`; `src/proxy.ts` (ADR-026) handles redirects only.
+- **Consequences:** auth integrates with the documented data model instead of a parallel one;
+  every missing credential maps to a working degraded mode; the E2E suite exercises the real
+  tokens/DB rows regardless of transport.
+
+## ADR-031 — Project `.npmrc` pins `registry=https://registry.npmjs.org` (the configured mirror
+## is stale)
+
+- **Status:** accepted (2026-09-23)
+- **Context:** the user-level `~/.npmrc` sets `registry=https://registry.npmmirror.com`.
+  Verified today: `npm view @upstash/ratelimit version` returns **2.1.0** through the mirror
+  but **2.2.0** from `registry.npmjs.org` — the version RESEARCH §e pins. Exact-version pins
+  (spec §1) can 404 or resolve wrong against a lagging mirror.
+- **Decision:** commit a repo-level `.npmrc` containing only
+  `registry=https://registry.npmjs.org/`. No token — auth stays user-level and is already
+  path-scoped to `registry.npmjs.org`; the parent `~/.npmrc` and `/home/swadhin/package.json`
+  remain untouched. Reverting = deleting one file.
+- **Consequences:** every pinned install resolves against the source of truth the research
+  table was fetched from; CI (which has no user `.npmrc`) behaves identically.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written | When |
 | --- | --- |
-| ADR-004b: TypeScript fallback outcome | Phase 1, immediately after the TS spike |
+| TypeScript 7 (after typescript-eslint widens its peer range) | re-evaluate post-MVP, per ADR-004b |
 | Drizzle 1.0 RC migration (or "stay on 0.x") | after Phase 4, per ADR-005 |
 | Dodo go-live / alternate MoR | Phase 7, per ADR-013 (risk R1) |
 | PDF export backend (react-pdf vs Playwright) | Phase 3 spike, per ADR-017 |
