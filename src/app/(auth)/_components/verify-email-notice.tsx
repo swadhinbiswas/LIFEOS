@@ -14,6 +14,11 @@ type Status = "verifying" | "ok" | "error";
  * StrictMode's double effect from burning the single-use token (the second call would see
  * it already consumed and show a false failure). Client-side on mount, never during server
  * render, for the same reason.
+ *
+ * Do NOT also cancel the in-flight call from the effect cleanup: in dev StrictMode the
+ * sequence is effect → cleanup → effect, the second effect bails on the ref guard, so a
+ * cleanup-driven `cancelled` flag would suppress the only response and the page would stay
+ * on "verifying" forever. The guard already bounds this to one request per mount.
  */
 export function VerifyEmailNotice({ token }: { token: string | null }) {
   const [status, setStatus] = useState<Status>("verifying");
@@ -24,11 +29,9 @@ export function VerifyEmailNotice({ token }: { token: string | null }) {
     if (started.current || !token) return;
     started.current = true;
 
-    let cancelled = false;
     authClient
       .verifyEmail({ query: { token } })
       .then(({ error }) => {
-        if (cancelled) return;
         if (error) {
           setStatus("error");
           setMessage(authErrorMessage(error));
@@ -37,14 +40,9 @@ export function VerifyEmailNotice({ token }: { token: string | null }) {
         }
       })
       .catch((err: unknown) => {
-        if (cancelled) return;
         setStatus("error");
         setMessage(authErrorMessage(err));
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, [token]);
 
   // Missing token is a pure render condition — no state, no synchronous setState
