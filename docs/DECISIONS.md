@@ -31,7 +31,7 @@
   KPI anatomy, settings IA). **No NexaCRM source code is read into the repo or reproduced.**
   LifeOS re-implements from scratch with its own TUI tokens (§3 of the spec diverges:
   radius none, 28–32px rows, monospace chrome).
-- **Consequences:** license risk neutralized; visual parity at the *craft* level without source
+- **Consequences:** license risk neutralized; visual parity at the _craft_ level without source
   coupling; every UI file is original so no provenance questions arise.
 
 ## ADR-003 — Stack pins verified from the npm registry (2026-09-23)
@@ -45,7 +45,7 @@
   fractional-indexing 4.0.0, recharts 3.10.1, Upstash redis 1.39.0 / ratelimit 2.2.0 /
   qstash 2.11.3, AI SDK 7.0.112 (ADR-007), MCP SDK 1.30.0 (ADR-010), chrono-node 2.10.1,
   rrule 2.8.1, vitest 5.0.1, playwright 1.63.0, axe 4.13.0, eslint 10.11.0, prettier 3.9.9`**,
-  full table in `RESEARCH.md` §e.
+full table in `RESEARCH.md` §e.
 - **Consequences:** reproducible installs; risk register in §e flags majors that need an early
   spike (TypeScript 7, TanStack Table v9, eslint 10, vitest 5). Any version bump after this
   date gets its own ADR.
@@ -124,7 +124,7 @@
 ## ADR-009 — Kanban ordering: fractional index (`fractional-indexing@4.0.0`)
 
 - **Status:** accepted (2026-09-23)
-- **Context:** Spec §7.3 `position TEXT`; research (d) §1: `generateKeyBetween` / 
+- **Context:** Spec §7.3 `position TEXT`; research (d) §1: `generateKeyBetween` /
   `generateNKeysBetween`, base62 keys sort under SQLite `BINARY`, `localeCompare` pitfall,
   non-atomic compute-then-write needs a UNIQUE + retry, rebalance at ≥128 chars (Atlassian).
 - **Decision:** store `position TEXT`; every move is a **one-row UPDATE** with a key generated
@@ -189,7 +189,7 @@
 - **Context:** Spec §11 ships Dodo checkout/portal/webhooks but current policy is "everything
   free and unlimited" with all billing UI hidden unless `BILLING_ENABLED=true`. Dodo's
   merchant-eligibility page (fetched 2026-09-23) does **not** list Bangladesh among countries
-  eligible for *new* merchant accounts; Bangladesh appears only in the **grandfather clause**
+  eligible for _new_ merchant accounts; Bangladesh appears only in the **grandfather clause**
   for merchants already served before it was added to the prohibited list, and Dodo's own
   guidance is to contact `support@dodopayments.com` before integrating. The operator is in
   Bangladesh (spec §11 note).
@@ -279,6 +279,7 @@
   reviewable.
 
 ## ADR-019 — Package manager: pnpm pinned via `packageManager`; root `package.json` ends the
+
 ## up-tree yarn conflict
 
 - **Status:** accepted (2026-09-23)
@@ -350,10 +351,11 @@
   with zero code changes.
 
 ## ADR-024 — Theme architecture: `<html data-*>` + cookie first-paint + per-user
+
 ## `user_settings.theme_overrides`, and how preset ↔ color-mode resolve
 
 - **Status:** accepted (2026-09-23)
-- **Context:** Phase 1 acceptance — *every* theme and *every* customizer option updates live and
+- **Context:** Phase 1 acceptance — _every_ theme and _every_ customizer option updates live and
   survives reload; spec §4.2 ships six single-row palettes (five dark, Paper light), a separate
   color-mode axis, one custom accent, and demands an automated WCAG contrast test; spec §3.3 —
   "persist them per user"; spec §7.1 — Zustand for theme prefs.
@@ -399,6 +401,7 @@
   on in config.
 
 ## ADR-026 — Session gate: Next 16 `proxy.ts` + Better Auth `getSessionCookie` for redirects only,
+
 ## real `auth.api.getSession` everywhere data is read
 
 - **Status:** accepted (2026-09-23)
@@ -476,6 +479,7 @@
   assert each axis independently; later phases inherit the shell unchanged.
 
 ## ADR-029 — Test harness: Vitest 5 colocated under `src/`, Playwright 1.63 e2e under `tests/e2e`
+
 ## with an isolated DB
 
 - **Status:** accepted (2026-09-23)
@@ -500,6 +504,7 @@
   same two runners rather than inventing new ones.
 
 ## ADR-030 — Better Auth config: drizzle adapter mapped onto the ERD's snake_case tables with
+
 ## integer-ms timestamps; verification required; Upstash secondary storage when present
 
 - **Status:** accepted (2026-09-23)
@@ -524,6 +529,7 @@
   tokens/DB rows regardless of transport.
 
 ## ADR-031 — Project `.npmrc` pins `registry=https://registry.npmjs.org` (the configured mirror
+
 ## is stale)
 
 - **Status:** accepted (2026-09-23)
@@ -538,15 +544,151 @@
 - **Consequences:** every pinned install resolves against the source of truth the research
   table was fetched from; CI (which has no user `.npmrc`) behaves identically.
 
+## ADR-032 — shadcn/ui component base: Radix primitives
+
+- **Status:** accepted (2026-09-24)
+- **Context:** shadcn CLI 4.21 offers three bases (`base` = Base UI, `radix` = Radix UI,
+  `aria` = React Aria) and its `-d` default preset pairs with `base`. Spec §7.1 says
+  "shadcn/ui"; NexaCRM (the reference craft level, ADR-002) is built on classic
+  Radix-based shadcn, so its component anatomy is what our re-skin targets.
+- **Decision:** initialize with `-b radix`. Component set added in Phase 1 only covers what
+  Phase 1 renders (button, input, label, card, dialog, dropdown-menu, avatar, switch,
+  separator, skeleton, sonner, command) — no speculative primitives (spec §1: features hidden,
+  not stubbed; same discipline for components).
+- **Consequences:** all primitives match the anatomy measured in RESEARCH §a; later phases add
+  components through the same CLI (`pnpm exec shadcn add …`), never hand-written.
+
+## ADR-033 — WCAG AA contrast: thresholds, derived fills, adjusted hexes
+
+- **Status:** accepted (2026-09-24)
+- **Context:** spec §4.2 (prompt.md:95) mandates "verify WCAG AA contrast (4.5:1 body text,
+  3:1 large text and UI borders) for every token pair in every theme, with an automated
+  contrast test." Several spec base hexes miss 4.5:1 against their own background, and the
+  derived hover/muted fills (also mandated: "derive hover/active/muted via color-mix") pull
+  the background _toward_ the foreground, which lowers contrast further for muted text.
+- **Decision:**
+  - **Test:** `src/config/themes.test.ts` (Vitest, colocated per ADR-029) asserts, for all
+    six presets × both surfaces (background, card): 4.5:1 for body-text pairs (foreground,
+    muted-foreground, primary, success, warning, danger, info — including on the derived
+    muted/secondary/accent fills) and on-color text (primary-foreground etc.); 3:1 for
+    UI/focus pairs (input, accent = focus/ring role, chart-1…5). It also asserts **formula
+    parity**: `globals.css` must contain the exact `color-mix` formulas that
+    `src/config/themes.ts:derivedTokens()` computes, so the test fails if CSS and TS drift.
+  - **Threshold reading of "UI borders":** the control boundary token is `--input`
+    (shadcn `border-input` on real controls) — asserted at 3:1. `--border` is a decorative
+    hairline/divider; WCAG 1.4.11 exempts pure decoration (identification is carried by
+    labels/spacing, and every actual control uses `--input`). Asserting `--border` ≥ 3:1
+    would force hairlines to ~#56586b-class values, destroying the subtle-hairline TUI
+    language (spec §3) and diverging from the measured NexaCRM craft (RESEARCH: `#222` on
+    dark ≈ 1.5:1). Recorded here so the interpretation is explicit, not silent.
+  - **Adjusted base hexes** (spec → shipped; each also noted inline in
+    `src/config/themes.ts`; ratios measured, background / derived-muted-fill):
+
+    | Preset · token      | Spec hex  | Spec ratio  | Shipped   | Ships       |
+    | ------------------- | --------- | ----------- | --------- | ----------- |
+    | midnight · muted-fg | `#565f89` | 2.76 / 2.33 | `#8b92b5` | ≥4.5 / ≥4.5 |
+    | mocha · muted-fg    | `#6c7086` | 3.36 / 2.77 | `#9399b2` | ≥4.5 / ≥4.5 |
+    | gruvbox · muted-fg  | `#928374` | 4.02 / 3.28 | `#ae9f87` | ≥4.5 / ≥4.5 |
+    | gruvbox · danger    | `#fb4934` | 4.29 / 3.50 | `#fb5d43` | ≥4.5 / ≥4.5 |
+    | phosphor · muted-fg | `#4f7a4f` | 3.89 / 3.32 | `#72a872` | ≥4.5 / ≥4.5 |
+    | amber · muted-fg    | `#8a6a2f` | 3.85 / 3.32 | `#b08a45` | ≥4.5 / ≥4.5 |
+    | paper · muted-fg    | `#8a857a` | 3.43 / 2.97 | `#69655b` | ≥4.5 / ≥4.5 |
+    | paper · warning     | `#9a6a12` | 4.42 / 3.82 | `#8a5e0f` | ≥4.5 / ≥4.5 |
+    | paper · info        | `#1b7f8a` | 4.41 / 3.81 | `#156976` | ≥4.5 / ≥4.5 |
+
+    Kept as spec: `paper · accent = #1b7f8a` (4.41:1) — the accent token's asserted role is
+    focus/ring (3:1), where it passes; accent is never used as body text.
+
+  - **Derived fills:** muted = foreground 8% over background, secondary = 5%, accent-surface
+    = 7%, input = border 50% toward foreground, primary-foreground = background, ring =
+    accent, chart-1…5 = primary/success/warning/destructive/info — defined once in
+    `globals.css` `:root` and mirrored by `derivedTokens()` in TS.
+- **Consequences:** every theme token pair has an automated AA gate (`pnpm test`); spec hex
+  deviations are enumerable and justified rather than silent; changing a formula in either
+  file without the other breaks the build's test run.
+
+## ADR-034 — shadcn init reconciliation (engine, fonts, dark variant, customizer semantics)
+
+- **Status:** accepted (2026-09-24)
+- **Context:** `pnpm exec shadcn init -b radix -p nova` (ADR-032) scaffolds to the current
+  shadcn 4.21 house style, which differs from spec §4/ADR-024 in four places: it rewrites
+  `src/lib/utils.ts` onto a new `cn` engine (and installs `cn`, `class-variance-authority`,
+  `radix-ui`, `tw-animate-css` with **caret** ranges, against spec §1 exact-pinning); it
+  injects the Geist **sans** font as `--font-sans` (not in spec §4.1's font list); it wires
+  the Tailwind `dark:` variant to a `.dark` class (ADR-024 uses `data-*` attributes); and it
+  expects `--accent` to be shadcn's subtle hover surface while spec §4.2 defines `--accent`
+  as the vivid Info/Accent brand token used for focus rings.
+- **Decision:**
+  - **Class engine:** keep the CLI-generated `export { cn } from "cn"` (cn 0.4.0 —
+    maintained by shadcn/aidenybai, zero-dependency drop-in for clsx + tailwind-merge, same
+    API). Remove now-unreferenced `clsx` and `tailwind-merge`. Pin all four injected deps
+    exact: `cn@0.4.0`, `class-variance-authority@0.7.1`, `radix-ui@1.6.7`,
+    `tw-animate-css@1.4.0`.
+  - **Fonts (spec §4.1 verbatim):** UI chrome = the customizer's font axis (JetBrains Mono
+    default; Geist Mono, Fira Code, IBM Plex Mono alternates) — `data-font` selects it by
+    setting `--font-sans`/`--font-mono` in `globals.css`, and `html { font-sans }` follows.
+    Geist **sans** is removed from `layout.tsx` (not in spec's list). **Inter is deferred**
+    with the notes editor / CV preview (spec: Inter is "for prose-heavy areas" — Phase 3+);
+    no font is loaded without a consumer. Ligatures toggle ships now (spec §4.1): axis
+    `ligatures: "on" | "off"`, default **off** (terminal default).
+  - **Dark variant:** `@custom-variant dark` retargeted from `.dark` to the _resolved_ mode
+    attribute — `&:is([data-mode="dark"], [data-mode="dark"] *)`. `themeAttrs()` gains
+    `data-mode` (resolved light|dark, alongside the preference `data-color-mode`), and the
+    no-FOUC inline script sets it together with `data-theme`.
+  - **Accent semantics:** `--accent` = spec's vivid Info/Accent hex (focus rings, brand
+    regeneration); shadcn's hover surface is a new derived token `--accent-surface`
+    (foreground 7% over background), and `@theme inline` maps the `bg-accent`/`hover:bg-accent`
+    **utility** to it. Focus styling uses `var(--accent)` directly (2 px outline, spec §4.1),
+    so the utility remap never weakens focus visibility.
+  - **Custom accent (spec §4.2):** when `overrides.accent` is set, `accentCssVars()` derives
+    an inline-style map on `<html>`: `--accent`, `--primary`, `--primary-foreground` (picked
+    by `bestForeground()` among theme background/foreground/black/white for ≥4.5:1),
+    `--chart-1…5` (accent mixed toward the theme background in steps); `--ring: var(--accent)`
+    follows automatically. Pure function shared by SSR, the live store, and tests.
+  - **Customizer axes → CSS:** radius → `--radius` (0/0.25/0.5/0.75rem, shadcn's derived
+    radii follow); scale → root `font-size` 14/16/18px; layout → `--content-max-width`
+    (compact = constrained column, full = edge-to-edge — interpretation of NexaCRM's
+    unmeasured "Content Layout" axis, RESEARCH §a lists names only); sidebar variant/mode →
+    `--sidebar-gap/-radius/-shadow/-width` per ADR-028 (flush 0px+border / inset 8px /
+    floating 12px+shadow; expanded 16rem / icon 48px / full = overlay). Inset/floating
+    rounding uses the user's radius axis, keeping one knob for all rounding.
+- **Consequences:** spec §4.1/§4.2 and ADR-024 remain the single source of truth while the
+  CLI's output is adapted rather than fought; future `shadcn add` runs keep working (they
+  only need `cn` + aliases); the four caret deps are re-pinned exact on every install; the
+  dark variant, fonts, and accent all flow through `data-*` attributes on `<html>`, which the
+  theme store toggles live.
+
+## ADR-035 — ESLint pinned to 9.39.5 (not 10) while eslint-config-next requires it
+
+- **Status:** accepted (2026-09-24)
+- **Context:** the first `pnpm lint` under ESLint 10.11.0 crashed with
+  `TypeError: contextOrFilename.getFilename is not a function` from `eslint-plugin-react` —
+  ESLint 10 removed the deprecated `context.getFilename()` API. Measured on npm today:
+  `eslint-config-next@16.3.6` (latest, required for the Next-specific rules) bundles
+  `eslint-plugin-react@7.37.5` (peer `^9.7` max), `eslint-plugin-jsx-a11y@6.10.2` (peer `^9`
+  max) and `eslint-plugin-import@2.32.0` (peer `^9` max) — **none declares ESLint 10
+  support, and no newer releases exist**. `typescript-eslint@8.70.1` and
+  `eslint-config-prettier@10.1.8` both accept `^9`.
+- **Decision:** pin `eslint@9.39.5` (the `maintenance` dist-tag line). npm marks 9.39.5
+  deprecated ("no longer supported") — accepted knowingly: today there is no ESLint major
+  that both (a) supports the removed-context-API plugins and (b) is un-deprecated, and lint
+  correctness beats lint currency (ADR-004b made the analogous call for TypeScript). The
+  alternative — dropping `eslint-config-next` to run ESLint 10 — was rejected: it loses the
+  Next-specific rules (sync-script detection etc.) that spec §1's checks rely on.
+- **Consequences:** `pnpm lint` passes with zero errors; the deprecation notice is visible
+  on every install as a reminder. Re-evaluate when `eslint-config-next`'s bundled plugins
+  declare `eslint ^10` (tracked in the appendix).
+
 ---
 
 ### Appendix — deferred/scheduled ADRs
 
-| Will be written | When |
-| --- | --- |
-| TypeScript 7 (after typescript-eslint widens its peer range) | re-evaluate post-MVP, per ADR-004b |
-| Drizzle 1.0 RC migration (or "stay on 0.x") | after Phase 4, per ADR-005 |
-| Dodo go-live / alternate MoR | Phase 7, per ADR-013 (risk R1) |
-| PDF export backend (react-pdf vs Playwright) | Phase 3 spike, per ADR-017 |
-| Vector/semantic search activation | post-MVP (see `MVP-SCOPE.md`) |
-| OAuth 2.1 for MCP (after Bearer keys) | after Phase 5, per ADR-010 |
+| Will be written                                                            | When                                                              |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| TypeScript 7 (after typescript-eslint widens its peer range)               | re-evaluate post-MVP, per ADR-004b                                |
+| ESLint 10 (after eslint-config-next's bundled plugins accept `eslint ^10`) | re-evaluate with the next eslint-config-next release, per ADR-035 |
+| Drizzle 1.0 RC migration (or "stay on 0.x")                                | after Phase 4, per ADR-005                                        |
+| Dodo go-live / alternate MoR                                               | Phase 7, per ADR-013 (risk R1)                                    |
+| PDF export backend (react-pdf vs Playwright)                               | Phase 3 spike, per ADR-017                                        |
+| Vector/semantic search activation                                          | post-MVP (see `MVP-SCOPE.md`)                                     |
+| OAuth 2.1 for MCP (after Bearer keys)                                      | after Phase 5, per ADR-010                                        |
