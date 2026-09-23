@@ -748,6 +748,49 @@ ADR-030: DB is source of truth), fields: {…} }`, same for `account → account
 
 ---
 
+## ADR-037 — Better Auth secondary storage + rate limits: always wired (Upstash or memory
+
+stub), DB stays source of truth, explicit fail-open
+
+- **Status:** accepted (2026-09-24)
+- **Context:** ADR-030 wants Upstash as Better Auth's secondary storage "only when
+  `hasUpstash`", ADR-021 wants a client module that is the real `@upstash/redis` when keyed
+  and an in-memory Map stub otherwise, research R13 wants Better Auth's built-in auth rate
+  limits, and ADR-014 wants rate-limit fail-open chosen explicitly. Reading the pinned 1.7.5
+  source shows how the pieces meet: `rateLimit.storage` becomes effective against
+  `secondaryStorage` via the **atomic** `SecondaryStorage.increment(key, ttl)` (BA compares
+  `increment <= max`); a _present_ secondary storage makes BA omit the sessions/verifications
+  tables unless `storeSessionInDatabase`/`storeInDatabase` are set (`get-tables.mjs`, already
+  read for ADR-036); and verification values on a secondary-only path are consumed through
+  atomic `getAndDelete`.
+- **Decision:**
+  - `secondaryStorage` is **always wired** — real Upstash when `hasUpstash`, the ADR-021
+    in-memory stub otherwise — so dev, tests and prod run the _same_ code path and differ
+    only in durability (ADR-021's own criterion). `storeSessionInDatabase: true` and
+    `verification.storeInDatabase: true` are therefore **unconditional**: the database is
+    the source of truth (ADR-030) and the secondary layer is pure cache — a lost or
+    restarted cache re-reads from SQL, it never loses a session or a reset token.
+  - `rateLimit: { enabled: true, storage: "secondary-storage" }` — auth endpoints are
+    limited in **every** environment (R13: BA limits on top of the app-level Upstash
+    limiter that Phase 5 adds); the counter backend follows ADR-021's env gate (stub in
+    dev, distributed in prod). BA's defaults apply (100 req / 10 s); per-route tightening
+    waits for a phase that demonstrates the need.
+  - **Fail-open is explicit, not incidental:** on backend error, `get`/`getAndDelete`
+    resolve `null` (cache miss → SQL serves), `set`/`delete` no-op, and `increment`
+    resolves `1` — since BA allows when `increment <= max`, an unreachable backend
+    _permits_ the request instead of bricking sign-in. Same deliberate trade as ADR-014;
+    to be written down in docs/SECURITY.md at Phase 9 (which ADR-014 already schedules).
+  - Recovery from a lost verification mail: `emailVerification.sendOnSignIn: true` — a
+    blocked sign-in re-sends the mail, so no extra "resend" page is needed in Phase 1;
+    BA's own endpoint rate limit (enabled above) bounds resend abuse.
+- **Consequences:** booting needs zero cloud credentials (ADR-021 kept); turning on
+  production auth limits is an env-var flip, not a code change; the availability-vs-
+  strictness choice for auth endpoints is recorded rather than inherited from an SDK
+  default; BA upgrades must re-verify `get-tables.mjs` + the rate-limiter and
+  SecondaryStorage contracts (same re-read rule as ADR-036).
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
