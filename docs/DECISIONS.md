@@ -679,6 +679,73 @@ full table in `RESEARCH.md` §e.
   on every install as a reminder. Re-evaluate when `eslint-config-next`'s bundled plugins
   declare `eslint ^10` (tracked in the appendix).
 
+## ADR-036 — Phase-1 schema: five tables; Better Auth mapped by source-verified
+
+`options.<model>.{modelName,fields}` overrides; `email_verified` rename; dates = column mode
+
+- **Status:** accepted (2026-09-24)
+- **Context:** ADR-030 (written from docs in Phase 0) predicted that model/column overrides
+  live _inside_ `drizzleAdapter(db, { modelName, field, … })` and that the adapter has a
+  "number-for-dates" flag. Reading the installed 1.7.5 source before writing the schema
+  (spec §1: verify, don't recall) showed both details differ: `DrizzleAdapterConfig`
+  (`@better-auth/drizzle-adapter/dist/index.d.mts`) only accepts
+  `provider | schema | usePlural | camelCase | transaction | debugLogs | schemaName` — the
+  overrides are **top-level Better Auth options** resolved in
+  `@better-auth/core/…/get-tables.mjs` as `options.<model>.modelName` and
+  `options.<model>.fields.<field>` — and there is **no date flag**: dates are passed to
+  Drizzle as `Date` objects and the _column_ decides storage, while the read path wraps the
+  raw value in `new Date(data)` (`customTransformOutput`, harmless around Drizzle's own
+  `Date`). The adapter also runs a schema self-check **by default**
+  (`checksSchema = options.advanced.database.validateSchema !== false`) that diffs
+  `config.schema`'s object keys and Drizzle **column property keys** against the resolved
+  `modelName`/`fieldName`s, and `diffSchema` rejects only _required_ extra columns
+  (nullable or defaulted extras pass).
+- **Decision:**
+  - **Phase 1 ships five tables:** `users`, `sessions`, `accounts`, `verifications` (Better
+    Auth–owned) + `user_settings` (ours). Deferred to their consuming phases rather than
+    created empty: `api_keys` (Phase 6 API), `workspaces`/`workspace_members` (teams are a
+    v1 non-goal, spec §15), `audit_log` (first business services, Phase 2). Spec §1's
+    "nothing out of phase" applies to schema too; Drizzle migrations are incremental by
+    design, so a later table is one reviewed migration, not debt.
+  - **Mapping (source-verified contract):** `user: { modelName: "users", fields: {…} }`,
+    `session: { modelName: "sessions", storeSessionInDatabase: true (when secondaryStorage,
+ADR-030: DB is source of truth), fields: {…} }`, same for `account → accounts`,
+    `verification → verifications` (+ `storeInDatabase: true` under Upstash). Field
+    overrides are declared **only where snake_case differs from Better Auth's camelCase
+    default** (`emailVerified→email_verified`, `createdAt→created_at`, `updatedAt→updated_at`,
+    `expiresAt→expires_at`, `userId→user_id`, `ipAddress→ip`, `userAgent→user_agent`,
+    `accountId→account_id`, `providerId→provider_id`, `accessToken→access_token`,
+    `refreshToken→refresh_token`, `idToken→id_token`, `accessTokenExpiresAt→access_token_expires_at`,
+    `refreshTokenExpiresAt→refresh_token_expires_at`); identical fields (`name`, `email`,
+    `image`, `token`, `identifier`, `value`, `scope`, `password`) need no override. Drizzle
+    column **property keys equal those resolved names** (the self-check and runtime
+    lookups key off properties); SQL names match, so the ERD's snake_case is literal. One
+    `schema` object keyed by the custom model names feeds both `drizzle(client, {schema})`
+    (so `db.query.users…` resolves) and `drizzleAdapter(db, { schema })`.
+  - **`advanced.database.generateId = () => ulid()`** so BA-created rows obey ADR-008.
+  - **Dates:** `integer({ mode: "timestamp_ms" })` on every BA-written timestamp —
+    Drizzle maps `Date → integer ms` (verified `mapToDriverValue(value: Date): number`) and
+    reads back `Date`, satisfying both Better Auth and the ERD's integer-ms convention.
+    This closes ADR-030's open question: _there is no adapter flag; the column mode is the
+    mechanism._
+  - **ERD rename `email_verified_at → email_verified`:** Better Auth's field is `type:
+"boolean"` (`defaultValue: false`, `input: false`) — it physically cannot store the
+    verification _time_, only the fact. The honest name is `email_verified` (0|1); the ERD
+    is amended accordingly (this ADR precedes the edit, per the ERD header).
+  - **ERD-extra columns stay out of Better Auth's way:** `bio`, `locale`, `timezone`,
+    `week_start`, `onboarded_at`, `is_demo`, `joined_during_free_period` on `users`, plus
+    everything on `user_settings`, are nullable or defaulted — required by `diffSchema`'s
+    "unexpected-required-column" rule and by the fact that BA inserts omit them. No
+    fabricated defaults: `locale`/`timezone`/`week_start` are nullable with service-layer
+    fallbacks (`en`/`UTC`/`mon` applied only at render, spec line 302 "configurable");
+    `joined_during_free_period` defaults **true** because spec line 426 mandates recording
+    `true` for early users while `BILLING_ENABLED=false` (ADR-013) — Phase 7 flips it.
+- **Consequences:** the default-on schema check passes with zero findings, so a schema
+  drift fails loudly at runtime instead of at the first odd SQL error; every future
+  Better Auth upgrade must re-verify `get-tables.mjs` + the adapter dist (comment pointers
+  land in the code); the five-table migration is reviewable and the remaining identity
+  tables arrive with real consumers.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

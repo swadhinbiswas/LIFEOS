@@ -6,6 +6,15 @@
  */
 import { z } from "zod";
 
+// ADR-027: this module also loads under drizzle-kit, vitest and playwright, where nothing
+// has read .env yet. loadEnvFile never overrides variables already in process.env (verified
+// on Node 24), so Next.js's own .env handling is unaffected; a missing file is normal in CI.
+try {
+  process.loadEnvFile();
+} catch {
+  /* no .env — variables come from the process environment */
+}
+
 const pairs: Array<[string, string]> = [
   ["UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"],
   ["GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET"],
