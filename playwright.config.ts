@@ -32,11 +32,14 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm dev",
+    // ADR-029: exercise the production build, not the dev server. Prod loads the auth graph
+    // once at boot on a small heap, so the ADR-038 warm-up is a cheap guard rather than a
+    // load-bearing fix; dev-only behaviour (StrictMode double effects) is not what users run.
+    command: "pnpm build && pnpm start",
     url: "http://localhost:3000",
-    timeout: 120_000,
+    timeout: 240_000,
     stdout: "pipe",
-    // A stray `pnpm dev` on :3000 would answer against the development database —
+    // A stray server on :3000 would answer against the development database —
     // fail fast instead of silently testing the wrong data.
     reuseExistingServer: false,
     env: e2eEnv(),

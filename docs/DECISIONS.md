@@ -850,6 +850,27 @@ stub), DB stays source of truth, explicit fail-open
 
 ---
 
+## ADR-040 — E2E `webServer` is the production build (reconciles ADR-029 and ADR-038)
+
+- **Status:** accepted (2026-09-24)
+- **Context:** ADR-029 specifies the Playwright `webServer` as `build && start` ("prod
+  behaviour"); ADR-038 was written against a `pnpm dev` server (where the native-loader stall
+  it documents is real) and closed with "`pnpm dev` stays the webServer (ADR-029)". The two
+  entries contradict each other, so one clause has to be superseded explicitly (this log is
+  append-only).
+- **Decision:** **ADR-029 wins** — the harness runs `pnpm build && pnpm start`. Verified: the
+  suite passes on the production build in 8.4 s, and the warm-up request completes in ~100 ms
+  because prod evaluates the auth graph once at boot on a small heap, so ADR-038's warm-up is
+  retained only as a cheap guard rather than a load-bearing workaround. ADR-038's closing
+  sentence about `pnpm dev` is superseded by this entry; everything else in ADR-038
+  (the diagnosis, the `.data/outbox` race fix, the surrounding harness shape) stands.
+- **Consequences:** e2e tests the artifact users actually run; dev-only behaviour (e.g. React
+  StrictMode's double effect, which the harness did catch and fix in the verify page) is not
+  re-tested by e2e and must be exercised when developing. Harness runtime includes a `next
+build` per run, cached by `.next` locally and cold in CI.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
