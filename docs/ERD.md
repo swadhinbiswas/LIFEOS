@@ -7,18 +7,18 @@
 
 ## 0. Conventions (spec §7.3)
 
-| Rule | Value |
-| --- | --- |
-| Primary keys | `id` text — ULID (decision `ADR-008`; cuid2 was the spec's alternative) |
-| Timestamps | `created_at`, `updated_at` as **integer milliseconds UTC**; no SQL `datetime` |
-| Soft delete | `deleted_at` (nullable) where restore is meaningful; hard delete only for account deletion flows |
-| Ownership | every user-owned table has `user_id` **and** a reserved nullable `workspace_id` (teams are a v1 non-goal, spec §15, but the column ships now to avoid a migration) |
-| Every query | filters by the authenticated owner (spec §10 tenant isolation); Drizzle queries always include `user_id` |
-| Ordering | kanban/card order is `position TEXT` = fractional index (spec §7.3, research (d) §1 — never integer ranks) |
-| Concurrency | mutable cards carry `version INTEGER` for optimistic-concurrency checks (research (d) §2) |
-| Recurrence | `recurrence TEXT` holds an RFC 5545 `RRULE` string (`rrule` library, library table #43) |
-| JSON columns | SQLite `TEXT` holding validated JSON; shape enforced by Zod at the service boundary, not in SQL |
-| IDs shown to humans | ULIDs sort by time, so cursor pagination on `(user_id, created_at, id)` needs no extra index |
+| Rule                | Value                                                                                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Primary keys        | `id` text — ULID (decision `ADR-008`; cuid2 was the spec's alternative)                                                                                            |
+| Timestamps          | `created_at`, `updated_at` as **integer milliseconds UTC**; no SQL `datetime`                                                                                      |
+| Soft delete         | `deleted_at` (nullable) where restore is meaningful; hard delete only for account deletion flows                                                                   |
+| Ownership           | every user-owned table has `user_id` **and** a reserved nullable `workspace_id` (teams are a v1 non-goal, spec §15, but the column ships now to avoid a migration) |
+| Every query         | filters by the authenticated owner (spec §10 tenant isolation); Drizzle queries always include `user_id`                                                           |
+| Ordering            | kanban/card order is `position TEXT` = fractional index (spec §7.3, research (d) §1 — never integer ranks)                                                         |
+| Concurrency         | mutable cards carry `version INTEGER` for optimistic-concurrency checks (research (d) §2)                                                                          |
+| Recurrence          | `recurrence TEXT` holds an RFC 5545 `RRULE` string (`rrule` library, library table #43)                                                                            |
+| JSON columns        | SQLite `TEXT` holding validated JSON; shape enforced by Zod at the service boundary, not in SQL                                                                    |
+| IDs shown to humans | ULIDs sort by time, so cursor pagination on `(user_id, created_at, id)` needs no extra index                                                                       |
 
 ## 1. Relationship graph (Mermaid)
 
@@ -112,7 +112,7 @@ Notes on edges the spec calls out explicitly:
   fields. One-to-one: `cards.id` ← `job_applications.card_id` (UNIQUE), used when
   `cards.kind = 'job'`.
 - `card_links` is polymorphic ("link between any two entities"): `(src_type, src_id, dst_type,
-  dst_id, link_kind)` with a CHECK that src/dst ids exist is impractical in SQLite, so integrity is
+dst_id, link_kind)` with a CHECK that src/dst ids exist is impractical in SQLite, so integrity is
   enforced in the service layer and an index covers `(src_type, src_id)` + `(dst_type, dst_id)`.
 - `resumes.ats_score` stays nullable: honest ATS reporting (research (d) §4) means a
   **parse-fidelity score + checklist**, computed on export, not a magic number the user types.
@@ -127,48 +127,48 @@ enums). Every row also carries `created_at`/`updated_at` and, where noted, `dele
 
 ### 2.1 Identity (spec line 354)
 
-| Table | Key columns beyond conventions |
-| --- | --- |
-| `users` | `email` UNIQUE, `email_verified_at`, `name`, `image`, `bio`, `locale`, `timezone`, `week_start`, `onboarded_at`, `is_demo` (0\|1, seed rows removable per spec §12), `joined_during_free_period` (spec §11 founder grandfathering) |
-| `sessions` | Better Auth shape: `token` UNIQUE, `user_id`, `expires_at`, `ip`, `user_agent` |
-| `accounts` | Better Auth OAuth link: `provider_id`, `account_id`, `user_id`, `access_token`/`refresh_token` (encrypted where present), `scope` |
-| `verifications` | Better Auth email-verify/reset: `identifier`, `value`, `expires_at` |
-| `api_keys` | `name`, `prefix` (display, e.g. `lifeos_live_ab12…`), `hash` (SHA-256 of full key), `scopes` (JSON array of `read:*` / `write:tasks` / `admin:export`), `last_used_at`, `expires_at`, `revoked_at` (spec §9.1) |
-| `workspaces` | `name`, `slug`, `owner_user_id` — reserved for future teams |
-| `workspace_members` | `workspace_id`, `user_id`, `role` — future (spec §15: schema ready, no UI) |
-| `user_settings` | `theme`, `theme_overrides` JSON (customizer: preset/font/color-mode/radius/content-layout/scale/sidebar-variant/sidebar-mode — spec §3), `shortcuts` JSON (remappable, spec §10 keyboard), `locale`, `timezone`, `week_start`, `ai_prefs` JSON (provider, model, auto-approve allowlist, morning-brief opt-in) |
-| `audit_log` | `actor` (`user:<id>` \| `ai` \| `api:<key id>` \| `mcp:<client>` \| `webhook:<id>`), `action`, `entity_type`, `entity_id`, `metadata` JSON, `request_id` (spec §10) |
+| Table               | Key columns beyond conventions                                                                                                                                                                                                                                                                                 |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `users`             | `email` UNIQUE, `email_verified_at`, `name`, `image`, `bio`, `locale`, `timezone`, `week_start`, `onboarded_at`, `is_demo` (0\|1, seed rows removable per spec §12), `joined_during_free_period` (spec §11 founder grandfathering)                                                                             |
+| `sessions`          | Better Auth shape: `token` UNIQUE, `user_id`, `expires_at`, `ip`, `user_agent`                                                                                                                                                                                                                                 |
+| `accounts`          | Better Auth OAuth link: `provider_id`, `account_id`, `user_id`, `access_token`/`refresh_token` (encrypted where present), `scope`                                                                                                                                                                              |
+| `verifications`     | Better Auth email-verify/reset: `identifier`, `value`, `expires_at`                                                                                                                                                                                                                                            |
+| `api_keys`          | `name`, `prefix` (display, e.g. `lifeos_live_ab12…`), `hash` (SHA-256 of full key), `scopes` (JSON array of `read:*` / `write:tasks` / `admin:export`), `last_used_at`, `expires_at`, `revoked_at` (spec §9.1)                                                                                                 |
+| `workspaces`        | `name`, `slug`, `owner_user_id` — reserved for future teams                                                                                                                                                                                                                                                    |
+| `workspace_members` | `workspace_id`, `user_id`, `role` — future (spec §15: schema ready, no UI)                                                                                                                                                                                                                                     |
+| `user_settings`     | `theme`, `theme_overrides` JSON (customizer: preset/font/color-mode/radius/content-layout/scale/sidebar-variant/sidebar-mode — spec §3), `shortcuts` JSON (remappable, spec §10 keyboard), `locale`, `timezone`, `week_start`, `ai_prefs` JSON (provider, model, auto-approve allowlist, morning-brief opt-in) |
+| `audit_log`         | `actor` (`user:<id>` \| `ai` \| `api:<key id>` \| `mcp:<client>` \| `webhook:<id>`), `action`, `entity_type`, `entity_id`, `metadata` JSON, `request_id` (spec §10)                                                                                                                                            |
 
 ### 2.2 Boards engine (spec line 355)
 
-| Table | Key columns |
-| --- | --- |
-| `boards` | `name`, `slug`, `template` (from Phase-8 gallery), `view_config` JSON (default view + visible views: table/kanban/calendar/grid/timeline), `card_fields` JSON (visible fields/order), `archived_at`, `is_demo` |
-| `board_columns` | `board_id`, `name`, `color`, `glyph`, `position` (fractional), `wip_limit` (nullable → TUI meter), `is_done` (0\|1; done column completes on drop) |
-| `cards` | `board_id`, `column_id`, `position` (TEXT fractional), `title`, `description` (markdown, sanitized on render — spec §10), `priority` (`p0`–`p3` or null), `due_at`, `start_at`, `estimate_min`, `completed_at`, `archived_at`, `recurrence` (RRULE), `kind` (`task`\|`job`\|`generic`), `meta` JSON, `version` (optimistic concurrency), `is_demo` |
-| `labels` | `board_id`, `name`, `color` |
-| `card_labels` | `card_id`, `label_id` (composite PK) |
-| `checklists` / `checklist_items` | `card_id` → items with `text`, `done_at`, `position` (fractional) |
-| `comments` | `card_id`, `body` (markdown, sanitized), `actor` |
-| `attachments` | `card_id`, `kind` (`link`\|`file`), `url`/`storage_key`, `name`, `size` — links-only is acceptable v1 (spec §7 files row) |
-| `custom_fields` | `board_id`, `key`, `label`, `type` (`text`\|`number`\|`date`\|`select`\|`bool`), `options` JSON, `position` |
-| `custom_field_values` | `card_id`, `field_id`, `value` (TEXT; typed at the boundary) |
-| `card_links` | `src_type`, `src_id`, `dst_type`, `dst_id`, `link_kind` (`relates`\|`blocks`\|`duplicates`) |
-| `saved_views` | `user_id`, `scope` (`tasks`\|`jobs`\|…), `name`, `query` JSON (filter/sort/group), `shared` (0\|1, reserved) — Notion-style personal saved views (research (b) #3) |
+| Table                            | Key columns                                                                                                                                                                                                                                                                                                                                        |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `boards`                         | `name`, `slug`, `template` (from Phase-8 gallery), `view_config` JSON (default view + visible views: table/kanban/calendar/grid/timeline), `card_fields` JSON (visible fields/order), `archived_at`, `is_demo`                                                                                                                                     |
+| `board_columns`                  | `board_id`, `name`, `color`, `glyph`, `position` (fractional), `wip_limit` (nullable → TUI meter), `is_done` (0\|1; done column completes on drop)                                                                                                                                                                                                 |
+| `cards`                          | `board_id`, `column_id`, `position` (TEXT fractional), `title`, `description` (markdown, sanitized on render — spec §10), `priority` (`p0`–`p3` or null), `due_at`, `start_at`, `estimate_min`, `completed_at`, `archived_at`, `recurrence` (RRULE), `kind` (`task`\|`job`\|`generic`), `meta` JSON, `version` (optimistic concurrency), `is_demo` |
+| `labels`                         | `board_id`, `name`, `color`                                                                                                                                                                                                                                                                                                                        |
+| `card_labels`                    | `card_id`, `label_id` (composite PK)                                                                                                                                                                                                                                                                                                               |
+| `checklists` / `checklist_items` | `card_id` → items with `text`, `done_at`, `position` (fractional)                                                                                                                                                                                                                                                                                  |
+| `comments`                       | `card_id`, `body` (markdown, sanitized), `actor`                                                                                                                                                                                                                                                                                                   |
+| `attachments`                    | `card_id`, `kind` (`link`\|`file`), `url`/`storage_key`, `name`, `size` — links-only is acceptable v1 (spec §7 files row)                                                                                                                                                                                                                          |
+| `custom_fields`                  | `board_id`, `key`, `label`, `type` (`text`\|`number`\|`date`\|`select`\|`bool`), `options` JSON, `position`                                                                                                                                                                                                                                        |
+| `custom_field_values`            | `card_id`, `field_id`, `value` (TEXT; typed at the boundary)                                                                                                                                                                                                                                                                                       |
+| `card_links`                     | `src_type`, `src_id`, `dst_type`, `dst_id`, `link_kind` (`relates`\|`blocks`\|`duplicates`)                                                                                                                                                                                                                                                        |
+| `saved_views`                    | `user_id`, `scope` (`tasks`\|`jobs`\|…), `name`, `query` JSON (filter/sort/group), `shared` (0\|1, reserved) — Notion-style personal saved views (research (b) #3)                                                                                                                                                                                 |
 
 ### 2.3 Career (spec line 356)
 
-| Table | Key columns |
-| --- | --- |
-| `companies` | `name`, `domain`, `industry`, `size`, `location`, `ats_type`, `logo_url`, `notes` |
-| `contacts` | `company_id`, `name`, `title`, `email`, `phone`, `linkedin_url`, `notes` |
-| `job_applications` | **`card_id` UNIQUE FK**, `company_id`, `stage_history` JSON (Huntr-style auto-activity — research (b) #7), `salary_min`, `salary_max`, `currency`, `work_mode` (`remote`\|`hybrid`\|`onsite`), `visa_status`, `source`, `url`, `jd_snapshot` (text — postings vanish, research (b) #7), `resume_id`, `cover_letter`, `excitement`, `fit_score`, `archived_at` |
-| `interviews` | `job_application_id`, `kind` (`screen`\|`tech`\|`system_design`\|`behavioral`\|`final`), `starts_at`, `duration_min`, `interviewers` JSON, `feedback`, `rating` |
-| `offers` | `job_application_id`, `base`, `equity`, `bonus`, `currency`, `received_at`, `accepted_at`, `declined_at`, `notes` |
-| `resumes` | `title`, `base_id` (shared base resume → variants), `template`, `data` (JSON Resume shape), `ats_score` (computed, nullable), `share_slug`, `share_enabled` (custom domains are v1 non-goal, spec §15) |
-| `resume_versions` | `resume_id`, `snapshot` JSON, `label`, `exported_at` |
-| `skills` / `achievements` / `projects` | portfolio/CV building blocks; `projects` holds real repo facts from seed research (f) |
-| `star_stories`, `question_bank`, `coding_problems` | interview-prep entities linked to cards via `card_links` where useful |
+| Table                                              | Key columns                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `companies`                                        | `name`, `domain`, `industry`, `size`, `location`, `ats_type`, `logo_url`, `notes`                                                                                                                                                                                                                                                                             |
+| `contacts`                                         | `company_id`, `name`, `title`, `email`, `phone`, `linkedin_url`, `notes`                                                                                                                                                                                                                                                                                      |
+| `job_applications`                                 | **`card_id` UNIQUE FK**, `company_id`, `stage_history` JSON (Huntr-style auto-activity — research (b) #7), `salary_min`, `salary_max`, `currency`, `work_mode` (`remote`\|`hybrid`\|`onsite`), `visa_status`, `source`, `url`, `jd_snapshot` (text — postings vanish, research (b) #7), `resume_id`, `cover_letter`, `excitement`, `fit_score`, `archived_at` |
+| `interviews`                                       | `job_application_id`, `kind` (`screen`\|`tech`\|`system_design`\|`behavioral`\|`final`), `starts_at`, `duration_min`, `interviewers` JSON, `feedback`, `rating`                                                                                                                                                                                               |
+| `offers`                                           | `job_application_id`, `base`, `equity`, `bonus`, `currency`, `received_at`, `accepted_at`, `declined_at`, `notes`                                                                                                                                                                                                                                             |
+| `resumes`                                          | `title`, `base_id` (shared base resume → variants), `template`, `data` (JSON Resume shape), `ats_score` (computed, nullable), `share_slug`, `share_enabled` (custom domains are v1 non-goal, spec §15)                                                                                                                                                        |
+| `resume_versions`                                  | `resume_id`, `snapshot` JSON, `label`, `exported_at`                                                                                                                                                                                                                                                                                                          |
+| `skills` / `achievements` / `projects`             | portfolio/CV building blocks; `projects` holds real repo facts from seed research (f)                                                                                                                                                                                                                                                                         |
+| `star_stories`, `question_bank`, `coding_problems` | interview-prep entities linked to cards via `card_links` where useful                                                                                                                                                                                                                                                                                         |
 
 Funnel metrics (research (d) §5) are **derived queries** over `job_applications` +
 `stage_history` — no summary table in v1; add one only if Phase 3 fixtures show it is slow.
@@ -212,19 +212,19 @@ takes `ctx { userId, workspaceId, actor, scopes }` and composes `where(user_id =
 
 ## 3. Hot-path indexes (spec line 362)
 
-| Index | Table(s) | Columns | Serves |
-| --- | --- | --- | --- |
-| `idx_cards_board_pos` | `cards` | `(board_id, column_id, position)` | kanban render order (fractional scan) |
-| `idx_cards_user_due` | `cards` | `(user_id, due_at)` WHERE `due_at IS NOT NULL` AND `deleted_at IS NULL` | Inbox / Today / Upcoming |
-| `idx_cards_user_updated` | `cards` | `(user_id, updated_at DESC)` | feed, cursor pagination |
-| `idx_cards_kind` | `cards` | `(user_id, kind, completed_at)` | tasks-vs-jobs lists, funnels |
-| `idx_habit_logs_day` | `habit_logs` | `(habit_id, date)` UNIQUE | daily grid, streaks |
-| `idx_jobs_stage` | `job_applications` | `(card_id, company_id)` + stage lookups via `board_columns` | pipeline stats |
-| `idx_audit_user_time` | `audit_log` | `(user_id, created_at DESC)` | audit UI |
-| FTS5 `search_index` | notes (+ cards later) | FTS5 indexes (content= notes) | global `/` search (FTS5 preloaded, research (g)) |
-| `idx_tx_user_date` | `transactions` | `(user_id, occurred_at DESC)` | finance lists |
-| `card_links` both directions | `card_links` | `(src_type, src_id)`, `(dst_type, dst_id)` | backlinks / graph |
-| `idx_api_keys_hash` | `api_keys` | `(hash)` UNIQUE | Bearer auth lookup (SHA-256, spec §9.1) |
+| Index                        | Table(s)              | Columns                                                                 | Serves                                           |
+| ---------------------------- | --------------------- | ----------------------------------------------------------------------- | ------------------------------------------------ |
+| `idx_cards_board_pos`        | `cards`               | `(board_id, column_id, position)`                                       | kanban render order (fractional scan)            |
+| `idx_cards_user_due`         | `cards`               | `(user_id, due_at)` WHERE `due_at IS NOT NULL` AND `deleted_at IS NULL` | Inbox / Today / Upcoming                         |
+| `idx_cards_user_updated`     | `cards`               | `(user_id, updated_at DESC)`                                            | feed, cursor pagination                          |
+| `idx_cards_kind`             | `cards`               | `(user_id, kind, completed_at)`                                         | tasks-vs-jobs lists, funnels                     |
+| `idx_habit_logs_day`         | `habit_logs`          | `(habit_id, date)` UNIQUE                                               | daily grid, streaks                              |
+| `idx_jobs_stage`             | `job_applications`    | `(card_id, company_id)` + stage lookups via `board_columns`             | pipeline stats                                   |
+| `idx_audit_user_time`        | `audit_log`           | `(user_id, created_at DESC)`                                            | audit UI                                         |
+| FTS5 `search_index`          | notes (+ cards later) | FTS5 indexes (content= notes)                                           | global `/` search (FTS5 preloaded, research (g)) |
+| `idx_tx_user_date`           | `transactions`        | `(user_id, occurred_at DESC)`                                           | finance lists                                    |
+| `card_links` both directions | `card_links`          | `(src_type, src_id)`, `(dst_type, dst_id)`                              | backlinks / graph                                |
+| `idx_api_keys_hash`          | `api_keys`            | `(hash)` UNIQUE                                                         | Bearer auth lookup (SHA-256, spec §9.1)          |
 
 Fractional-index uniqueness: add `UNIQUE(board_id, column_id, position)` with a service-layer
 retry on collision (read→compute→write is not atomic — research (d) §1 risk R8), plus a
@@ -246,6 +246,6 @@ mutating the prod database (research (g) §g2).
 ## 5. What this doc deliberately excludes
 
 - Column-level Drizzle code (Phase 1 writes `src/db/schema/*` against §2).
-- The v1.1 automation *UI* (tables exist per spec line 359 but are hidden — spec §15).
+- The v1.1 automation _UI_ (tables exist per spec line 359 but are hidden — spec §15).
 - Team/workspace permission enforcement (columns reserved; no queries yet — spec §15).
 - Summary/rollup tables for analytics (derive from fixtures first; add only if slow).

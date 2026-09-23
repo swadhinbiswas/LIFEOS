@@ -18,37 +18,37 @@ license page `https://shadcnstudio.com/license`, and the 12 PNGs in `docs/refere
 
 ### Hard measurements (from the fetched CSS, exact values)
 
-| Token / attribute | Value | Evidence |
-| --- | --- | --- |
-| `--sidebar-width` | `16rem` (256 px) | demo HTML `style=` attribute |
-| `--sidebar-width-icon` | `3rem` (48 px) | demo HTML |
-| `--radius` (default) | `0.45rem` (7.2 px) | demo HTML + `nexa1.css` |
-| `--spacing` (default scale) | `0.25rem` (4 px) | `nexa1.css`; scale SM `0.2222rem`, LG `0.26222rem` under `[data-theme-scale]` |
-| Dark `--background` | `#171717` | `nexa1.css:.dark` |
-| Dark `--foreground` | `#ebebeb` | `nexa1.css:.dark` |
-| Dark `--border` | `#222` | `nexa1.css:.dark` |
-| Light `--background` / `--card` | `#fff` | `nexa1.css` |
-| Light `--foreground` | `#333` | `nexa1.css` |
-| Light `--border` | `#ebebeb` | `nexa1.css` |
-| `--primary` | light `#18181b`, dark `#e4e4e7` (neutral zinc, **not** blue) | `nexa1.css` — the blue buttons seen in screenshots come from a preset override at runtime |
-| Default font | `--font-sans: var(--font-manrope)` (Manrope) | demo HTML |
-| Fonts shipped as CSS vars | Geist, Geist Mono, Geist Pixel Square, DM Sans, Figtree, Inter, JetBrains Mono, Lora, Merriweather, Noto Sans, Noto Serif, Nunito Sans, Outfit, Playfair Display, Public Sans, Raleway, Roboto, Roboto Slab, Manrope | `<html>` class list in demo HTML — this is the Font customizer's option set |
-| Sidebar state attrs | `data-variant="inset"`, `data-state="expanded"`, `data-collapsible`, `data-side="left"` | demo HTML (shadcn sidebar contract) |
-| Sidebar width transition | `transition-[width] duration-200 ease-linear` | demo HTML |
+| Token / attribute               | Value                                                                                                                                                                                                                | Evidence                                                                                  |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `--sidebar-width`               | `16rem` (256 px)                                                                                                                                                                                                     | demo HTML `style=` attribute                                                              |
+| `--sidebar-width-icon`          | `3rem` (48 px)                                                                                                                                                                                                       | demo HTML                                                                                 |
+| `--radius` (default)            | `0.45rem` (7.2 px)                                                                                                                                                                                                   | demo HTML + `nexa1.css`                                                                   |
+| `--spacing` (default scale)     | `0.25rem` (4 px)                                                                                                                                                                                                     | `nexa1.css`; scale SM `0.2222rem`, LG `0.26222rem` under `[data-theme-scale]`             |
+| Dark `--background`             | `#171717`                                                                                                                                                                                                            | `nexa1.css:.dark`                                                                         |
+| Dark `--foreground`             | `#ebebeb`                                                                                                                                                                                                            | `nexa1.css:.dark`                                                                         |
+| Dark `--border`                 | `#222`                                                                                                                                                                                                               | `nexa1.css:.dark`                                                                         |
+| Light `--background` / `--card` | `#fff`                                                                                                                                                                                                               | `nexa1.css`                                                                               |
+| Light `--foreground`            | `#333`                                                                                                                                                                                                               | `nexa1.css`                                                                               |
+| Light `--border`                | `#ebebeb`                                                                                                                                                                                                            | `nexa1.css`                                                                               |
+| `--primary`                     | light `#18181b`, dark `#e4e4e7` (neutral zinc, **not** blue)                                                                                                                                                         | `nexa1.css` — the blue buttons seen in screenshots come from a preset override at runtime |
+| Default font                    | `--font-sans: var(--font-manrope)` (Manrope)                                                                                                                                                                         | demo HTML                                                                                 |
+| Fonts shipped as CSS vars       | Geist, Geist Mono, Geist Pixel Square, DM Sans, Figtree, Inter, JetBrains Mono, Lora, Merriweather, Noto Sans, Noto Serif, Nunito Sans, Outfit, Playfair Display, Public Sans, Raleway, Roboto, Roboto Slab, Manrope | `<html>` class list in demo HTML — this is the Font customizer's option set               |
+| Sidebar state attrs             | `data-variant="inset"`, `data-state="expanded"`, `data-collapsible`, `data-side="left"`                                                                                                                              | demo HTML (shadcn sidebar contract)                                                       |
+| Sidebar width transition        | `transition-[width] duration-200 ease-linear`                                                                                                                                                                        | demo HTML                                                                                 |
 
 ### Layout measurements (from the 12 PNGs; ±2 px)
 
-| Area | Measurement |
-| --- | --- |
-| Header height | ≈48–50 px; contains sidebar toggle, icon+title breadcrumb, pill search “Type to search…”, palette icon, theme toggle |
+| Area                | Measurement                                                                                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Header height       | ≈48–50 px; contains sidebar toggle, icon+title breadcrumb, pill search “Type to search…”, palette icon, theme toggle                                                            |
 | Sidebar item height | ≈36–38 px, active item = filled rounded rect; section labels above groups (Favorites, Dashboards, CRM, Workspace, Views, System); user chip pinned bottom (Alex Morgan · Admin) |
-| Toolbar row | ≈34 px: left = current view + count (“All Companies · 60”), right = view button (Table/Grid/Calendar/Kanban), Filter, Sort, Options, primary `+ New …` button |
-| KPI cards | 4-up, gap ≈24 px, height ≈110 px, radius ≈10–12 px; label 13 px muted top-left, value ≈28–30 px semibold bottom-left, 40 px rounded icon box top-right |
-| Table | header row ≈36 px (icon + muted 12–13 px label); data rows ≈44–45 px pitch, 1 px separators; 24 px rounded letter avatars; outlined pill status badges; kebab menu per row |
-| Kanban column | width ≈264 px, gap ≈10 px; header = status chip + count + drag dots + kebab; card padding ≈16 px, radius ≈8 px, meta rows with icons, footer = avatar+name left / value right |
-| Calendar | month grid, weekday header ≈28 px, date number top-right, event cards with title (2-line clamp) + meta rows |
-| Grid view | 5 columns, card height ≈146 px (pitch ≈188 px), 28 px avatar, name 14 px semibold + title 13 px muted, email/phone rows, company chip bottom |
-| Dashboard | widget grid: KPI row, large bar chart (“Deals closed”), Summary + Pipeline panels, upgrade card, weekly-performance list; delta chips (`+12.6%` / `−12.2%`) bordered rounded-md |
+| Toolbar row         | ≈34 px: left = current view + count (“All Companies · 60”), right = view button (Table/Grid/Calendar/Kanban), Filter, Sort, Options, primary `+ New …` button                   |
+| KPI cards           | 4-up, gap ≈24 px, height ≈110 px, radius ≈10–12 px; label 13 px muted top-left, value ≈28–30 px semibold bottom-left, 40 px rounded icon box top-right                          |
+| Table               | header row ≈36 px (icon + muted 12–13 px label); data rows ≈44–45 px pitch, 1 px separators; 24 px rounded letter avatars; outlined pill status badges; kebab menu per row      |
+| Kanban column       | width ≈264 px, gap ≈10 px; header = status chip + count + drag dots + kebab; card padding ≈16 px, radius ≈8 px, meta rows with icons, footer = avatar+name left / value right   |
+| Calendar            | month grid, weekday header ≈28 px, date number top-right, event cards with title (2-line clamp) + meta rows                                                                     |
+| Grid view           | 5 columns, card height ≈146 px (pitch ≈188 px), 28 px avatar, name 14 px semibold + title 13 px muted, email/phone rows, company chip bottom                                    |
+| Dashboard           | widget grid: KPI row, large bar chart (“Deals closed”), Summary + Pipeline panels, upgrade card, weekly-performance list; delta chips (`+12.6%` / `−12.2%`) bordered rounded-md |
 
 ### Information architecture observed
 
@@ -90,16 +90,18 @@ settings IA, 256 px sidebar, header pattern) is what we match.
 Twelve products, takeaways with sources. Full list of URLs used is at the end of this section.
 
 ### 1. Linear (linear.app)
+
 A keyboard-first issue tracker for teams, now also pitching “the product development system for
 teams and agents” (https://linear.app/docs/start-guide).
+
 - **Command menu as the universal verb:** Cmd/Ctrl+K runs any action or navigation by name; `/`
-  searches issues/projects/docs and accepts raw IDs like `LIN-123`; `?` opens a *searchable*
+  searches issues/projects/docs and accepts raw IDs like `LIN-123`; `?` opens a _searchable_
   shortcuts help screen (https://linear.app/enablement/guide/navigating-linear,
   https://linear.app/changelog/2021-03-25-keyboard-shortcuts-help). → LifeOS: one palette, two
   modes (navigate + act) + fuzzy `?` overlay.
 - **Two-key “go to” grammar:** `G` then `I` = Inbox, `G` then `M` = My Issues — mnemonics instead
   of modifier soup (https://linear.app/enablement/guide/navigating-linear).
-- **Triage as intake queue:** snooze until time *or* new activity; rules run in order, **first
+- **Triage as intake queue:** snooze until time _or_ new activity; rules run in order, **first
   match only** — deterministic and debuggable (https://linear.app/docs/triage).
 - **Inbox is keyboard-drivable:** J/K move, Backspace delete, Shift+Backspace delete-all-read,
   H snooze (https://linear.app/docs/inbox).
@@ -107,8 +109,10 @@ teams and agents” (https://linear.app/docs/start-guide).
   (https://linear.app/docs/use-cycles).
 
 ### 2. Trello (trello.com)
+
 The canonical drag-and-drop Kanban board wrapped around a personal Inbox + Planner
 (https://trello.com/tour).
+
 - **Five automation shapes:** Rules, card buttons, board buttons, calendar commands, due-date
   commands; hard cap 20 actions per automation, documented workaround = second automation on the
   same trigger (https://support.atlassian.com/trello/docs/automation-overview,
@@ -123,8 +127,10 @@ The canonical drag-and-drop Kanban board wrapped around a personal Inbox + Plann
   (https://support.atlassian.com/trello/docs/trello-planner).
 
 ### 3. Notion (notion.so)
+
 Block-based docs + databases as a general workspace
 (https://www.notion.com/help/category/database-views).
+
 - **Four inline triggers power the editor:** `/` block menu, `@` mentions/dates, `[[` page links,
   `:` emoji; Cmd/Ctrl+K search-jump; peek view `Ctrl+J/K` steps through database pages without
   closing (https://www.notion.com/help/keyboard-shortcuts). → steal peek-pagination for pipeline
@@ -132,15 +138,17 @@ Block-based docs + databases as a general workspace
 - **One dataset, many saved views:** each view owns layout, property visibility, filter, sort,
   group/sub-group, with **“Save for everyone” vs personal** toggle per filter
   (https://www.notion.com/help/views-filters-and-sorts).
-- **Database templates pre-fill properties *and* page body**, repeatable daily/weekly/monthly/
+- **Database templates pre-fill properties _and_ page body**, repeatable daily/weekly/monthly/
   yearly (https://www.notion.com/help/database-templates). → recurring journal + per-application
   CV templates.
 - **Nested AND/OR filter groups up to three layers** — advanced logic without a query language
   (same source).
 
 ### 4. Todoist (todoist.com)
+
 Mass-market task manager famous for natural-language capture
 (https://www.todoist.com/help/todoist/features/introduction-to-tasks-080OAXric).
+
 - **Quick Add grammar with inline parse preview:** `tomorrow at 4 PM`, `{march 30}` deadline,
   `%label`, `p1–p3`, `!14:00` reminder, `#project`, `#Work /Admin`, `+Person`; recognized tokens
   are **highlighted as you type**, and a mis-parse is fixed by **clicking the highlighted word to
@@ -154,8 +162,10 @@ Mass-market task manager famous for natural-language capture
 - **Saved cross-project filters** (https://www.todoist.com/help/todoist/get-started/todoist-glossary-cA60laWMH).
 
 ### 5. Things 3 (culturedcode.com/things)
+
 Opinionated Apple to-do app built on a small “when” list set
 (https://culturedcode.com/things/support/articles/1059358).
+
 - **Quick Entry with Autofill:** `Ctrl+Space` capture from anywhere, and **every main-app
   keyboard shortcut works inside the capture window** (https://culturedcode.com/things/support/articles/2249437).
   → global capture must support the full field grammar, not just a title.
@@ -169,8 +179,10 @@ Opinionated Apple to-do app built on a small “when” list set
   (https://culturedcode.com/things/features).
 
 ### 6. Sunsama (sunsama.com)
-A daily/weekly *ritual* planner, deliberately not a project manager
+
+A daily/weekly _ritual_ planner, deliberately not a project manager
 (https://www.sunsama.com/daily-planning).
+
 - **Named five-step ritual:** Process → Plan → Prioritize → Prepare → Publish (to Slack)
   (https://www.sunsama.com/features/daily-planning-and-shutdown). Naming the steps teaches the flow.
 - **Pull meetings in first**, then backlog, then email/Slack; “your day is not a project”
@@ -185,8 +197,10 @@ A daily/weekly *ritual* planner, deliberately not a project manager
   source and is omitted.)
 
 ### 7. Huntr (huntr.co)
+
 Job-search CRM + AI resume builder for individual seekers
 (https://help.huntr.co/en/articles/10477521-what-is-huntr).
+
 - **Kanban with inline-editable stages:** rename columns by clicking the title, add by typing
   past the last one, reorder via `⋯ → Move List` (https://help.huntr.co/en/articles/13413245-the-job-board).
 - **Stage moves auto-generate activity-log entries** — a free audit trail with zero data entry
@@ -198,12 +212,14 @@ Job-search CRM + AI resume builder for individual seekers
   (https://huntr.co/product/linkedin-resume-builder, https://huntr.co/product/job-clipper).
 
 ### 8. Teal (tealhq.com)
+
 Free career platform: job tracker + resume builder + JD matching, tied together by an extension
 (https://www.tealhq.com/how-it-works).
+
 - **Job Matcher killer UI:** resume and JD side by side, keywords **green = present / red =
   missing**, hovering a keyword scrolls your resume to that spot and offers ignore / `+` to skills
   / AI bullet generation (https://help.tealhq.com/en/articles/12060992-using-the-job-matcher).
-  Pattern: *diff view over a score* — show the gap, not just a number.
+  Pattern: _diff view over a score_ — show the gap, not just a number.
 - **Threshold-driven export gate:** warns until Analysis ≥60% and Match ≥50%, green/blue/red status
   icons (https://help.tealhq.com/en/articles/9519151-export-your-resume-cover-letter).
 - **Cross-feature coupling:** export panel toggle “Move job to applied” flips the tracker card as
@@ -214,8 +230,10 @@ Free career platform: job tracker + resume builder + JD matching, tied together 
   https://www.tealhq.com/tools/resume-builder).
 
 ### 9. Simplify (simplify.jobs)
+
 Employer-subsidised job-search suite: browser Copilot for autofill + auto-tracking
 (https://simplify.jobs/).
+
 - **Tracking that requires no deliberate act:** applying via Copilot auto-saves the application,
   then prompts confirmation (https://help.simplify.jobs/en/articles/2140179-using-the-job-tracker).
   → every job-pipeline entry auto-creates its activity rows.
@@ -227,10 +245,12 @@ Employer-subsidised job-search suite: browser Copilot for autofill + auto-tracki
   application page (https://addons.mozilla.org/en-US/firefox/addon/simplify-jobs).
 
 ### 10. Reclaim.ai + Motion
+
 Auto-scheduling calendar layer (Reclaim: https://reclaim.ai/, Motion: https://www.usemotion.com/).
+
 - **Reclaim task form is a scheduling-rules DSL:** duration (min 15 min), due date (default +3
   days), earliest start, **min/max event duration**, working/meeting/personal hours
-  (https://help.reclaim.ai/en/articles/5108936-tasks-overview). The *max event duration* field is
+  (https://help.reclaim.ai/en/articles/5108936-tasks-overview). The _max event duration_ field is
   how it spaces chunks — steal that parameter.
 - **Habits express ranges:** “no less than x / no more than y per day”, ideal time, custom
   frequency (2nd Friday monthly), auto Free vs Busy toggling
@@ -249,11 +269,13 @@ Auto-scheduling calendar layer (Reclaim: https://reclaim.ai/, Motion: https://ww
   (https://www.usemotion.com/help/time-management/auto-scheduling/auto-scheduling-how-to-guide).
 
 ### 11. Habitica (habitica.com)
+
 Open-source RPG over habits/dailies/to-dos with social accountability (https://www.habitica.com/).
+
 - **Three task types with different punishment contracts:** Habits (±), Dailies (missing costs HP),
   To-Dos (never cost HP) (https://www.habitica.com/static/faq). The dual `+`/`−` habit (“drink
   water vs. soda”) is a reusable model for LifeOS habits.
-- **Color *is* the data:** tasks start yellow, blue as you succeed, red as you fail; redder =
+- **Color _is_ the data:** tasks start yellow, blue as you succeed, red as you fail; redder =
   more damage, bluer = more reward (https://www.habitica.com/static/faq,
   https://habitica.fandom.com/wiki/Damage_to_Player).
 - **Cron as explicit day boundary:** midnight or user-set Custom Day Start; missed dailies take
@@ -263,10 +285,12 @@ Open-source RPG over habits/dailies/to-dos with social accountability (https://w
   toggle (https://habitica.fandom.com/wiki/Streaks, https://www.habitica.com/static/faq).
 - **Gold buys user-defined real-life rewards**; party quests make a missed daily hurt teammates
   (https://www.habitica.com/static/features).
-- *(Cron/streak/damage details come from the community wiki, not official docs — flagged.)*
+- _(Cron/streak/damage details come from the community wiki, not official docs — flagged.)_
 
 ### 12. Obsidian (obsidian.md)
+
 Local-first Markdown knowledge base with a plugin/theme ecosystem (https://obsidian.md/).
+
 - **Command palette with real fuzzy semantics:** `Ctrl/Cmd+P`, initials work (`scf` → Save current
   file); since v1.8.3 recently-used commands are **pinned to the top but still fuzzy-filtered**,
   shorter commands beating recents once typing starts
@@ -284,6 +308,7 @@ Local-first Markdown knowledge base with a plugin/theme ecosystem (https://obsid
   extension surface rather than hard-coding every module.
 
 ### Cross-cutting patterns (each supported by ≥1 URL above)
+
 1. Fuzzy command palette as primary UI (Linear Cmd+K, Obsidian Ctrl+P with recents, Notion
    Cmd+K, Reclaim single-key `C`).
 2. NL parsing with **live token highlighting + click-to-correct** (Todoist; Things abbreviations;
@@ -310,6 +335,7 @@ Five references studied against their own docs. Sources: lazygit
 Bubbles (`help/help.go`), opencode (`opencode.ai/docs/tui|keybinds|themes`).
 
 ### lazygit
+
 - Numbered panel groups, sidebar 1/3 default (`sidePanelWidth: 0.3333`), jump with `1`–`5`,
   `0` returns to main panel; `border: rounded`, `activeBorderColor` green+bold vs
   `inactiveBorderColor` default, `searchingActiveBorderColor` cyan; persistent bottom key-hint
@@ -318,7 +344,7 @@ Bubbles (`help/help.go`), opencode (`opencode.ai/docs/tui|keybinds|themes`).
 - Keys: `space` stage, `a` hunk, `c` commit, `d` delete, `j/k`, `v` range-select, `/` filter,
   `:` shell, `?` keybindings menu (**a full panel listing every binding grouped by context**),
   `q`/`esc`, `z`/`Z` undo/redo.
-- Status colors encode *where a commit lives*: green = on master, yellow = not on master, red =
+- Status colors encode _where a commit lives_: green = on master, yellow = not on master, red =
   unpushed; cherry-pick cyan-on-blue; selected line `selectedLineBgColor` blue; unstaged tinted
   red; commit graph `+`/`_` compact/expand.
 - Details: spinner frames `●∙∙ → ∙●∙ → ∙∙●` at 180 ms; `scrollOffMargin: 2` keeps two lines of
@@ -326,6 +352,7 @@ Bubbles (`help/help.go`), opencode (`opencode.ai/docs/tui|keybinds|themes`).
   global.
 
 ### btop
+
 - Grid of boxes (cpu/mem/net/proc/disks/sensors) with `shown_boxes`, presets `1–9`, flips
   (`proc_left`, `cpu_bottom`); rounded corners on; **help/main/options menus are themselves
   bordered boxes overlaid on the layout**, not separate screens.
@@ -337,6 +364,7 @@ Bubbles (`help/help.go`), opencode (`opencode.ai/docs/tui|keybinds|themes`).
 - Multi-select batch signals; live-editable in-app options (config is a TUI, not a dotfile).
 
 ### k9s
+
 - Header (context/namespace/aliases/counters) + main table + **footer menu line of contextual key
   hints**; breadcrumbs (`ctrl-g`); `:` command mode (`:po`, `:deploy ns-x`), `ctrl-a` aliases;
   `headless/logoless/crumbsless/splashless/noIcons` strip chrome; `readOnly: true` disables
@@ -351,6 +379,7 @@ Bubbles (`help/help.go`), opencode (`opencode.ai/docs/tui|keybinds|themes`).
   `refreshRate` default 2 s, min 1 s.
 
 ### Charm Bubble Tea / Lip Gloss / Bubbles
+
 - Elm architecture: Model/Init/Update/View, runtime renders cell-by-cell; layout via
   `JoinHorizontal/JoinVertical/Place`, borders `Normal/Rounded/Thick/Double`, `AdaptiveColors` /
   `HasDarkBackground` for light/dark terminals.
@@ -359,14 +388,15 @@ Bubbles (`help/help.go`), opencode (`opencode.ai/docs/tui|keybinds|themes`).
   (`ShortHelp()`/`FullHelp()`), disabled bindings self-remove
   (https://github.com/charmbracelet/bubbles/blob/main/help/help.go).
 - Help styles keys/descriptions/separators separately with `DefaultStyles(isDark)`; **short help
-  is one line split by ` • ` and truncates with `…` instead of wrapping**; full help joins
+  is one line split by `•` and truncates with `…` instead of wrapping**; full help joins
   columns and skips empties; bubbles ship spinner/progress/viewport/table/paginator/list.
 
 ### opencode TUI
+
 - Transcript + input footer; status bar shows cwd, LSP count, MCP count, version; footer hints
   `[Agent | Model | Provider]` + `[Spinner|Esc] … [Tab] switch agent [Ctrl+P] commands` with
   `hints_visible` toggle; `tui.json` holds `theme/leader_timeout/keybinds/scroll_speed/diff_style/
-  cursor/mouse/attention`.
+cursor/mouse/attention`.
 - Slash commands in composer (`/help /models /sessions /themes /compact /undo /redo`), `@` file
   fuzzy-ref, `!` shell; **`ctrl+x` leader with 2000 ms timeout** for chords (`ctrl+x n` new,
   `ctrl+x m` models…); `ctrl+p` palette; `tab` cycles agents; user-overridable `keybinds`.
@@ -377,6 +407,7 @@ Bubbles (`help/help.go`), opencode (`opencode.ai/docs/tui|keybinds|themes`).
   optional mouse capture (disable restores native selection); `/undo`/`/redo` use git internally.
 
 ### The 10 concrete UI decisions for LifeOS
+
 1. **Three-tier border tokens.** Every panel gets `border`, `borderActive`, `borderSubtle`
    (opencode theme schema — https://opencode.ai/docs/themes/); focus is communicated by border
    color alone.
@@ -420,6 +451,7 @@ https://opencode.ai/docs/tui/ · https://opencode.ai/docs/keybinds/ · https://o
 ## (d) Best-practice notes
 
 ### d1. Kanban ordering — fractional indexing
+
 - Each row stores a `TEXT` order key; a move generates a key **between** the two neighbours, so a
   drag = one-row `UPDATE`, and `ORDER BY key` (byte order) reproduces display order
   ([fractional-indexing README](https://www.npmjs.com/package/fractional-indexing),
@@ -455,6 +487,7 @@ https://opencode.ai/docs/tui/ · https://opencode.ai/docs/keybinds/ · https://o
   [write-up](https://sonim1.com/en/blog/fractional-indexing/)).
 
 ### d2. Optimistic updates for DnD
+
 Canonical TanStack Query pattern ([Optimistic Updates guide](https://tanstack.com/query/latest/docs/framework/react/guides/optimistic-updates)):
 `onMutate` → `cancelQueries` → snapshot `getQueryData` → `setQueryData` optimistic → **return the
 snapshot** → `onError` rollback → `onSettled` `invalidateQueries`. Lighter alternative: if only
@@ -474,6 +507,7 @@ Alternative: [TanStack DB mutations](https://tanstack.com/db/latest/docs/guides/
 (pending→persisting→completed|failed, auto-rollback).
 
 ### d3. Drag-and-drop accessibility
+
 dnd-kit ([Accessibility guide](https://github.com/dnd-kit/docs/blob/master/guides/accessibility.md)):
 Keyboard sensor enabled **by default** alongside Pointer; `useDraggable` exposes
 `role`/`aria-roledescription`/`aria-describedby`; hidden off-screen **screen-reader instructions**
@@ -506,6 +540,7 @@ corroborated by react-beautiful-dnd's lifecycle announcements
 up/down buttons (satisfies 2.1.1 and 2.5.7).
 
 ### d4. CV / ATS parsing
+
 Vendor-documented failure modes (highest confidence) — Greenhouse
 [Unsuccessful resume parse](https://support.greenhouse.io/hc/en-us/articles/200989175-Unsuccessful-resume-parse):
 files **>2.5 MB**; graphics/photos/word art; image uploads instead of .docx/.pdf;
@@ -540,10 +575,12 @@ keywords[]), `languages[]`, `interests[]`, `references[]`, `projects[]`; JSON Re
 working on a Job Description schema (same page) — useful for the JD matcher.
 
 ### d5. Job-search funnel metrics
+
 Formulas (ours, no external source needed): `app→screen %`, `screen→interview %`,
 `interview→offer %`, `app→offer %` (product), `response rate by source`, `time-in-stage`
 (median per stage), `applications/week vs goal`, `ghosted` (no reply/state change after threshold T).
 Benchmarks with sources:
+
 - **SmartRecruiters “Recruiting Benchmarks 2026”** ([PDF](https://ta.smartrecruiters.com/rs/664-NIC-529/images/Recruiting-Benchmarks%202025-2026.pdf);
   12 months ATS data Sep 2023–Aug 2024, 89M applications, 1.5M jobs, 95 countries): **73
   applicants/role → 3 interviewed → 1 offer** ⇒ ⓓ app→interview ≈ **4.1%**, interview→offer ≈
@@ -580,6 +617,7 @@ Benchmarks with sources:
   2–5%” figures appear only in SEO aggregators — **low confidence/folklore**.
 
 ### d6. Natural-language date capture — chrono-node
+
 **v2.10.1**, MIT, ~1.95M weekly downloads, repo [wanasit/chrono](https://github.com/wanasit/chrono)
 (5.3k★) ([npm](https://www.npmjs.com/package/chrono-node)). API ([README](https://github.com/wanasit/chrono)):
 `chrono.parseDate(text, ref?, options?) → Date | null`, `chrono.parse(...) → ParsedResult[]`;
@@ -607,52 +645,52 @@ Versions fetched from the npm registry `dist-tags` on **2026-09-23**; docs URLs 
 day. Pin exact versions at install; re-verify then (a version drift between now and Phase N is
 expected — treat this as the snapshot, package.json as the truth).
 
-| # | Library | Version (registry latest 2026-09-23) | Docs URL | Key API we will use | Risk |
-| --- | --- | --- | --- | --- | --- |
-| 1 | next | **16.3.6** | https://nextjs.org/docs | App Router, Server Actions, **`proxy.ts` (Next 16 renamed middleware → proxy)** | Medium: recent major; confirm proxy + auth patterns against Next 16 docs at Phase 1 (Better Auth already documents Next 16: https://better-auth.com/docs/integrations/next) |
-| 2 | react / react-dom | 19.3.0 | https://react.dev | Server Components, `use`, Actions | Low |
-| 3 | typescript | **7.0.2** (native line) | https://www.typescriptlang.org/docs | strict mode project config | **High: brand-new major.** If eslint/test tooling breaks, fall back to the newest 5.x/6.x that Next 16 supports; record choice in DECISIONS |
-| 4 | tailwindcss | 4.3.3 | https://tailwindcss.com/docs | CSS-first `@theme`, tokens for 6 palettes | Low; v4 config differs from v3 (verify at Phase 1) |
-| 5 | shadcn (CLI) | 4.21.0 | https://ui.shadcn.com/docs | `shadcn add` primitives, re-skinned | Low |
-| 6 | drizzle-orm | **0.45.3** (`dist-tags.latest`) | https://orm.drizzle.team/docs/overview · Turso guide https://orm.drizzle.team/docs/connect-turso | `drizzle({ connection: { url, authToken } })`, `sqliteTable` | **Medium: docs now promote a 1.0 RC** (`npm i drizzle-orm@rc`, banner “Upgrade to v1.0 RC”). Pin stable 0.45.3 for MVP, revisit RC later → DECISIONS |
-| 7 | drizzle-kit | 0.31.11 | https://orm.drizzle.team/docs/drizzle-kit | `generate`/`migrate`/`push`/`studio` | Low |
-| 8 | @libsql/client | 0.18.0 | https://docs.turso.tech/sdk/ts/reference | `createClient({ url, authToken })` | Low |
-| 9 | better-auth | 1.7.5 | https://better-auth.com/docs | `betterAuth`, `toNextJsHandler`, `auth.api.getSession`, `getSessionCookie` (redirect-only, **not** security) | Low–Med: v1.7 docs are versioned (https://better-auth.com/docs/llms.txt) — follow the 1.7 index |
-| 10 | @better-auth/drizzle-adapter | 1.7.5 | https://better-auth.com/docs/adapters/drizzle | `drizzleAdapter(db, { provider: "sqlite" })` — **now a separate package** | Low: keep versions in lockstep with better-auth |
-| 11 | @tanstack/react-query | 5.103.2 | https://tanstack.com/query/latest/docs | `useMutation` optimistic pattern (d2), tag-based invalidation | Low |
-| 12 | @tanstack/react-table | 9.2.4 | https://tanstack.com/table/latest | column visibility/sort/filter/selection/pinning/grouping | Med: v9 is current; re-read table APIs at Phase 2 |
-| 13 | @tanstack/react-virtual | 3.14.13 | https://tanstack.com/virtual/latest | row virtualization for 500+ cards/tables | Low |
-| 14 | zustand | 5.0.15 | https://zustand.docs.pmnd.rs | theme/customizer/shortcut stores | Low |
-| 15 | nuqs | 2.10.1 | https://nuqs.dev | `?view=&filter=` URL state | Low |
-| 16 | react-hook-form + @hookform/resolvers | 7.88.0 / 5.9.1 | https://react-hook-form.com | `useForm`, zodResolver | Low |
-| 17 | zod | 4.6.5 | https://zod.dev | every boundary schema; OpenAPI source | Med: v4 major — check `zod-openapi` generator compat at Phase 5 |
-| 18 | @dnd-kit/core / sortable / utilities | 6.3.1 / 10.0.0 / 3.2.2 | https://dndkit.com | `DndContext`, KeyboardSensor, `accessibility.announcements` (d3) | Low–Med: keep `KeyboardSensor` when customizing sensors (d3) |
-| 19 | fractional-indexing | 4.0.0 | https://www.npmjs.com/package/fractional-indexing | `generateKeyBetween`/`generateNKeysBetween` (d1) | Low; heed `localeCompare` pitfall |
-| 20 | recharts | 3.10.1 | https://recharts.org | themed bar/line charts | Low; spec allows visx fallback |
-| 21 | react-big-calendar | 1.20.0 | https://github.com/jquense/react-big-calendar | month/week/day/agenda + drag reschedule | Med: styling to tokens; FullCalendar 7.1.0 is the fallback |
-| 22 | @upstash/redis | 1.39.0 | https://upstash.com/docs/redis/overall/getstarted | cache + idempotency store (24 h keys) | Low |
-| 23 | @upstash/ratelimit | 2.2.0 | https://upstash.com/docs/redis/sdks/ratelimit-ts/overview | `new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(n, "10 s") })` (also fixedWindow/tokenBucket — https://upstash.com/docs/redis/sdks/ratelimit-ts/algorithms) | Med: default **timeout fails open** — configure explicitly and document |
-| 24 | @upstash/qstash | 2.11.3 | https://upstash.com/docs/qstash/overall/getstarted | webhook retries/delays/cron fan-out | Low |
-| 25 | ai (AI SDK) | **7.0.112** (v7) | https://ai-sdk.dev/docs | `generateText/streamText`, `tool({ description, inputSchema: z, execute })`, **`toolApproval` two-call flow** (`tool-approval-request`/`-response`), `stopWhen: isStepCount(n)`, MCP tools `/docs/ai-sdk-core/mcp-tools` | Med: v7 renamed `needsApproval`→`toolApproval` (deprecated path still works) — follow v7 docs only |
-| 26 | @modelcontextprotocol/sdk | 1.30.0 | https://modelcontextprotocol.io | Streamable HTTP transport, tool `readOnlyHint`/`destructiveHint` | Med: spec date moves — pin spec **2026-07-28** + SDK, re-verify at Phase 5 build time |
-| 27 | @dodopayments/nextjs | 0.3.9 | https://docs.dodopayments.com/developer-resources/nextjs-adaptor | checkout route handler, portal route handler, webhook route handler; env `DODO_PAYMENTS_API_KEY/_WEBHOOK_KEY/_RETURN_URL/_ENVIRONMENT` | Med (0.x) + **critical external blocker — see (g)** |
-| 28 | resend | 6.28.1 | https://resend.com/docs | verification/reset/digest mail | Low; SMTP adapter fallback (spec §7 table) |
-| 29 | @react-pdf/renderer | 4.9.0 | https://react-pdf.org | ATS-safe PDF export | Med: must prove selectable-text/ATS round-trip vs Playwright HTML→PDF (spec §7 table: pick after testing Vercel limits) |
-| 30 | next-intl | 4.14.6 | https://next-intl.dev | `en` + scaffolded `bn` | Low |
-| 31 | lucide-react / sonner | 1.47.0 / 2.0.8 | https://lucide.dev · https://sonner.emilkowal.ski | icons; toasts with undo | Low |
-| 32 | ulid | 3.0.2 | https://github.com/ulid/spec | text IDs (spec allows ulid or cuid2; `@paralleldrive/cuid2` 3.3.0 checked as alternative) | Low; choose one → DECISIONS |
-| 33 | @jsonresume/schema | 1.3.1 | https://jsonresume.org/schema | CV data shape validation | Low |
-| 34 | pino (+pino-pretty) | 10.3.1 / 13.1.3 | https://github.com/pinojs/pino | structured logs | Low |
-| 35 | vitest / @vitest/coverage | 5.0.1 | https://vitest.dev | unit + ≥80% services coverage | Med: v5 major — check config migration at Phase 1 |
-| 36 | @playwright/test | 1.63.0 | https://playwright.dev | e2e + axe runs + PDF experiments | Low |
-| 37 | @axe-core/playwright / axe-core | 4.13.0 | https://github.com/dequelabs/axe-core | WCAG 2.2 AA gate every route × theme | Low |
-| 38 | msw | 2.15.0 | https://mswjs.io | API/MCP integration mocking | Low |
-| 39 | eslint / eslint-config-next / prettier / eslint-config-prettier | 10.11.0 / 16.3.6 / 3.9.9 / 10.1.8 | https://eslint.org · https://nextjs.org/docs/app/api-reference/config/eslint | lint + format gate | Med: eslint 10 major — validate with next config at Phase 1 |
-| 40 | husky / lint-staged / @commitlint/cli | 9.1.7 / 17.5.1 / 21.2.3 | https://github.com/typicode/husky · https://github.com/lint-staged/lint-staged · https://commitlint.js.org | pre-commit format/lint, commit-msg conventional check | Low |
-| 41 | @testing-library/react / jest-dom / @total-typescript/shoehorn | 16.3.3 / 7.0.1 / 0.1.2 | https://testing-library.com · https://www.totaltypescript.com | component tests; `shoehorn` for partial fixtures | Low |
-| 42 | clsx / tailwind-merge / class-variance-authority | 2.1.1 / 3.7.0 / 0.7.1 | https://github.com/lukeed/clsx · https://github.com/dcastil/tailwind-merge · https://cva.style | `cn()` helper, variant styling | Low |
-| 43 | rrule | 2.8.1 | https://rrule.js.org | recurring tasks (`RRULE` column) | Low; chrono has no recurrence (d6) |
-| 44 | @types/node / @types/react / @types/react-dom | 26.6.2 / 19.3.0 / 19.3.0 | — | strict TS support | Low |
+| #   | Library                                                         | Version (registry latest 2026-09-23) | Docs URL                                                                                                   | Key API we will use                                                                                                                                                                                                      | Risk                                                                                                                                                                        |
+| --- | --------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | next                                                            | **16.3.6**                           | https://nextjs.org/docs                                                                                    | App Router, Server Actions, **`proxy.ts` (Next 16 renamed middleware → proxy)**                                                                                                                                          | Medium: recent major; confirm proxy + auth patterns against Next 16 docs at Phase 1 (Better Auth already documents Next 16: https://better-auth.com/docs/integrations/next) |
+| 2   | react / react-dom                                               | 19.3.0                               | https://react.dev                                                                                          | Server Components, `use`, Actions                                                                                                                                                                                        | Low                                                                                                                                                                         |
+| 3   | typescript                                                      | **7.0.2** (native line)              | https://www.typescriptlang.org/docs                                                                        | strict mode project config                                                                                                                                                                                               | **High: brand-new major.** If eslint/test tooling breaks, fall back to the newest 5.x/6.x that Next 16 supports; record choice in DECISIONS                                 |
+| 4   | tailwindcss                                                     | 4.3.3                                | https://tailwindcss.com/docs                                                                               | CSS-first `@theme`, tokens for 6 palettes                                                                                                                                                                                | Low; v4 config differs from v3 (verify at Phase 1)                                                                                                                          |
+| 5   | shadcn (CLI)                                                    | 4.21.0                               | https://ui.shadcn.com/docs                                                                                 | `shadcn add` primitives, re-skinned                                                                                                                                                                                      | Low                                                                                                                                                                         |
+| 6   | drizzle-orm                                                     | **0.45.3** (`dist-tags.latest`)      | https://orm.drizzle.team/docs/overview · Turso guide https://orm.drizzle.team/docs/connect-turso           | `drizzle({ connection: { url, authToken } })`, `sqliteTable`                                                                                                                                                             | **Medium: docs now promote a 1.0 RC** (`npm i drizzle-orm@rc`, banner “Upgrade to v1.0 RC”). Pin stable 0.45.3 for MVP, revisit RC later → DECISIONS                        |
+| 7   | drizzle-kit                                                     | 0.31.11                              | https://orm.drizzle.team/docs/drizzle-kit                                                                  | `generate`/`migrate`/`push`/`studio`                                                                                                                                                                                     | Low                                                                                                                                                                         |
+| 8   | @libsql/client                                                  | 0.18.0                               | https://docs.turso.tech/sdk/ts/reference                                                                   | `createClient({ url, authToken })`                                                                                                                                                                                       | Low                                                                                                                                                                         |
+| 9   | better-auth                                                     | 1.7.5                                | https://better-auth.com/docs                                                                               | `betterAuth`, `toNextJsHandler`, `auth.api.getSession`, `getSessionCookie` (redirect-only, **not** security)                                                                                                             | Low–Med: v1.7 docs are versioned (https://better-auth.com/docs/llms.txt) — follow the 1.7 index                                                                             |
+| 10  | @better-auth/drizzle-adapter                                    | 1.7.5                                | https://better-auth.com/docs/adapters/drizzle                                                              | `drizzleAdapter(db, { provider: "sqlite" })` — **now a separate package**                                                                                                                                                | Low: keep versions in lockstep with better-auth                                                                                                                             |
+| 11  | @tanstack/react-query                                           | 5.103.2                              | https://tanstack.com/query/latest/docs                                                                     | `useMutation` optimistic pattern (d2), tag-based invalidation                                                                                                                                                            | Low                                                                                                                                                                         |
+| 12  | @tanstack/react-table                                           | 9.2.4                                | https://tanstack.com/table/latest                                                                          | column visibility/sort/filter/selection/pinning/grouping                                                                                                                                                                 | Med: v9 is current; re-read table APIs at Phase 2                                                                                                                           |
+| 13  | @tanstack/react-virtual                                         | 3.14.13                              | https://tanstack.com/virtual/latest                                                                        | row virtualization for 500+ cards/tables                                                                                                                                                                                 | Low                                                                                                                                                                         |
+| 14  | zustand                                                         | 5.0.15                               | https://zustand.docs.pmnd.rs                                                                               | theme/customizer/shortcut stores                                                                                                                                                                                         | Low                                                                                                                                                                         |
+| 15  | nuqs                                                            | 2.10.1                               | https://nuqs.dev                                                                                           | `?view=&filter=` URL state                                                                                                                                                                                               | Low                                                                                                                                                                         |
+| 16  | react-hook-form + @hookform/resolvers                           | 7.88.0 / 5.9.1                       | https://react-hook-form.com                                                                                | `useForm`, zodResolver                                                                                                                                                                                                   | Low                                                                                                                                                                         |
+| 17  | zod                                                             | 4.6.5                                | https://zod.dev                                                                                            | every boundary schema; OpenAPI source                                                                                                                                                                                    | Med: v4 major — check `zod-openapi` generator compat at Phase 5                                                                                                             |
+| 18  | @dnd-kit/core / sortable / utilities                            | 6.3.1 / 10.0.0 / 3.2.2               | https://dndkit.com                                                                                         | `DndContext`, KeyboardSensor, `accessibility.announcements` (d3)                                                                                                                                                         | Low–Med: keep `KeyboardSensor` when customizing sensors (d3)                                                                                                                |
+| 19  | fractional-indexing                                             | 4.0.0                                | https://www.npmjs.com/package/fractional-indexing                                                          | `generateKeyBetween`/`generateNKeysBetween` (d1)                                                                                                                                                                         | Low; heed `localeCompare` pitfall                                                                                                                                           |
+| 20  | recharts                                                        | 3.10.1                               | https://recharts.org                                                                                       | themed bar/line charts                                                                                                                                                                                                   | Low; spec allows visx fallback                                                                                                                                              |
+| 21  | react-big-calendar                                              | 1.20.0                               | https://github.com/jquense/react-big-calendar                                                              | month/week/day/agenda + drag reschedule                                                                                                                                                                                  | Med: styling to tokens; FullCalendar 7.1.0 is the fallback                                                                                                                  |
+| 22  | @upstash/redis                                                  | 1.39.0                               | https://upstash.com/docs/redis/overall/getstarted                                                          | cache + idempotency store (24 h keys)                                                                                                                                                                                    | Low                                                                                                                                                                         |
+| 23  | @upstash/ratelimit                                              | 2.2.0                                | https://upstash.com/docs/redis/sdks/ratelimit-ts/overview                                                  | `new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(n, "10 s") })` (also fixedWindow/tokenBucket — https://upstash.com/docs/redis/sdks/ratelimit-ts/algorithms)                                                     | Med: default **timeout fails open** — configure explicitly and document                                                                                                     |
+| 24  | @upstash/qstash                                                 | 2.11.3                               | https://upstash.com/docs/qstash/overall/getstarted                                                         | webhook retries/delays/cron fan-out                                                                                                                                                                                      | Low                                                                                                                                                                         |
+| 25  | ai (AI SDK)                                                     | **7.0.112** (v7)                     | https://ai-sdk.dev/docs                                                                                    | `generateText/streamText`, `tool({ description, inputSchema: z, execute })`, **`toolApproval` two-call flow** (`tool-approval-request`/`-response`), `stopWhen: isStepCount(n)`, MCP tools `/docs/ai-sdk-core/mcp-tools` | Med: v7 renamed `needsApproval`→`toolApproval` (deprecated path still works) — follow v7 docs only                                                                          |
+| 26  | @modelcontextprotocol/sdk                                       | 1.30.0                               | https://modelcontextprotocol.io                                                                            | Streamable HTTP transport, tool `readOnlyHint`/`destructiveHint`                                                                                                                                                         | Med: spec date moves — pin spec **2026-07-28** + SDK, re-verify at Phase 5 build time                                                                                       |
+| 27  | @dodopayments/nextjs                                            | 0.3.9                                | https://docs.dodopayments.com/developer-resources/nextjs-adaptor                                           | checkout route handler, portal route handler, webhook route handler; env `DODO_PAYMENTS_API_KEY/_WEBHOOK_KEY/_RETURN_URL/_ENVIRONMENT`                                                                                   | Med (0.x) + **critical external blocker — see (g)**                                                                                                                         |
+| 28  | resend                                                          | 6.28.1                               | https://resend.com/docs                                                                                    | verification/reset/digest mail                                                                                                                                                                                           | Low; SMTP adapter fallback (spec §7 table)                                                                                                                                  |
+| 29  | @react-pdf/renderer                                             | 4.9.0                                | https://react-pdf.org                                                                                      | ATS-safe PDF export                                                                                                                                                                                                      | Med: must prove selectable-text/ATS round-trip vs Playwright HTML→PDF (spec §7 table: pick after testing Vercel limits)                                                     |
+| 30  | next-intl                                                       | 4.14.6                               | https://next-intl.dev                                                                                      | `en` + scaffolded `bn`                                                                                                                                                                                                   | Low                                                                                                                                                                         |
+| 31  | lucide-react / sonner                                           | 1.47.0 / 2.0.8                       | https://lucide.dev · https://sonner.emilkowal.ski                                                          | icons; toasts with undo                                                                                                                                                                                                  | Low                                                                                                                                                                         |
+| 32  | ulid                                                            | 3.0.2                                | https://github.com/ulid/spec                                                                               | text IDs (spec allows ulid or cuid2; `@paralleldrive/cuid2` 3.3.0 checked as alternative)                                                                                                                                | Low; choose one → DECISIONS                                                                                                                                                 |
+| 33  | @jsonresume/schema                                              | 1.3.1                                | https://jsonresume.org/schema                                                                              | CV data shape validation                                                                                                                                                                                                 | Low                                                                                                                                                                         |
+| 34  | pino (+pino-pretty)                                             | 10.3.1 / 13.1.3                      | https://github.com/pinojs/pino                                                                             | structured logs                                                                                                                                                                                                          | Low                                                                                                                                                                         |
+| 35  | vitest / @vitest/coverage                                       | 5.0.1                                | https://vitest.dev                                                                                         | unit + ≥80% services coverage                                                                                                                                                                                            | Med: v5 major — check config migration at Phase 1                                                                                                                           |
+| 36  | @playwright/test                                                | 1.63.0                               | https://playwright.dev                                                                                     | e2e + axe runs + PDF experiments                                                                                                                                                                                         | Low                                                                                                                                                                         |
+| 37  | @axe-core/playwright / axe-core                                 | 4.13.0                               | https://github.com/dequelabs/axe-core                                                                      | WCAG 2.2 AA gate every route × theme                                                                                                                                                                                     | Low                                                                                                                                                                         |
+| 38  | msw                                                             | 2.15.0                               | https://mswjs.io                                                                                           | API/MCP integration mocking                                                                                                                                                                                              | Low                                                                                                                                                                         |
+| 39  | eslint / eslint-config-next / prettier / eslint-config-prettier | 10.11.0 / 16.3.6 / 3.9.9 / 10.1.8    | https://eslint.org · https://nextjs.org/docs/app/api-reference/config/eslint                               | lint + format gate                                                                                                                                                                                                       | Med: eslint 10 major — validate with next config at Phase 1                                                                                                                 |
+| 40  | husky / lint-staged / @commitlint/cli                           | 9.1.7 / 17.5.1 / 21.2.3              | https://github.com/typicode/husky · https://github.com/lint-staged/lint-staged · https://commitlint.js.org | pre-commit format/lint, commit-msg conventional check                                                                                                                                                                    | Low                                                                                                                                                                         |
+| 41  | @testing-library/react / jest-dom / @total-typescript/shoehorn  | 16.3.3 / 7.0.1 / 0.1.2               | https://testing-library.com · https://www.totaltypescript.com                                              | component tests; `shoehorn` for partial fixtures                                                                                                                                                                         | Low                                                                                                                                                                         |
+| 42  | clsx / tailwind-merge / class-variance-authority                | 2.1.1 / 3.7.0 / 0.7.1                | https://github.com/lukeed/clsx · https://github.com/dcastil/tailwind-merge · https://cva.style             | `cn()` helper, variant styling                                                                                                                                                                                           | Low                                                                                                                                                                         |
+| 43  | rrule                                                           | 2.8.1                                | https://rrule.js.org                                                                                       | recurring tasks (`RRULE` column)                                                                                                                                                                                         | Low; chrono has no recurrence (d6)                                                                                                                                          |
+| 44  | @types/node / @types/react / @types/react-dom                   | 26.6.2 / 19.3.0 / 19.3.0             | —                                                                                                          | strict TS support                                                                                                                                                                                                        | Low                                                                                                                                                                         |
 
 ---
 
@@ -666,34 +704,34 @@ expected — treat this as the snapshot, package.json as the truth).
 
 ### Re-verified facts vs. the spec's snapshot (§12 said “re-verify”)
 
-| Claim in prompt.md | Verified 2026-09-23 | Verdict |
-| --- | --- | --- |
-| ~84 public repositories | **93** (`public_repos: 93`; 76 non-fork, 660 stars non-fork, 104 followers, `hireable: true`, `company: "@TheOpenCodeHub"`) | Updated |
-| Headline “MLOps & Data Engineer \| Python · Spark · Kubernetes \| Pipeline Automation \| Open to EU Relocation” | matches `bio` verbatim | Confirmed |
-| X `@swadh1n` | `twitter_username: "swadh1n"`; profile README + swadhin.cv both link **`x.com/swadhin_sh`** | **Conflict** — README/site say `swadhin_sh`; use README/site for public links, keep API value in raw data |
-| LinkedIn `in/swadh1n` | swadhin.cv links **`linkedin.com/in/swadhinbiswas`** | **Conflict** — prefer site |
-| Orgs: Roast-Lang, nanoLMs, StreamBerryLabs | **nanoLMs, StreamBerryLabs, AetherRavyn** (Roast-Lang absent) | Updated |
-| Pinned: opengrammar, FAANG-Playbook, OpencodeHub | all three present | Confirmed |
-| fetchx (Rust) and “ls-f” (Rust) | `fetchx` present; repo is named **`lsf`** (description “ls-f is a Linux terminal ls…”) | Name correction |
-| Sites swadhin.cv + swadhin.my.id, ORCID, Hugging Face | `blog: https://swadhin.cv` confirmed; others not present in the API payload fetched (unverified this run) | Partial |
-| User email private | `user.email: null` — nothing to leak; profile README links `swadhinbiswas.dev@gmail.com` | Email **excluded from seed** per §12 |
+| Claim in prompt.md                                                                                              | Verified 2026-09-23                                                                                                         | Verdict                                                                                                   |
+| --------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| ~84 public repositories                                                                                         | **93** (`public_repos: 93`; 76 non-fork, 660 stars non-fork, 104 followers, `hireable: true`, `company: "@TheOpenCodeHub"`) | Updated                                                                                                   |
+| Headline “MLOps & Data Engineer \| Python · Spark · Kubernetes \| Pipeline Automation \| Open to EU Relocation” | matches `bio` verbatim                                                                                                      | Confirmed                                                                                                 |
+| X `@swadh1n`                                                                                                    | `twitter_username: "swadh1n"`; profile README + swadhin.cv both link **`x.com/swadhin_sh`**                                 | **Conflict** — README/site say `swadhin_sh`; use README/site for public links, keep API value in raw data |
+| LinkedIn `in/swadh1n`                                                                                           | swadhin.cv links **`linkedin.com/in/swadhinbiswas`**                                                                        | **Conflict** — prefer site                                                                                |
+| Orgs: Roast-Lang, nanoLMs, StreamBerryLabs                                                                      | **nanoLMs, StreamBerryLabs, AetherRavyn** (Roast-Lang absent)                                                               | Updated                                                                                                   |
+| Pinned: opengrammar, FAANG-Playbook, OpencodeHub                                                                | all three present                                                                                                           | Confirmed                                                                                                 |
+| fetchx (Rust) and “ls-f” (Rust)                                                                                 | `fetchx` present; repo is named **`lsf`** (description “ls-f is a Linux terminal ls…”)                                      | Name correction                                                                                           |
+| Sites swadhin.cv + swadhin.my.id, ORCID, Hugging Face                                                           | `blog: https://swadhin.cv` confirmed; others not present in the API payload fetched (unverified this run)                   | Partial                                                                                                   |
+| User email private                                                                                              | `user.email: null` — nothing to leak; profile README links `swadhinbiswas.dev@gmail.com`                                    | Email **excluded from seed** per §12                                                                      |
 
 ### Top public repos (non-fork, by stars; from the raw JSON)
 
-| Repo | ★ | Language | Pushed | Description (verbatim) |
-| --- | --- | --- | --- | --- |
-| veet | 151 | Go | 2026-08-19 | Universal Linux Application Uninstaller & Deep-Clean Residual Purger (topics: appimage, bubbletea, cli, debian, disk-spa…) |
-| opengrammar | 124 | TypeScript | 2026-09-21 | A Opensource and self hosted alternative of Grammarly |
-| Mervelas | 51 | TypeScript | 2026-04-03 | An independent, high-performance AI coding CLI built with Bun and driven by free resources |
-| FAANG-Playbook | 40 | Astro | 2026-08-31 | Complete guide to landing tech jobs at FAANG & 200+ companies with 1,400+ LeetCode problems |
-| swadhinbiswas | 27 | Astro | 2026-09-23 | README repository |
-| AIBOT | 25 | HTML | 2025-07-12 | Telegram chatbot |
-| OpencodeHub | 16 | TypeScript | 2026-08-28 | self-hosted Git platform (SSH, Actions-compatible pipelines, AI reviews); homepage docs.opencodehub.space |
-| linuxy | 16 | HTML | 2026-09-23 | One click AppImage Runner |
-| lsf | 15 | Rust | 2026-08-22 | terminal ls with file-type icons |
-| de-omarchy | 14 | QML | 2026-08-27 | Beautiful, Modern & Opinionated Linux for non omarchy Users |
-| ChanDeskPro | 14 | TypeScript | 2026-01-17 | privacy-focused 4chan desktop client |
-| TheProfessor | 13 | Python | 2024-02-10 | Agentic AI system against CopyCats |
+| Repo           | ★   | Language   | Pushed     | Description (verbatim)                                                                                                     |
+| -------------- | --- | ---------- | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
+| veet           | 151 | Go         | 2026-08-19 | Universal Linux Application Uninstaller & Deep-Clean Residual Purger (topics: appimage, bubbletea, cli, debian, disk-spa…) |
+| opengrammar    | 124 | TypeScript | 2026-09-21 | A Opensource and self hosted alternative of Grammarly                                                                      |
+| Mervelas       | 51  | TypeScript | 2026-04-03 | An independent, high-performance AI coding CLI built with Bun and driven by free resources                                 |
+| FAANG-Playbook | 40  | Astro      | 2026-08-31 | Complete guide to landing tech jobs at FAANG & 200+ companies with 1,400+ LeetCode problems                                |
+| swadhinbiswas  | 27  | Astro      | 2026-09-23 | README repository                                                                                                          |
+| AIBOT          | 25  | HTML       | 2025-07-12 | Telegram chatbot                                                                                                           |
+| OpencodeHub    | 16  | TypeScript | 2026-08-28 | self-hosted Git platform (SSH, Actions-compatible pipelines, AI reviews); homepage docs.opencodehub.space                  |
+| linuxy         | 16  | HTML       | 2026-09-23 | One click AppImage Runner                                                                                                  |
+| lsf            | 15  | Rust       | 2026-08-22 | terminal ls with file-type icons                                                                                           |
+| de-omarchy     | 14  | QML        | 2026-08-27 | Beautiful, Modern & Opinionated Linux for non omarchy Users                                                                |
+| ChanDeskPro    | 14  | TypeScript | 2026-01-17 | privacy-focused 4chan desktop client                                                                                       |
+| TheProfessor   | 13  | Python     | 2024-02-10 | Agentic AI system against CopyCats                                                                                         |
 
 Corpus stats: languages Python 24 · TypeScript 13 · (none) 7 · HTML 6 · Astro 4 · Go 4 · Rust 4 ·
 C 3 · QML 2 · Shell 2; 25 repos have topics; **43 repos pushed in 2026**; homepages include
@@ -731,6 +769,7 @@ work history, education. **Excluded:** any email address; anything not publicly 
 “add yours” until then). All fictional pipeline companies remain tagged `sample`.
 
 ### Seed content plan (derived, no inventions)
+
 JSON Resume `basics` (name “Swadhin Biswas”, label from README roles, location Dhaka BD, profile
 links above) · `projects[]` from the top-repo table (verbatim descriptions + languages) ·
 `skills[]` grouped by the README stack and repo language/topic distribution (Python, Go, Rust,
@@ -748,6 +787,7 @@ one-click removable (§12).
 ## (g) Vendor & spec findings
 
 ### g1. Dodo Payments (docs.dodopayments.com — index `llms.txt` fetched 2026-09-23)
+
 - **Model:** all-in-one merchant of record for SaaS/AI/digital products — payments, billing,
   distribution; one-time, subscription, credit/usage-based billing
   (https://docs.dodopayments.com/introduction).
@@ -779,7 +819,7 @@ one-click removable (§12).
   company registration; the accepted list (177 countries/territories) **does not include
   Bangladesh** for new merchants; Bangladesh appears only in the **grandfather clause**
   (“Merchants who were receiving services in a country before it was added to the prohibited list
- … unless subject to active sanctions… **Bangladesh**, Egypt, Equatorial Guinea, Eritrea, … are
+  … unless subject to active sanctions… **Bangladesh**, Egypt, Equatorial Guinea, Eritrea, … are
   grandfathered”), and “merchants domiciled in any other country on the prohibited list … are **not
   eligible to onboard or continue transacting**.” Payouts only in listed countries. Their own
   advice: contact `support@dodopayments.com` **before** integrating.
@@ -793,6 +833,7 @@ one-click removable (§12).
   we add a webhook replay script (§11).
 
 ### g2. Turso (docs.turso.tech — index fetched 2026-09-23)
+
 - Product lines: **Turso Cloud** (managed libSQL, branching, analytics, backups),
   Turso Database (embedded engine), AgentFS, Sync (https://docs.turso.tech/introduction).
   LifeOS uses **Turso Cloud** (spec §13: PITR/branching documented).
@@ -820,6 +861,7 @@ one-click removable (§12).
   (https://docs.turso.tech/features/embedded-replicas/introduction), CDC, concurrent-writes docs.
 
 ### g3. Upstash (upstash.com/llms.txt + docs fetched 2026-09-23)
+
 - Positioning: serverless, pay-per-use, no idle costs; products Redis, Vector, Search, QStash,
   Workflow, Box, Blob (https://upstash.com/llms.txt). LifeOS uses **Redis + Ratelimit + QStash**
   (Workflow is available for the scheduled briefs if Cron proves insufficient).
@@ -843,6 +885,7 @@ one-click removable (§12).
   build.
 
 ### g4. MCP specification (modelcontextprotocol.io fetched 2026-09-23)
+
 - **Current spec = 2026-07-28** (`/specification/latest` resolves there; schema
   `schema/2026-07-28/schema.ts`); versioned docs also exist for 2025-11-25, 2025-06-18,
   2025-03-26 — pin our implementation + docs links to **2026-07-28** and re-verify at Phase 5.
@@ -860,37 +903,37 @@ one-click removable (§12).
 - SDK: `@modelcontextprotocol/sdk` **1.30.0** (registry, 2026-09-23). We expose
   `/api/mcp` (Streamable HTTP), tools with `readOnlyHint`/`destructiveHint`, resources
   `lifeos://…`, prompts `plan_my_day` etc. (§9.2), token-efficient responses, same service layer
-  + rate limits + audit (`actor = mcp:<client>`).
+  - rate limits + audit (`actor = mcp:<client>`).
 
 ---
 
 ## Open risks and mitigations
 
-| # | Risk | Sev | Mitigation |
-| --- | --- | --- | --- |
-| R1 | **Dodo unavailable to a Bangladesh-domiciled operator** (new accounts not eligible; only grandfathered) — blocks paid launch | High | Everything ships behind `BILLING_ENABLED=false` (§11) so no user-facing impact; Phase 7 builds plumbing + test-mode flow; before go-live: (a) email Dodo support citing the grandfather clause, (b) evaluate alternate MoR (Polar/Lemon Squeezy-class) or entity in supported country; decision recorded in DECISIONS.md; public /pricing stays “Free” |
-| R2 | TypeScript **7.0.2** brand-new major may break eslint/test/Next tooling | High | Pin at Phase 1; run full gate immediately; fallback = newest supported 5.x/6.x; ADR before scaffolding |
-| R3 | Drizzle stable (0.45.3) vs promoted **1.0 RC** divergence | Med | Pin stable for MVP; no RC APIs in our code; scheduled re-evaluation ADR after Phase 4 |
-| R4 | TanStack Table **v9** / React Big Calendar API drift from remembered usage | Med | Re-read official docs at Phase 2 start (table + calendar spikes), not from memory |
-| R5 | MCP **spec drift** (2026-07-28 today; SDK features may lag/lead) | Med | Pin spec date + SDK 1.30.0; re-verify transports/auth at Phase 5 build time; Inspector in CI |
-| R6 | AI SDK v7 approval flow (`toolApproval` two-call) semantics subtle (deprecated `needsApproval`, provider-executed tools bypass approvals) | Med | Follow v7 docs only; destructive tools never auto-approve (§8); fixture evals + malicious-JD injection tests |
-| R7 | chrono-node **timezone weakness** (issue #590) mis-parses capture | Med | Inline parse preview + click-to-correct (Todoist pattern, (b)#4), `isCertain` highlighting, store UTC / render user tz, manual override always possible |
-| R8 | Fractional key duplication under concurrent inserts (read→compute→write not atomic) | Med | `UNIQUE(board_id, column_id, position)` + retry with fresh neighbours; rebalance job at ≥128 chars (Atlassian thresholds) |
-| R9 | Kanban/table performance at 500+ rows | Med | Fractional keys + TanStack Virtual + optimistic single-row updates; perf benchmark is a Phase 2 acceptance item |
-| R10 | PDF export not ATS-parseable (selectable text/fonts) | Med | Early Phase 3 spike comparing @react-pdf/renderer vs Playwright HTML→PDF on Vercel limits; round-trip parse-fidelity test (d4) as the gate |
-| R11 | “ATS score” claims could mislead users | Low | Ship parse-fidelity + layout-risk checklist + JD keyword coverage, all labelled honestly (d4); never a magic 0–100 “ATS score” |
-| R12 | axe AA failures across 6 themes × all routes | Med | axe in Playwright per route per theme from Phase 1 (spec §13); keyboard-only walkthrough documented |
-| R13 | Upstash ratelimit **fail-open timeout** default weakens abuse controls | Med | Configure timeout/analytics explicitly; document behavior in docs/SECURITY; auth endpoints additionally use Better Auth rate limits (https://better-auth.com/docs/concepts/rate-limit) |
-| R14 | Seed research staleness / GitHub API rate limits (unauthenticated 60 req/h) | Low | Raw JSON cached with `fetched_at`; seed reads the file, not live API; refresh is a manual command |
-| R15 | Seed facts drift from prompt.md's snapshot (84 repos, Roast-Lang, `ls-f`, X handle conflict) | Low | Fetched data wins; discrepancies table in (f); conflicts (X/LinkedIn) resolved toward the profile README/site at seed time |
-| R16 | NexaCRM **commercial license** — copying source would infringe | High | Measurements + ideas only (this doc); all LifeOS code original; no NexaCRM source in repo; license URL cited in DECISIONS |
-| R17 | Email/PDF/webhook external services with real keys | Med | `.env.example` only, secrets never committed, test-mode fixtures, signature verification tests (Dodo HMAC, webhook HMAC-SHA256) |
-| R18 | `@dodopayments/nextjs` 0.x churn | Med | Adapter is thin — keep business logic in our service layer so an SDK swap costs one file |
-| R19 | Prompt-injection via user data / pasted JDs reaching AI tools | High | §8 model: delimiters, untrusted-content framing, approval step before any write, malicious-JD fixtures in evals |
-| R20 | Tenant isolation bugs across 6 surfaces (UI/REST/MCP/AI/webhooks/export) | High | Two-user isolation test suite as a named deliverable (§10), runs in CI from Phase 5 |
+| #   | Risk                                                                                                                                      | Sev  | Mitigation                                                                                                                                                                                                                                                                                                                                             |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R1  | **Dodo unavailable to a Bangladesh-domiciled operator** (new accounts not eligible; only grandfathered) — blocks paid launch              | High | Everything ships behind `BILLING_ENABLED=false` (§11) so no user-facing impact; Phase 7 builds plumbing + test-mode flow; before go-live: (a) email Dodo support citing the grandfather clause, (b) evaluate alternate MoR (Polar/Lemon Squeezy-class) or entity in supported country; decision recorded in DECISIONS.md; public /pricing stays “Free” |
+| R2  | TypeScript **7.0.2** brand-new major may break eslint/test/Next tooling                                                                   | High | Pin at Phase 1; run full gate immediately; fallback = newest supported 5.x/6.x; ADR before scaffolding                                                                                                                                                                                                                                                 |
+| R3  | Drizzle stable (0.45.3) vs promoted **1.0 RC** divergence                                                                                 | Med  | Pin stable for MVP; no RC APIs in our code; scheduled re-evaluation ADR after Phase 4                                                                                                                                                                                                                                                                  |
+| R4  | TanStack Table **v9** / React Big Calendar API drift from remembered usage                                                                | Med  | Re-read official docs at Phase 2 start (table + calendar spikes), not from memory                                                                                                                                                                                                                                                                      |
+| R5  | MCP **spec drift** (2026-07-28 today; SDK features may lag/lead)                                                                          | Med  | Pin spec date + SDK 1.30.0; re-verify transports/auth at Phase 5 build time; Inspector in CI                                                                                                                                                                                                                                                           |
+| R6  | AI SDK v7 approval flow (`toolApproval` two-call) semantics subtle (deprecated `needsApproval`, provider-executed tools bypass approvals) | Med  | Follow v7 docs only; destructive tools never auto-approve (§8); fixture evals + malicious-JD injection tests                                                                                                                                                                                                                                           |
+| R7  | chrono-node **timezone weakness** (issue #590) mis-parses capture                                                                         | Med  | Inline parse preview + click-to-correct (Todoist pattern, (b)#4), `isCertain` highlighting, store UTC / render user tz, manual override always possible                                                                                                                                                                                                |
+| R8  | Fractional key duplication under concurrent inserts (read→compute→write not atomic)                                                       | Med  | `UNIQUE(board_id, column_id, position)` + retry with fresh neighbours; rebalance job at ≥128 chars (Atlassian thresholds)                                                                                                                                                                                                                              |
+| R9  | Kanban/table performance at 500+ rows                                                                                                     | Med  | Fractional keys + TanStack Virtual + optimistic single-row updates; perf benchmark is a Phase 2 acceptance item                                                                                                                                                                                                                                        |
+| R10 | PDF export not ATS-parseable (selectable text/fonts)                                                                                      | Med  | Early Phase 3 spike comparing @react-pdf/renderer vs Playwright HTML→PDF on Vercel limits; round-trip parse-fidelity test (d4) as the gate                                                                                                                                                                                                             |
+| R11 | “ATS score” claims could mislead users                                                                                                    | Low  | Ship parse-fidelity + layout-risk checklist + JD keyword coverage, all labelled honestly (d4); never a magic 0–100 “ATS score”                                                                                                                                                                                                                         |
+| R12 | axe AA failures across 6 themes × all routes                                                                                              | Med  | axe in Playwright per route per theme from Phase 1 (spec §13); keyboard-only walkthrough documented                                                                                                                                                                                                                                                    |
+| R13 | Upstash ratelimit **fail-open timeout** default weakens abuse controls                                                                    | Med  | Configure timeout/analytics explicitly; document behavior in docs/SECURITY; auth endpoints additionally use Better Auth rate limits (https://better-auth.com/docs/concepts/rate-limit)                                                                                                                                                                 |
+| R14 | Seed research staleness / GitHub API rate limits (unauthenticated 60 req/h)                                                               | Low  | Raw JSON cached with `fetched_at`; seed reads the file, not live API; refresh is a manual command                                                                                                                                                                                                                                                      |
+| R15 | Seed facts drift from prompt.md's snapshot (84 repos, Roast-Lang, `ls-f`, X handle conflict)                                              | Low  | Fetched data wins; discrepancies table in (f); conflicts (X/LinkedIn) resolved toward the profile README/site at seed time                                                                                                                                                                                                                             |
+| R16 | NexaCRM **commercial license** — copying source would infringe                                                                            | High | Measurements + ideas only (this doc); all LifeOS code original; no NexaCRM source in repo; license URL cited in DECISIONS                                                                                                                                                                                                                              |
+| R17 | Email/PDF/webhook external services with real keys                                                                                        | Med  | `.env.example` only, secrets never committed, test-mode fixtures, signature verification tests (Dodo HMAC, webhook HMAC-SHA256)                                                                                                                                                                                                                        |
+| R18 | `@dodopayments/nextjs` 0.x churn                                                                                                          | Med  | Adapter is thin — keep business logic in our service layer so an SDK swap costs one file                                                                                                                                                                                                                                                               |
+| R19 | Prompt-injection via user data / pasted JDs reaching AI tools                                                                             | High | §8 model: delimiters, untrusted-content framing, approval step before any write, malicious-JD fixtures in evals                                                                                                                                                                                                                                        |
+| R20 | Tenant isolation bugs across 6 surfaces (UI/REST/MCP/AI/webhooks/export)                                                                  | High | Two-user isolation test suite as a named deliverable (§10), runs in CI from Phase 5                                                                                                                                                                                                                                                                    |
 
 ---
 
-*Phase 0 acceptance checklist:* docs exist (`RESEARCH.md` §a–g, `ERD.md`, `DECISIONS.md`,
+_Phase 0 acceptance checklist:_ docs exist (`RESEARCH.md` §a–g, `ERD.md`, `DECISIONS.md`,
 `MVP-SCOPE.md`, raw seed JSON) · claims cite a URL or a measurement (unverified items labelled) ·
 open risks + mitigations listed above.

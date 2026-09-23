@@ -16,16 +16,16 @@ career/CV, habits, notes, finance) rendered as a keyboard-first, TUI-skinned web
 
 ## Repository map
 
-| Path | Purpose |
-| --- | --- |
-| `prompt.md` | Full spec (17 sections). Never edit without being asked. |
-| `docs/RESEARCH.md` | Phase 0 research: NexaCRM measurements, competitor teardown, TUI study, best practices, library verification, seed research, vendor findings, open risks. |
-| `docs/ERD.md` | Entity-relationship model derived from spec §7.3. |
-| `docs/DECISIONS.md` | Append-only ADR log. Every non-obvious choice gets an entry **before** the code that implements it. |
-| `docs/MVP-SCOPE.md` | The MVP cut-list: what ships, what is deferred, what is excluded. |
-| `docs/research/github-swadhinbiswas.json` | Raw seed research (fetched GitHub API data + profile README, with `fetched_at`). Refresh, don't trust forever. |
-| `docs/reference/` | NexaCRM reference screenshots (study only — see license note below). |
-| `src/` … | Not created yet. Scaffolding starts in Phase 1 per `prompt.md` §14. |
+| Path                                      | Purpose                                                                                                                                                   |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prompt.md`                               | Full spec (17 sections). Never edit without being asked.                                                                                                  |
+| `docs/RESEARCH.md`                        | Phase 0 research: NexaCRM measurements, competitor teardown, TUI study, best practices, library verification, seed research, vendor findings, open risks. |
+| `docs/ERD.md`                             | Entity-relationship model derived from spec §7.3.                                                                                                         |
+| `docs/DECISIONS.md`                       | Append-only ADR log. Every non-obvious choice gets an entry **before** the code that implements it.                                                       |
+| `docs/MVP-SCOPE.md`                       | The MVP cut-list: what ships, what is deferred, what is excluded.                                                                                         |
+| `docs/research/github-swadhinbiswas.json` | Raw seed research (fetched GitHub API data + profile README, with `fetched_at`). Refresh, don't trust forever.                                            |
+| `docs/reference/`                         | NexaCRM reference screenshots (study only — see license note below).                                                                                      |
+| `src/` …                                  | Not created yet. Scaffolding starts in Phase 1 per `prompt.md` §14.                                                                                       |
 
 ## Hard rules (extracted from spec §1, §10, §12)
 
