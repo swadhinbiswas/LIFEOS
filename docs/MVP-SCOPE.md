@@ -1,0 +1,105 @@
+# docs/MVP-SCOPE.md — MVP scope cut-list (Phase 0)
+
+> Purpose: an explicit, testable answer to "is this in the MVP, deferred, or out?" for every
+> feature named anywhere in `prompt.md`. Phase gate: work only proceeds if the feature's phase
+> (spec §14) has started, and **out-of-phase features are hidden entirely — never stubbed**
+> (spec §1, no placeholders). Items moved across the cut-line get a note in
+> `docs/DECISIONS.md`.
+>
+> Legend: **IN** = ships inside the v0.1.0 MVP (phases 1–9) · **DEFER** = post-MVP v1.1
+> backlog · **OUT** = v1 non-goal (spec §15) · **\*** = partial/conditional.
+
+| # | Feature (spec ref) | Cut | Phase | Notes / acceptance anchor |
+| --- | --- | --- | --- | --- |
+| 1 | Scaffold: Next 16 + TS + Tailwind v4 + shadcn, env validation, Drizzle+Turso migrations, CI/lint/format/test harness | **IN** | 1 | Sign up/in/out, verify email, reset password E2E; axe passes shell routes (§14 Ph1) |
+| 2 | Better Auth: email+password, GitHub, Google OAuth | **IN** | 1 | ADR-006; adapter is a separate package |
+| 3 | Theme system: six TUI presets + full NexaCRM customizer (preset/font/color-mode/radius/content-layout/scale/sidebar-variant/sidebar-mode), persisted per user | **IN** | 1 | Live switch + survives reload (§14 Ph1); customizer option matrix measured in RESEARCH §a |
+| 4 | TUI primitives: Panel, StatusLine, Kbd, AsciiMeter, Spark | **IN** | 1 | The 10 TUI decisions (RESEARCH §c) land here: border tiers, footer key-hints, help overlay, scroll-off, leader key |
+| 5 | App shell: sidebar (variants+modes), header, breadcrumbs, status line; command palette **skeleton** | **IN** | 1 | Palette is skeleton until Ph2 fills it |
+| 6 | Email verification + password reset flows | **IN** | 1 | §14 Ph1 acceptance |
+| 7 | Boards engine: Kanban + Table/Calendar/Grid/Timeline views over one dataset | **IN** | 2 | §6.1; `?view=` URL param (NexaCRM pattern) |
+| 8 | Fractional ordering + optimistic updates + version-409 conflicts | **IN** | 2 | ADR-009/011; drag 500 cards smoothly (§14 Ph2) |
+| 9 | Keyboard navigation, undo, golden-path-by-keyboard | **IN** | 2 | §14 Ph2 acceptance; ADR-016 move buttons |
+| 10 | Board templates + template gallery | **IN** | 2 (engine) / 8 (gallery) | Gallery UI in Ph8 |
+| 11 | Task Inbox / Today / Upcoming / Done | **IN** | 2 | §6.2; hot-path index `idx_cards_user_due` |
+| 12 | Natural-language capture (chrono-node, click-to-correct preview) | **IN** | 2 | ADR-015 |
+| 13 | Recurring tasks (RRULE) | **IN** | 2 | `cards.recurrence`; rrule 2.8.1 |
+| 14 | Global command palette with real search (FTS5) | **IN** | 2 | §6.2; Obsidian-style recents ranking (RESEARCH §b #12) |
+| 15 | Labels, checklists, comments, attachments (links-only v1), card_links, custom fields | **IN** | 2 | ERD §2.2 |
+| 16 | Career: job pipeline (8 stages), companies, contacts, interviews, offers | **IN** | 3 | §6.3; add-job <10s (§14 Ph3) |
+| 17 | CV builder: JSON Resume data, versions, live preview, PDF/DOCX/JSON export | **IN** | 3 | ADR-017; targeted ATS-safe PDF <3 min (§14 Ph3) |
+| 18 | Funnel analytics + pipeline stats (fixture-verified) | **IN** | 3 | §6.3; formulas+benchmarks in RESEARCH §d5 |
+| 19 | Honest ATS reporting (parse-fidelity + layout checklist + JD keyword coverage) | **IN** | 3 | ADR-017; never a magic "ATS score" |
+| 20 | Skills, achievements, portfolio projects, interview prep (star stories, question bank, coding problems) | **IN** | 3 | Seeded from real repo data (ADR-012) |
+| 21 | Four dashboards with configurable widgets (every KPI links to source) | **IN** | 4 | §14 Ph4: KPI matches hand-calculated fixture |
+| 22 | Habits + goals (+key results, goal links) | **IN** | 4 | §6.4–6.5; Habitica-style color+dual +/− habits (RESEARCH §d, §b #11) |
+| 23 | Notes + journal + daily notes, backlinks, tags, FTS search | **IN** | 4 | §6.6; `search_index` FTS5 |
+| 24 | Calendar (month/week/agenda over all dated items) | **IN** | 4 | react-big-calendar 1.20.0 |
+| 25 | Focus timer + time entries | **IN** | 4 | §6.7; focus_sessions/time_entries in ERD |
+| 26 | Finance-lite: transactions, budgets, tracked subscriptions, manual accounts | **IN** | 4 | §6.8; **manual entry only** (bank connections = OUT) |
+| 27 | Health-lite, learning (courses/books), reviews | **IN** | 4 | §6.9; §14 Ph4 |
+| 28 | Notifications center (in-app) + reminders | **IN** | 4 | §12; email/web-push delivery channels deferred (see #64) |
+| 29 | PWA: installable, offline read cache, offline quick-capture queue + sync | **IN** | 4 | §14 Ph4: capture syncs after reconnect |
+| 30 | i18n scaffold: `en` shipped, `bn` (Bangla) example page | **IN** | 4 | §12; next-intl |
+| 31 | Two-user tenant-isolation test suite across all surfaces | **IN** | 5 (starts) → grows each phase | §10; acceptance requires it on REST+MCP (Ph5) and all six surfaces by Ph9 |
+| 32 | REST `/api/v1`: all resources, cursor pagination, sparse fields, ETag/If-Match, Idempotency-Key, error shape | **IN** | 5 | §9.1 |
+| 33 | Personal API keys (create UI, hashed, scoped, expiry, revoke, usage) | **IN** | 5 | §9.1/§10; SHA-256 + prefix |
+| 34 | MCP server `/api/mcp` (Streamable HTTP, spec 2026-07-28) + in-app "Connect an AI agent" flow | **IN** | 5 | ADR-010; §14 Ph5: real client runs search/create_card/move_card/get_daily_brief |
+| 35 | `/api/v1/ingest` endpoint + Shortcut recipe docs | **IN** | 5 | §9.1 |
+| 36 | Outgoing webhooks + deliveries (HMAC, QStash retries) | **IN** | 5 | ERD webhooks_out/deliveries |
+| 37 | OpenAPI 3.1 from Zod + themed `/docs/api` + curl/fetch/Python examples | **IN** | 5 | §9.1 |
+| 38 | Global search incl. semantic/vector search | **IN\*** | 5 (FTS5) | **Vector/semantic part DEFER** — native `F32_BLOB` verified available (RESEARCH §g2) but not required for MVP; FTS5 ships |
+| 39 | AI copilot: /ai page, Ctrl/Cmd+J slide-over, palette "Ask AI", contextual buttons | **IN** | 6 | §8 |
+| 40 | BYOK provider keys (envelope-encrypted) + platform default, model/token display, streaming/stop/retry | **IN** | 6 | ADR-007/§10 |
+| 41 | Approval-gated write tools (proposal cards, y/n, auto-approve for low-risk only) | **IN** | 6 | §8 safety model; destructive always confirms |
+| 42 | Prompt-injection defense + malicious-JD fixture tests | **IN** | 6 | §8; §14 Ph6 acceptance: fixtures cannot trigger unapproved writes |
+| 43 | AI eval suite (parsing accuracy, no-fact-invention, 30+ tool-selection prompts) | **IN** | 6 | §8; runs CI on demand |
+| 44 | Morning brief + Friday review drafts (schedule, opt-in, off by default) | **IN** | 6 | §8; QStash/Vercel Cron |
+| 45 | User-editable memory/context in `/settings/ai` | **IN** | 6 | §8 |
+| 46 | Billing: entitlements service + plans config + Dodo checkout/portal/webhook (test mode) behind `BILLING_ENABLED=false` | **IN** | 7 | ADR-013; nothing limited, no billing UI while flag off (§14 Ph7) |
+| 47 | Export / import / delete-account + audit-log UI | **IN** | 7 | §10/§14 Ph7; data ownership |
+| 48 | Founder grandfathering flag + FOUNDER_PERKS config | **IN** | 7 | §11 |
+| 49 | Settings suite (profile, appearance, shortcuts remap, integrations, data-model, AI) | **IN** | 7 | §14 Ph7; §2.1 ERD user_settings |
+| 50 | Onboarding 60-second setup, demo mode, template gallery, public landing (TUI hero), pricing page, docs site | **IN** | 8 | §14 Ph8: visitor tries demo w/o account; populated dashboard ≤60s |
+| 51 | Seed from `github-swadhinbiswas.json` (JSON Resume basics/projects/skills/work/education, boards, habits, 8–12 sample jobs), `is_demo` + one-click remove | **IN** | 8 | §12; ADR-012; **no email addresses**, no invented employers/dates |
+| 52 | Full a11y sweep (all routes × all six themes), keyboard-only pass, Lighthouse budgets | **IN** | 9 | §13/§14 Ph9 |
+| 53 | Security review vs §10, load test (k6/autocannon), dependency audit, docs/SECURITY.md, self-hosting guide, changelog, v0.1.0 tag, Vercel preview | **IN** | 9 | §14 Ph9 |
+| 54 | Trash/restore, activity feed, keyboard cheat-sheet, ICS feed export, GitHub OAuth import (repos→projects/skills) | **IN\*** | 4–5 | ICS + GitHub import: **IN** if they fit Ph5/Ph8; otherwise first items of v1.1 — decide at their phase gate, not earlier |
+| 55 | **CLI** (`npx lifeos add/today/jobs move`) | **DEFER** | — | §9.1: "Nice-to-have after MVP" |
+| 56 | Capture email address (per-user inbox → ingest) | **DEFER** | — | §9.3 marks v1.1 |
+| 57 | Job clipper browser extension / bookmarklet + AI URL extraction | **DEFER** | — | §6.3: v1.1 |
+| 58 | Google Calendar two-way sync | **DEFER** | — | §9.3: v1.1 (ICS export is #54, in) |
+| 59 | Telegram bot; Slack/Discord notification posts | **DEFER** | — | §9.3: Telegram v1.1; Slack/Discord webhook URL = v1.1 |
+| 60 | Automations UI + React Flow workflow canvas (`/workflows`) | **DEFER** | — | §6.3 line 65 + line 211: v1.1; `automations` tables exist (ERD) but UI hidden |
+| 61 | Email notifications + web push + quiet hours | **DEFER** | — | §12 lists channels; in-app notifications ship (#28); delivery channels = v1.1 |
+| 62 | Trello-style automation mining, saved **shared** views, teams view sharing | **DEFER** | — | Needs teams or heuristics; personal saved views ship (#15) |
+| 63 | Semantic search activation, archive-of-life, time-lapse graph animation | **DEFER** | — | Post-MVP niceties (RESEARCH §c #10) |
+| 64 | iOS/Android native apps | **OUT** | — | §15: PWA only |
+| 65 | Real-time multi-user collaboration + team permissions UI | **OUT** | — | §15: schema ready (`workspace_id`), UI not |
+| 66 | Bank connections (open banking) | **OUT** | — | §15; finance stays manual (#26) |
+| 67 | Voice AI | **OUT** | — | §15 |
+| 68 | Marketplace (plugins/integrations store) | **OUT** | — | §15 |
+| 69 | Custom-domain hosting for public CVs | **OUT** | — | §15; `share_slug`/`share_enabled` fields exist, custom domains don't |
+| 70 | Paid-plan **enforcement** (paywalls, upgrade nags, plan badges) | **OUT** | — | §11/§15 while `BILLING_ENABLED=false`; plumbing is #46 |
+| 71 | Copying any NexaCRM source code | **OUT** | — | ADR-002; measurements only |
+
+## Cut-line rules (how to apply this file)
+
+1. **Phase order is the schedule.** Nothing from a later phase starts early; nothing from an
+   earlier phase is left behind at its gate (spec §14).
+2. **DEFER items must be invisible** until v1.1: no dead buttons, no TODO screens — hide the
+   entry point (spec §1). The only exceptions are tables that already exist for schema
+   stability (`workspace_members`, `automations`): they persist, they have no UI.
+3. **OUT items get no schema surprises either.** Where a column/table pre-exists (§15's
+   "schema is ready"), that's deliberate; adding *new* OUT-scope storage needs an ADR.
+4. **IN\* items** (#38, #54) are decided at their phase gate and the decision recorded in
+   `docs/DECISIONS.md` — this file is updated in the same commit.
+5. Anything not listed here is **not built** until it's listed here.
+
+## MVP definition of done (spec §16, restated as the cut-line test)
+
+The MVP is complete when a new user can: sign up → guided setup → capture tasks by keyboard →
+run a job pipeline on Kanban → build and export a CV → connect an AI agent over MCP → get an AI
+daily brief — all on the free plan, in the TUI-styled UI, with CI green, deployed to a Vercel
+preview, no dead UI, no lorem ipsum, no unexplained `any`, no console errors on any route.
+Everything in the DEFER/OUT columns above is explicitly *not* required for that sentence.
