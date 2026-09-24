@@ -1,0 +1,1 @@
+ALTER TABLE `webhook_deliveries` ADD `next_attempt_at` integer;

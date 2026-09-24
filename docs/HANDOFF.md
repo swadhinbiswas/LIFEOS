@@ -7,8 +7,8 @@ not decisions (those are in `docs/DECISIONS.md`).
 
 - Phases 0–4 complete and reported. **Phase 5 in progress** (API, MCP, webhooks, docs).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **224 passed** ✓ · `pnpm e2e` **47 passed, twice** ✓.
-- ADR-044 … ADR-068 record the decisions. Nothing is pushed; all work is on local `master`.
+  `pnpm test` **225 passed** ✓ · `pnpm e2e` **47 passed, twice** ✓.
+- ADR-044 … ADR-069 record the decisions. Nothing is pushed; all work is on local `master`.
 
 ## Phase 5 so far
 
@@ -23,15 +23,18 @@ not decisions (those are in `docs/DECISIONS.md`).
   `move_card`, `get_daily_brief`, Bearer-key scopes, Origin guard (ADR-064).
 - `POST /api/v1/ingest` for Shortcuts/automations, reusing the capture grammar, with the recipe in
   `docs/INGEST.md` (ADR-065).
-- Outgoing webhooks (`webhooks_out` + `webhook_deliveries`, migration 0009): HMAC-signed deliveries
-  emitted best-effort from the board/notes/habits/career services, a replayable delivery log, and a
-  panel in `/settings/integrations` (ADR-066). Scheduled retries are deferred until a queue exists.
+- Outgoing webhooks (`webhooks_out` + `webhook_deliveries`, migrations 0009/0010): HMAC-signed
+  deliveries emitted best-effort from the board/notes/habits/career services, **retried on an
+  exponential backoff** (60s/5m/30m/2h/6h, six attempts) by a sweep that the `CRON_SECRET`-guarded
+  `/api/cron/webhooks` route or the integrations page runs, with a replayable log and a panel in
+  `/settings/integrations` (ADR-066/069).
 - OpenAPI 3.1 generated from the route Zod schemas at `/api/v1/openapi.json`, with a themed
   server-rendered reference at `/docs/api` (ADR-067).
 - Two-user isolation suite across the REST and MCP surfaces, plus an MCP wire-level acceptance e2e
   (initialize → tools/list → the four tools → the moved card live on the board) (ADR-068).
-- Next: the Phase 5 acceptance/report. Deferred: scheduled webhook retries (needs a queue), and a
-  live external MCP client transcript (the protocol is exercised over HTTP in the e2e).
+- Next: the Phase 5 acceptance/report. Deferred: a live external MCP client transcript (the protocol
+  is exercised over HTTP in the e2e), REST coverage for the remaining resources, MCP
+  resources/prompts, and the incremental i18n surface pass.
 
 ## The Phase-4 chunks
 

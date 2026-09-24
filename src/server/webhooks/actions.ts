@@ -5,7 +5,7 @@ import { ZodError, z } from "zod";
 import { getServerSession } from "@/server/auth/session";
 import type { ActionResult } from "@/server/boards/actions";
 
-import { createWebhook, deleteWebhook, redeliver, WEBHOOK_EVENTS } from "./index";
+import { createWebhook, deleteWebhook, retryDelivery, WEBHOOK_EVENTS } from "./index";
 
 /** Webhook adapters (spec §7.2): the service owns signing, delivery and the log. */
 
@@ -47,9 +47,9 @@ export async function deleteWebhookAction(input: unknown): Promise<ActionResult<
   });
 }
 
-export async function redeliverWebhookAction(input: unknown): Promise<ActionResult<null>> {
+export async function retryWebhookAction(input: unknown): Promise<ActionResult<null>> {
   return run(async (userId) => {
-    const sent = await redeliver(userId, idInput.parse(input).id);
+    const sent = await retryDelivery(userId, idInput.parse(input).id);
     if (!sent) throw new Error("delivery not found");
     return null;
   });

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   createWebhookAction,
   deleteWebhookAction,
-  redeliverWebhookAction,
+  retryWebhookAction,
 } from "@/server/webhooks/actions";
 
 interface WebhookSummary {
@@ -22,6 +22,8 @@ interface DeliverySummary {
   status: number;
   error: string | null;
   delivered: boolean;
+  attempts: number;
+  nextAttemptAt: string | null;
 }
 
 const EVENTS = [
@@ -35,9 +37,9 @@ const EVENTS = [
 ] as const;
 
 /**
- * Outgoing-webhook management (spec §9.3, ADR-066). The secret is shown once at creation — it is
- * the receiver's shared secret for verifying the `x-lifeos-signature` header. Deliveries are logged
- * and replayable by hand.
+ * Outgoing-webhook management (spec §9.3, ADR-066/069). The secret is shown once at creation — it
+ * is the receiver's shared secret for verifying the `x-lifeos-signature` header. Failed deliveries
+ * are retried on an exponential backoff by the sweep; a row can also be re-attempted now.
  */
 export function Webhooks({
   webhooks,
@@ -83,7 +85,7 @@ export function Webhooks({
 
   const replay = async (id: string) => {
     setBusy(true);
-    await redeliverWebhookAction({ id });
+    await retryWebhookAction({ id });
     setBusy(false);
     router.refresh();
   };
@@ -185,18 +187,20 @@ export function Webhooks({
                 <span className="text-primary">{delivery.event}</span>
                 <span className="text-muted-foreground">
                   {delivery.delivered
-                    ? `delivered (${delivery.status})`
-                    : `failed (${delivery.status || "no response"})`}
+                    ? `delivered (${delivery.status}, ${delivery.attempts} attempt${delivery.attempts === 1 ? "" : "s"})`
+                    : delivery.nextAttemptAt
+                      ? `failed (${delivery.status || "no response"}) · retry ${delivery.attempts + 1}`
+                      : `abandoned after ${delivery.attempts} attempts`}
                 </span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   disabled={busy}
-                  aria-label={`replay ${delivery.event}`}
+                  aria-label={`retry ${delivery.event}`}
                   onClick={() => void replay(delivery.id)}
                 >
-                  replay
+                  retry now
                 </Button>
               </li>
             ))}

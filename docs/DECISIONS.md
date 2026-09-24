@@ -1607,6 +1607,33 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-069 — Webhook retries: exponential backoff with a scheduled sweep
+
+- **Status:** accepted (2026-09-24)
+- **Context:** ADR-066 deferred scheduled retries "until a queue is configured" and kept only manual
+  replay. §9.3 explicitly requires retries with exponential backoff, so that was a gap rather than a
+  design choice, and the user asked for it to be fixed properly.
+- **Decision:**
+  - `webhook_deliveries` gains **`next_attempt_at`** (migration 0010). A failed attempt sets
+    `next_attempt_at = now + backoff(attempts)`; success clears it; exhaustion leaves it `null`.
+  - Backoff is a fixed ladder — **60 s, 5 m, 30 m, 2 h, 6 h** (six attempts total) — computed by a
+    **pure function** (`nextAttemptAt`) so it is hand-tested.
+  - Retries re-attempt **in place**: `attempts` increments on the same row instead of inserting a
+    new one, so a delivery keeps one event's history as a count.
+  - A **sweep** (`retryDueDeliveries`) processes due, undelivered rows, and is called by:
+    - **`GET /api/cron/webhooks`**, guarded by **`CRON_SECRET`** — a scheduler (Vercel Cron/QStash)
+      calls it, and the route is a **404 when the secret is unset**, so nothing is exposed by
+      default; and
+    - the integrations page for the signed-in user, so dev and small installs **self-heal with no
+      scheduler**.
+  - The UI shows attempts and the next retry, with a **"retry now"** button for an immediate
+    re-attempt.
+- **Consequences:** retries are real and observable without requiring a queue, and a deployment can
+  add unattended retries by setting one variable. Cost: unattended installs depend on the cron
+  route, and the backoff ladder is fixed rather than per-subscription.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

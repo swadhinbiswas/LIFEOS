@@ -1,15 +1,19 @@
 import { createHmac, randomBytes } from "node:crypto";
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, lte } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
 import { webhook_deliveries, webhooks_out } from "@/server/db/schema";
 
 /**
- * Outgoing webhooks (spec §9.3, ADR-066). `emitEvent` is called from the services that own a write
- * and is **best-effort**: it signs the exact body with HMAC-SHA256, records a delivery row per
+ * Outgoing webhooks (spec §9.3, ADR-066/069). `emitEvent` is called from the services that own a
+ * write and is **best-effort**: it signs the exact body with HMAC-SHA256, records a delivery row per
  * matching subscription, and never lets a webhook failure break the write.
+ *
+ * Delivery is retried on a schedule: a failed attempt records `next_attempt_at` computed from an
+ * exponential backoff, and the retry sweep (`retryDueDeliveries`, called by the cron route or
+ * opportunistically by the UI) re-attempts due rows in place until they succeed or are exhausted.
  */
 
 export const WEBHOOK_EVENTS = [
@@ -25,6 +29,11 @@ export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];
 
 export type WebhookRow = typeof webhooks_out.$inferSelect;
 export type DeliveryRow = typeof webhook_deliveries.$inferSelect;
+
+/** Exponential backoff between attempts, in seconds (ADR-069). */
+export const RETRY_BACKOFF_SECONDS = [60, 300, 1_800, 7_200, 21_600] as const;
+/** First attempt plus one per backoff step; beyond this a delivery is abandoned (no next retry). */
+export const MAX_ATTEMPTS = RETRY_BACKOFF_SECONDS.length + 1;
 
 const parseEvents = (raw: string): string[] => {
   try {
@@ -43,6 +52,12 @@ export function createSecret(): string {
 
 export const signatureFor = (secret: string, body: string): string =>
   `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
+
+/** The instant of the next retry after `attempts` attempts, or null once exhausted. */
+export const nextAttemptAt = (attempts: number, now: Date): Date | null =>
+  attempts >= MAX_ATTEMPTS
+    ? null
+    : new Date(now.getTime() + (RETRY_BACKOFF_SECONDS[attempts - 1] ?? 21_600) * 1_000);
 
 export async function createWebhook(
   userId: string,
@@ -85,11 +100,13 @@ export async function listDeliveries(userId: string, limit = 20): Promise<Delive
     .limit(limit);
 }
 
-const ok = (status: number) => status >= 200 && status < 300;
+const succeeded = (status: number) => status >= 200 && status < 300;
 
-async function deliver(row: WebhookRow, event: string, payload: string): Promise<void> {
-  let response_status = 0;
-  let error: string | null = null;
+async function attempt(
+  row: WebhookRow,
+  event: string,
+  payload: string,
+): Promise<{ status: number; error: string | null }> {
   try {
     const response = await fetch(row.url, {
       method: "POST",
@@ -101,20 +118,28 @@ async function deliver(row: WebhookRow, event: string, payload: string): Promise
       body: payload,
       signal: AbortSignal.timeout(5_000),
     });
-    response_status = response.status;
+    return { status: response.status, error: null };
   } catch (caught) {
-    error = caught instanceof Error ? caught.message : String(caught);
+    return { status: 0, error: caught instanceof Error ? caught.message : String(caught) };
   }
+}
 
+/** First attempt: always logs a delivery, scheduling a retry when it fails. */
+async function deliver(row: WebhookRow, event: string, payload: string): Promise<void> {
+  const now = new Date();
+  const { status, error } = await attempt(row, event, payload);
+  const ok = succeeded(status);
   await db.insert(webhook_deliveries).values({
     id: newId(),
     user_id: row.user_id,
     webhook_id: row.id,
     event,
     payload,
-    response_status,
+    response_status: status,
     error,
-    delivered_at: ok(response_status) ? new Date() : null,
+    attempts: 1,
+    delivered_at: ok ? now : null,
+    next_attempt_at: ok ? null : nextAttemptAt(1, now),
   });
 }
 
@@ -140,8 +165,8 @@ export async function emitEvent(
   }
 }
 
-/** Replay one logged delivery's exact payload as a fresh attempt. */
-export async function redeliver(userId: string, deliveryId: string): Promise<boolean> {
+/** Re-attempt one logged delivery in place, advancing its attempts and backoff. */
+export async function retryDelivery(userId: string, deliveryId: string): Promise<boolean> {
   const [delivery] = await db
     .select()
     .from(webhook_deliveries)
@@ -154,8 +179,49 @@ export async function redeliver(userId: string, deliveryId: string): Promise<boo
     .where(and(eq(webhooks_out.id, delivery.webhook_id), eq(webhooks_out.user_id, userId)))
     .limit(1);
   if (!row) return false;
-  await deliver(row, delivery.event, delivery.payload);
+
+  const now = new Date();
+  const { status, error } = await attempt(row, delivery.event, delivery.payload);
+  const ok = succeeded(status);
+  const attempts = delivery.attempts + 1;
+  await db
+    .update(webhook_deliveries)
+    .set({
+      response_status: status,
+      error,
+      attempts,
+      delivered_at: ok ? now : null,
+      next_attempt_at: ok ? null : nextAttemptAt(attempts, now),
+    })
+    .where(and(eq(webhook_deliveries.id, delivery.id), eq(webhook_deliveries.user_id, userId)));
   return true;
+}
+
+/**
+ * Retry every due, undelivered delivery (optionally scoped to one user). A null `next_attempt_at`
+ * on an undelivered row means it is exhausted, so the `lte` predicate excludes it. Returns how many
+ * were attempted.
+ */
+export async function retryDueDeliveries(now: Date = new Date(), userId?: string): Promise<number> {
+  const filters = [
+    isNull(webhook_deliveries.delivered_at),
+    lte(webhook_deliveries.next_attempt_at, now),
+  ];
+  if (userId) filters.push(eq(webhook_deliveries.user_id, userId));
+
+  const due = await db
+    .select({ id: webhook_deliveries.id, userId: webhook_deliveries.user_id })
+    .from(webhook_deliveries)
+    .where(and(...filters))
+    .orderBy(asc(webhook_deliveries.next_attempt_at))
+    .limit(100);
+
+  let count = 0;
+  for (const row of due) {
+    await retryDelivery(row.userId, row.id);
+    count += 1;
+  }
+  return count;
 }
 
 export interface WebhookSummary {
@@ -179,6 +245,8 @@ export interface DeliverySummary {
   status: number;
   error: string | null;
   delivered: boolean;
+  attempts: number;
+  nextAttemptAt: string | null;
   createdAt: string;
 }
 export const toDeliverySummary = (row: DeliveryRow): DeliverySummary => ({
@@ -187,5 +255,7 @@ export const toDeliverySummary = (row: DeliveryRow): DeliverySummary => ({
   status: row.response_status,
   error: row.error,
   delivered: Boolean(row.delivered_at),
+  attempts: row.attempts,
+  nextAttemptAt: row.next_attempt_at ? new Date(row.next_attempt_at).toISOString() : null,
   createdAt: new Date(row.created_at).toISOString(),
 });

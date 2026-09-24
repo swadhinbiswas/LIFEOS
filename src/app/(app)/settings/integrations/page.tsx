@@ -6,6 +6,7 @@ import { listApiKeys, toKeySummary } from "@/server/api-keys";
 import {
   listDeliveries,
   listWebhooks,
+  retryDueDeliveries,
   toDeliverySummary,
   toWebhookSummary,
 } from "@/server/webhooks";
@@ -26,6 +27,8 @@ export default async function IntegrationsPage() {
   const keys = (await listApiKeys(session.user.id)).map(toKeySummary);
   const active = keys.filter((key) => !key.revoked).length;
   const webhooks = (await listWebhooks(session.user.id)).map(toWebhookSummary);
+  // Drain any due retries for this user before listing, so the log is current without a scheduler.
+  await retryDueDeliveries(new Date(), session.user.id);
   const deliveries = (await listDeliveries(session.user.id)).map(toDeliverySummary);
 
   return (

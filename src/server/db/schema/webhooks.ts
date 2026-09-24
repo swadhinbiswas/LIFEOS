@@ -54,6 +54,8 @@ export const webhook_deliveries = sqliteTable(
     error: text("error"),
     attempts: integer("attempts").notNull().default(1),
     delivered_at: integer("delivered_at", { mode: "timestamp_ms" }),
+    /** When the next retry is due (ADR-069); null when delivered or exhausted. */
+    next_attempt_at: integer("next_attempt_at", { mode: "timestamp_ms" }),
     ...timestamps(),
   },
   (t) => [index("webhook_deliveries_user_idx").on(t.user_id, t.created_at)],
