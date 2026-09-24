@@ -13,6 +13,7 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "eval": "vitest run --config vitest.evals.config.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
@@ -64,6 +65,7 @@
     "zustand": "5.0.15"
   },
   "devDependencies": {
+    "@ai-sdk/provider": "4.0.18",
     "@axe-core/playwright": "4.13.0",
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",

@@ -17,6 +17,7 @@ import { useThemeStore } from "@/lib/theme-store";
 import { cn } from "@/lib/utils";
 
 import { CommandPalette } from "./command-palette";
+import { CopilotOverlay } from "./copilot-overlay";
 import { GlobalKeyboard } from "./global-keyboard";
 import { HelpOverlay } from "./help-overlay";
 import { OfflineCapture } from "./offline-capture";
@@ -52,6 +53,8 @@ export function AppShell({
   const [overlayDismissed, setOverlayDismissed] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
+  const [copilotPrompt, setCopilotPrompt] = useState<string | undefined>(undefined);
   const [helpOpen, setHelpOpen] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [stoppingFocus, setStoppingFocus] = useState(false);
@@ -100,6 +103,13 @@ export function AppShell({
         return;
       }
 
+      // Ctrl/Cmd+J opens the copilot slide-over anywhere (spec §8), like the palette.
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "j") {
+        event.preventDefault();
+        setCopilotOpen(true);
+        return;
+      }
+
       // Everything else is disabled inside a field so typing is never hijacked.
       if (
         target &&
@@ -121,6 +131,17 @@ export function AppShell({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [cycleSidebar, overlayOpen]);
+
+  // Contextual buttons anywhere dispatch this event to open the copilot with a prompt (spec §8).
+  useEffect(() => {
+    const onAsk = (event: Event) => {
+      const detail = (event as CustomEvent<{ prompt?: string }>).detail;
+      setCopilotPrompt(detail?.prompt);
+      setCopilotOpen(true);
+    };
+    window.addEventListener("lifeos:copilot", onAsk);
+    return () => window.removeEventListener("lifeos:copilot", onAsk);
+  }, []);
 
   async function signOut() {
     setSigningOut(true);
@@ -265,7 +286,18 @@ export function AppShell({
       {/* Mounted only while open: shadcn's CommandDialog renders its sr-only header outside
           the portal even when closed, which axe reports as content outside a landmark. */}
       {paletteOpen ? (
-        <CommandPalette open onOpenChange={setPaletteOpen} onSignOut={() => void signOut()} />
+        <CommandPalette
+          open
+          onOpenChange={setPaletteOpen}
+          onSignOut={() => void signOut()}
+          onAskAi={() => {
+            setPaletteOpen(false);
+            setCopilotOpen(true);
+          }}
+        />
+      ) : null}
+      {copilotOpen ? (
+        <CopilotOverlay open onOpenChange={setCopilotOpen} prefill={copilotPrompt} />
       ) : null}
       <HelpOverlay open={helpOpen} onOpenChange={setHelpOpen} />
       <GlobalKeyboard />

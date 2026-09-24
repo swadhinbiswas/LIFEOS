@@ -6,6 +6,7 @@ import { ensureSystemTasksBoard, getBoard } from "@/server/boards";
 import { getDailyBrief } from "@/server/boards/brief";
 import { getTimeZone } from "@/server/settings";
 
+import { CopilotQuickAction } from "../_components/copilot-quick-action";
 import { BoardView } from "../_components/board/board-view";
 import { PlanMyDay } from "../_components/board/plan-my-day";
 
@@ -20,6 +21,7 @@ export default async function TasksPage() {
   if (!session) redirect("/sign-in");
 
   const t = await getTranslations("Pages.Tasks");
+  const tCopilot = await getTranslations("Pages.Copilot");
   const board = await ensureSystemTasksBoard(session.user.id);
   const payload = await getBoard(session.user.id, board.id);
   const brief = await getDailyBrief(
@@ -34,6 +36,12 @@ export default async function TasksPage() {
         {t("title")}
       </h1>
       <div className="grid gap-4">
+        <div className="flex justify-end">
+          <CopilotQuickAction
+            label={tCopilot("planMyDay")}
+            prompt="Plan my day: call get_daily_brief, then propose the three most valuable tasks for today and note anything overdue."
+          />
+        </div>
         <PlanMyDay boardId={board.id} brief={brief} />
         <BoardView boardId={board.id} initialData={payload} />
       </div>

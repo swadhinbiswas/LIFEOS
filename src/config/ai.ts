@@ -15,4 +15,5 @@ export const AI_CONTEXT_LIMITS = {
   cards: 20,
   goals: 10,
   jobs: 10,
+  habits: 20,
 } as const;

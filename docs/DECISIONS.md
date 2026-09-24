@@ -1832,6 +1832,11 @@ build` per run, cached by `.next` locally and cold in CI.
   - injection: each malicious fixture must end with zero executed writes and, where a write is
     proposed, an approval request.
     The same classification is asserted by unit tests beside the code, so a regression fails fast.
+- **Completion (2026-09-25):** `pnpm eval` runs 9 assertions with a mock model and no key: tool
+  selection 32/32 (100 %) across the §8 tool surface, injection 3/3 (each malicious fixture yields
+  an approval request and zero executed writes), and the CV no-invention checker accepts a faithful
+  rewrite and rejects an inventing one. The copilot e2e proves the propose → approve/reject flow
+  against the scripted model, and `/ai` and `/settings/ai` are in the axe sweep.
 - **Consequences:** Phase 6 acceptance is a command with a printed threshold table, and the suite
   cannot silently depend on a paid key. Cost: fixtures must be maintained with the tool list.
 

@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Bot,
   Briefcase,
   CalendarDays,
   Inbox,
@@ -39,6 +40,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
+  { href: "/ai", key: "copilot", icon: Sparkles },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
   { href: "/reviews", key: "reviews", icon: ClipboardCheck },
   { href: "/tasks", key: "tasks", icon: ListTodo },
@@ -58,6 +60,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/career/interview-prep", key: "prep", icon: MessageSquareQuote },
   { href: "/settings", key: "profile", icon: UserRound },
   { href: "/settings/integrations", key: "integrations", icon: KeyRound },
+  { href: "/settings/ai", key: "aiSettings", icon: Bot },
   { href: "/docs/api", key: "api", icon: FileCode },
   { href: "/settings/appearance", key: "appearance", icon: Palette },
   { href: "/about", key: "about", icon: Info },

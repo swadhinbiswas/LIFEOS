@@ -35,10 +35,12 @@ export function CommandPalette({
   open,
   onOpenChange,
   onSignOut,
+  onAskAi,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSignOut: () => void;
+  onAskAi: () => void;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -169,6 +171,12 @@ export function CommandPalette({
             </>
           ) : (
             <>
+              <CommandGroup heading={t("ai")}>
+                <CommandItem value="ask ai" onSelect={run(onAskAi)}>
+                  {t("askAi")}
+                </CommandItem>
+              </CommandGroup>
+
               <CommandGroup heading={t("navigate")}>
                 {NAV_ITEMS.map((item) => {
                   const label = tNav(item.key);

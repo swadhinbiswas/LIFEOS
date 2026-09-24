@@ -5,27 +5,35 @@ not decisions (those are in `docs/DECISIONS.md`).
 
 ## Status
 
-- Phases 0–5 complete and reported. **Phase 6 in progress** (AI copilot).
+- Phases 0–5 complete and reported. **Phase 6 complete** (AI copilot); awaiting the user's go-ahead
+  for Phase 7 (billing scaffold, settings, data ownership).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **252 passed** ✓ · `pnpm e2e` **47 passed** ✓.
+  `pnpm test` **252 passed** ✓ · `pnpm eval` **9 passed, thresholds 100 %** ✓ ·
+  `pnpm e2e` **48 passed, twice** ✓.
 - ADR-044 … ADR-078 record the decisions. Nothing is pushed; all work is on local `master`.
 
-## Phase 6 so far (AI copilot)
+## Phase 6 — AI copilot (complete)
 
 - Foundation: AI env contract, AES-256-GCM at-rest helper with a documented dev/test fallback,
   `ai_credentials`/`ai_conversations`/`ai_messages`/`ai_usage`/`ai_memories` + `audit_log`
   (migration 0011), the credential store (encrypted, masked, tenant-scoped), audit and usage
   services, and AI prefs on `user_settings` (ADR-073/074).
 - Safety: a pure tool catalogue and the single `approvalFor` policy — read free, write proposes,
-  destructive never auto-approvable, unknown denied (ADR-076/078 unit tests).
+  destructive never auto-approvable, unknown denied (ADR-076/078).
 - Tools: all 28 §8 tool adapters over the shared services (ADR-076).
 - Runtime: `agent.ts` attaches the policy, wraps untrusted content, streams with a step cap and
-  usage callback; tests prove a write cannot execute without an approval response (ADR-076/077).
-- **Remaining Phase 6**: the model factory + scripted model (ADR-075), `/api/ai/chat` streaming
-  route with conversation persistence and the budget cap, the `/ai` page + Ctrl/Cmd+J slide-over +
-  command-palette "Ask AI…" row + contextual buttons with an approve/reject UI, `/settings/ai`
-  (provider, model, privacy, memory), and the `evals/` suite (30+ tool-selection prompts,
-  no-fact-invention CV rewrite, malicious-JD injection) run by `pnpm eval`.
+  usage callback; `providers.ts` resolves BYO → platform → scripted (`AI_SCRIPTED`) and the scripted
+  model is a real `LanguageModelV4` (ADR-075).
+- Endpoint: `POST /api/ai/chat` — session auth, budget cap, signed approvals
+  (`TOOL_APPROVAL_SECRET`), conversation persistence (upsert, approval-safe).
+- UI: `/ai` full page, Ctrl/Cmd+J slide-over, palette “Ask AI…”, contextual buttons (Plan my day,
+  Summarize board), one-key approve (y) / reject (n); `/settings/ai` for provider, model, key,
+  auto-approve allowlist, memory and usage. All translated (en/bn), 878/878 keys.
+- Evals: `pnpm eval` — 32 tool-selection prompts, 3 injection fixtures, CV no-invention checker.
+- e2e: `tests/e2e/copilot.spec.ts` exercises propose → approve → reject against the scripted model.
+- Gotcha: the E2E harness sets `AI_SCRIPTED=true` plus a fixed `AI_ENCRYPTION_KEY` and
+  `TOOL_APPROVAL_SECRET` in `tests/e2e/global-setup.ts`; a production build without a provider key
+  shows the honest “configure a provider” state instead of a dead chat box.
 
 ## Phase 5 so far
 

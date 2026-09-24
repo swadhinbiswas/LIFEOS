@@ -1,8 +1,10 @@
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { getServerSession } from "@/server/auth/session";
 import { BoardError, getBoard } from "@/server/boards";
 
+import { CopilotQuickAction } from "../../_components/copilot-quick-action";
 import { BoardView } from "../../_components/board/board-view";
 
 type PageProps = { params: Promise<{ boardId: string }> };
@@ -21,11 +23,18 @@ export default async function BoardPage({ params }: PageProps) {
   });
   if (!payload) notFound();
 
+  const t = await getTranslations("Pages.Copilot");
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        {payload.board.name}
-      </h1>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+          {payload.board.name}
+        </h1>
+        <CopilotQuickAction
+          label={t("summarizeBoard")}
+          prompt={`Summarize this board: call get_board with boardId "${boardId}", then give a short status of what is in flight and what looks stuck.`}
+        />
+      </div>
       <BoardView boardId={boardId} initialData={payload} />
     </>
   );
