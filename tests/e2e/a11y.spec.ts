@@ -62,6 +62,7 @@ const SHELL_ROUTES = [
   "/tasks",
   "/habits",
   "/goals",
+  "/notes",
   "/inbox",
   "/boards",
   "/career/jobs",
