@@ -6,8 +6,8 @@ not decisions (those are in `docs/DECISIONS.md`).
 ## Status
 
 - Phases 0–3 complete and reported. **Phase 4 complete** (dashboards + life modules).
-- Last verified gate (clean tree at `d286561`): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **196 passed** ✓ · `pnpm e2e` **37 passed, twice** ✓.
+- Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
+  `pnpm test` **196 passed** ✓ · `pnpm e2e` **38 passed, twice** ✓.
 - ADR-044 … ADR-053 record the phase's decisions. Nothing is pushed; all work is on local `master`.
 
 ## The Phase-4 chunks
@@ -24,25 +24,19 @@ not decisions (those are in `docs/DECISIONS.md`).
 - `1ab114c` tags on notes + card→goal links (ADR-049) · `cf3f0ad` subscriptions (ADR-050)
 - `91721ac` offline quick-capture queue (ADR-051) · `97e7e41` calendar (ADR-052)
 - `d286561` i18n scaffold (ADR-053)
+- undo/redo shipped: Ctrl+Z / Ctrl+Shift+Z over the version-free reversal actions (spec §6.1)
 
 ## Outstanding gaps (deliberate, with next steps)
 
-1. **Board undo/redo (Ctrl+Z) is still not shipped.** The foundation is committed (`217c087`):
-   `src/server/boards/revert.ts`, `board-history.ts`, `use-undo-redo.ts` + passing `revert.test.ts`.
-   The UI wiring (record from the four mutations, Ctrl+Z/Ctrl+Shift+Z in `use-board-keys.ts`,
-   history buttons in `board-view.tsx`, a `Ctrl+Z` row in `config/shortcuts.ts`) was attempted and
-   reverted three times over a flake that appears **only in the full e2e suite**. Next step, with
-   fresh context: `pnpm exec playwright test tests/e2e/boards.spec.ts --repeat-each=3`, then
-   `pnpm e2e --trace on`, open the failing trace. Do **not** ship until `pnpm e2e` is green twice.
-2. **PWA installability + offline read cache** are deferred (ADR-051); offline **capture** syncs,
+1. **PWA installability + offline read cache** are deferred (ADR-051); offline **capture** syncs,
    which is the phase-acceptance item.
-3. **i18n is a scaffold** (ADR-053): `/about` is translated (en/bn) with a cookie locale; the shell
+2. **i18n is a scaffold** (ADR-053): `/about` is translated (en/bn) with a cookie locale; the shell
    is English. Translated pathnames and a per-user locale setting are pending.
-4. **The `reminders` table is unwired** — ADR-050 sends subscription renewal nudges through the
+3. **The `reminders` table is unwired** — ADR-050 sends subscription renewal nudges through the
    notification sweep instead. An explicit per-entity "remind me at" UI is a future chunk.
-5. **Generic tags apply to notes only** (ADR-049); cards keep their board-scoped labels.
+4. **Generic tags apply to notes only** (ADR-049); cards keep their board-scoped labels.
    `card_links` (card↔card) is unwired.
-6. **Dates are UTC everywhere** (ADR-045/052/053); per-user timezone rendering is the open §6.9
+5. **Dates are UTC everywhere** (ADR-045/052/053); per-user timezone rendering is the open §6.9
    timezone item.
 
 ## Next: Phase 5 (awaiting the user's go-ahead)

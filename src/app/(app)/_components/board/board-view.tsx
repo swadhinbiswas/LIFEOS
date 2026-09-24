@@ -31,6 +31,7 @@ import { SavedViews } from "./saved-views";
 import { TableView } from "./table-view";
 import { useBoardKeys } from "./use-board-keys";
 import { useBoard } from "./use-board";
+import { useUndoRedo } from "./use-undo-redo";
 
 const byPosition = (a: Card, b: Card) =>
   a.position < b.position ? -1 : a.position > b.position ? 1 : 0;
@@ -54,6 +55,7 @@ export function BoardView({
     boardId,
     initialData,
   );
+  const { canUndo, canRedo, undo, redo, undoCount, redoCount } = useUndoRedo(boardId);
   const [viewParam, setViewParam] = useQueryState("view");
   const [query, setQuery] = useQueryState("q");
   const [filterParam, setFilterParam] = useQueryState("filter");
@@ -243,6 +245,8 @@ export function BoardView({
     onClearSelection: () => setSelectedIds([]),
     hasSelection: selectedIds.length > 0,
     onView: (next) => void setViewParam(next === "kanban" ? null : "table"),
+    onUndo: undo,
+    onRedo: redo,
     enabled: view === "kanban",
   });
 
@@ -278,6 +282,29 @@ export function BoardView({
       />
 
       <BoardUtils boardId={boardId} />
+
+      <div className="flex flex-wrap items-center gap-1 font-mono text-[10px]">
+        <button
+          type="button"
+          data-slot="undo"
+          data-undo-count={undoCount}
+          disabled={!canUndo}
+          onClick={undo}
+          className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 text-foreground hover:bg-accent hover:text-accent-foreground disabled:text-muted-foreground"
+        >
+          undo (Ctrl+Z)
+        </button>
+        <button
+          type="button"
+          data-slot="redo"
+          data-redo-count={redoCount}
+          disabled={!canRedo}
+          onClick={redo}
+          className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 text-foreground hover:bg-accent hover:text-accent-foreground disabled:text-muted-foreground"
+        >
+          redo (Ctrl+Shift+Z)
+        </button>
+      </div>
 
       {selectedIds.length > 0 ? (
         <div

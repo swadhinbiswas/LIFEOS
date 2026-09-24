@@ -95,7 +95,7 @@ test("card sheet: deep link, edits persist, delete is undoable", async ({ page }
   await page.goto(`/tasks?card=${cardId}`);
   await page.getByRole("button", { name: "delete" }).click();
   await expect(serverCard(page, "Inbox", renamed)).toHaveCount(0);
-  await page.getByRole("button", { name: "undo" }).click();
+  await page.getByRole("button", { name: "undo", exact: true }).click();
   await expect(serverCard(page, "Inbox", renamed)).toBeVisible();
   await page.waitForLoadState("networkidle");
   await page.goto("/tasks");
@@ -246,4 +246,48 @@ test("bulk actions: select two cards with x and move them together", async ({ pa
   await page.reload();
   await expect(serverCard(page, "Today", "bulk one")).toBeVisible();
   await expect(serverCard(page, "Today", "bulk two")).toBeVisible();
+});
+
+/**
+ * Undo/redo (spec §6.1: "last 50 board actions"). Entries are recorded on success, so the test
+ * waits for the undo stack to grow (its count is on the control) before pressing the key — no
+ * race between the write landing and the keystroke.
+ */
+test("undo/redo: Ctrl+Z reverses a move and Ctrl+Shift+Z replays it", async ({ page }) => {
+  test.setTimeout(90_000);
+  const email = uniqueEmail("undo");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/tasks");
+
+  const title = "undo me";
+  const adder = page.getByLabel("add a card to Inbox");
+  await adder.click();
+  await adder.fill(title);
+  await adder.press("Enter");
+  await expect(serverCard(page, "Inbox", title)).toBeVisible();
+  await adder.blur();
+
+  const undo = page.locator('[data-slot="undo"]');
+  const redo = page.locator('[data-slot="redo"]');
+  // The create is action 1; wait for it so the move becomes action 2.
+  await expect(undo).toHaveAttribute("data-undo-count", "1");
+
+  await serverCard(page, "Inbox", title)
+    .getByRole("button", { name: `move ${title} right` })
+    .click();
+  await expect(serverCard(page, "Today", title)).toBeVisible();
+  await expect(undo).toHaveAttribute("data-undo-count", "2");
+
+  await page.keyboard.press("Control+z");
+  await expect(serverCard(page, "Inbox", title)).toBeVisible();
+  await expect(redo).toHaveAttribute("data-redo-count", "1");
+
+  await page.keyboard.press("Control+Shift+z");
+  await expect(serverCard(page, "Today", title)).toBeVisible();
+
+  await page.waitForLoadState("networkidle");
+  await page.reload();
+  await expect(serverCard(page, "Today", title)).toBeVisible();
 });

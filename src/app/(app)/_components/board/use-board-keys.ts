@@ -33,13 +33,16 @@ export interface BoardKeyHandlers {
   onClearSelection: () => void;
   hasSelection: boolean;
   onView: (view: "kanban" | "table") => void;
+  /** Board history (spec §6.1): Ctrl+Z / Ctrl+Shift+Z. */
+  onUndo: () => void;
+  onRedo: () => void;
   /** Off in the table view, whose own controls handle the same concepts. */
   enabled: boolean;
 }
 /**
  * Board list keys (spec §4.3): `j`/`k` move focus, `h`/`l` cross columns, Enter opens the card,
- * Space toggles done, Shift+J/K reorder, Del deletes (with the standard undo toast) and `1`/`2`
- * switch between the two views that exist.
+ * Space toggles done, Shift+J/K reorder, Del deletes (with the standard undo toast), `1`/`2`
+ * switch between the two views that exist, and Ctrl+Z / Ctrl+Shift+Z walk the history stack.
  *
  * Every action delegates to the same service-backed mutation a drag or button uses.
  */
@@ -56,6 +59,8 @@ export function useBoardKeys({
   onClearSelection,
   hasSelection,
   onView,
+  onUndo,
+  onRedo,
   enabled,
 }: BoardKeyHandlers): void {
   useEffect(() => {
@@ -67,6 +72,15 @@ export function useBoardKeys({
       ) {
         return;
       }
+
+      // History works in either view and regardless of focus state.
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        if (event.shiftKey) onRedo();
+        else onUndo();
+        return;
+      }
+
       if (event.metaKey || event.ctrlKey || event.altKey) return;
 
       const flat = orderedCards(cards, columns);
@@ -181,6 +195,8 @@ export function useBoardKeys({
     onClearSelection,
     hasSelection,
     onView,
+    onUndo,
+    onRedo,
     enabled,
   ]);
 }

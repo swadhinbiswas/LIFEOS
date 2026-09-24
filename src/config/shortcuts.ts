@@ -45,6 +45,8 @@ export const KEY_BINDINGS: BindingGroup[] = [
       { keys: ["Del"], label: "delete" },
       { keys: ["c"], label: "carry over overdue" },
       { keys: ["1", "2"], label: "table / kanban" },
+      { keys: ["Ctrl", "Z"], label: "undo" },
+      { keys: ["Ctrl", "Shift", "Z"], label: "redo" },
     ],
   },
 ];
