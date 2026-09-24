@@ -20,6 +20,7 @@ export function BoardColumn({
   busy,
   onMove,
   onOpen,
+  focusedCardId,
   onAdd,
 }: {
   column: Column;
@@ -28,6 +29,7 @@ export function BoardColumn({
   busy: boolean;
   onMove: (cardId: string, direction: MoveDirection) => void;
   onOpen?: (cardId: string) => void;
+  focusedCardId?: string | null;
   onAdd: (columnId: string, title: string) => Promise<void> | void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id, data: { type: "column" } });
@@ -85,7 +87,14 @@ export function BoardColumn({
               strategy={verticalListSortingStrategy}
             >
               {sorted.map((card) => (
-                <CardTile key={card.id} card={card} query={query} onMove={onMove} onOpen={onOpen} />
+                <CardTile
+                  key={card.id}
+                  card={card}
+                  query={query}
+                  focused={card.id === focusedCardId}
+                  onMove={onMove}
+                  onOpen={onOpen}
+                />
               ))}
             </SortableContext>
             {sorted.length === 0 ? (
@@ -108,6 +117,7 @@ export function BoardColumn({
             </label>
             <input
               id={`add-${column.id}`}
+              data-new-item=""
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               placeholder="+ add card"

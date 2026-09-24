@@ -110,6 +110,7 @@ export function BoardToolbar({
       </label>
       <input
         id="board-search"
+        data-search=""
         value={query}
         onChange={(event) => onQuery(event.target.value)}
         placeholder="filter cards…"

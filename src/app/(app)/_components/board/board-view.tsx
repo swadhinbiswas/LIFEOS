@@ -13,7 +13,7 @@ import {
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useQueryState } from "nuqs";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   cardMatchesFilter,
@@ -28,6 +28,7 @@ import { CardSheet } from "./card-sheet";
 import { type MoveDirection } from "./card-tile";
 import { SavedViews } from "./saved-views";
 import { TableView } from "./table-view";
+import { useBoardKeys } from "./use-board-keys";
 import { useBoard } from "./use-board";
 
 const byPosition = (a: Card, b: Card) =>
@@ -55,6 +56,7 @@ export function BoardView({
   const [groupParam, setGroupParam] = useQueryState("group");
   const [cardParam, setCardParam] = useQueryState("card");
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [focusedId, setFocusedId] = useState<string | null>(null);
 
   const view = viewParam === "table" ? "table" : "kanban";
   const filters = useMemo(() => parseQuickFilters(filterParam), [filterParam]);
@@ -163,15 +165,15 @@ export function BoardView({
     void setFilterParam(serializeQuickFilters(next));
   };
 
-  /** The current URL state, captured by "save view" and replayed by "apply". */
-  const currentQuery = useMemo(() => {
-    const state: Record<string, string> = {};
-    if (viewParam === "table") state.view = "table";
-    if (filterParam) state.filter = filterParam;
-    if (groupParam) state.group = groupParam;
-    if (query) state.q = query;
-    return state;
-  }, [viewParam, filterParam, groupParam, query]);
+  /** The current URL state, captured by "save view" and replayed by "apply". */ const currentQuery =
+    useMemo(() => {
+      const state: Record<string, string> = {};
+      if (viewParam === "table") state.view = "table";
+      if (filterParam) state.filter = filterParam;
+      if (groupParam) state.group = groupParam;
+      if (query) state.q = query;
+      return state;
+    }, [viewParam, filterParam, groupParam, query]);
 
   const applyView = (state: Record<string, string>) => {
     void setViewParam(state.view === "table" ? "table" : null);
@@ -179,6 +181,43 @@ export function BoardView({
     void setGroupParam(state.group ?? null);
     void setQuery(state.q ?? null);
   };
+
+  /** Space toggles done: into the done column, or back to the first open one (spec §4.3). */
+  const toggleComplete = (card: Card) => {
+    const done = columns.find((column) => column.is_done);
+    const firstOpen = columns.find((column) => !column.is_done);
+    const target = done && card.column_id !== done.id ? done : firstOpen;
+    if (!target || target.id === card.column_id) return;
+    moveCard.mutate({
+      cardId: card.id,
+      version: card.version,
+      toColumnId: target.id,
+      prevCardId: cardsInColumn(target.id).at(-1)?.id ?? null,
+      nextCardId: null,
+    });
+  };
+
+  useBoardKeys({
+    cards: visibleCards,
+    columns,
+    focusedId,
+    setFocusedId,
+    onOpen: (cardId) => void setCardParam(cardId),
+    onToggleComplete: toggleComplete,
+    onReorder: (card, direction) => handleMove(card.id, direction),
+    onDelete: (card) => removeCard.mutate({ cardId: card.id }),
+    onView: (next) => void setViewParam(next === "kanban" ? null : "table"),
+    enabled: view === "kanban",
+  });
+
+  // Move real focus with the keyboard focus, so screen readers follow and the card is visible.
+  useEffect(() => {
+    if (!focusedId) return;
+    const element = document.querySelector<HTMLElement>(`[data-card-id="${focusedId}"]`);
+    if (!element) return;
+    element.focus({ preventScroll: true });
+    element.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [focusedId]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -250,6 +289,7 @@ export function BoardView({
                 busy={isFetching}
                 onMove={handleMove}
                 onOpen={(cardId) => void setCardParam(cardId)}
+                focusedCardId={focusedId}
                 onAdd={(columnId, title) => {
                   createCard.mutate({ columnId, title });
                 }}

@@ -22,11 +22,13 @@ const control =
 export function CardTile({
   card,
   query,
+  focused,
   onMove,
   onOpen,
 }: {
   card: Card;
   query: string;
+  focused?: boolean;
   onMove: (cardId: string, direction: MoveDirection) => void;
   onOpen?: (cardId: string) => void;
 }) {
@@ -43,8 +45,15 @@ export function CardTile({
       ref={setNodeRef}
       data-slot="card"
       data-card-id={card.id}
+      data-focused={focused ? "true" : undefined}
+      tabIndex={-1}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn("group/card border border-border bg-background", isDragging && "opacity-40")}
+      className={cn(
+        "group/card border border-border bg-background outline-none",
+        // Focus is communicated by the border token as well as the ring (spec §4.4).
+        focused && "border-ring ring-2 ring-ring/40",
+        isDragging && "opacity-40",
+      )}
     >
       <div className="flex items-start gap-1 p-2">
         <button

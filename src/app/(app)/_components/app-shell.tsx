@@ -14,6 +14,7 @@ import { useThemeStore } from "@/lib/theme-store";
 import { cn } from "@/lib/utils";
 
 import { CommandPalette } from "./command-palette";
+import { GlobalKeyboard } from "./global-keyboard";
 import { HelpOverlay } from "./help-overlay";
 
 /** Cycle order per ADR-028: `[` walks expanded → icon → full → expanded. */
@@ -164,6 +165,7 @@ export function AppShell({ user, children }: { user: { name: string }; children:
         <CommandPalette open onOpenChange={setPaletteOpen} onSignOut={() => void signOut()} />
       ) : null}
       <HelpOverlay open={helpOpen} onOpenChange={setHelpOpen} />
+      <GlobalKeyboard />
     </div>
   );
 }

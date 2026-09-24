@@ -73,6 +73,7 @@ export function CaptureBox({
       </label>
       <input
         id="capture-input"
+        data-new-item=""
         value={text}
         onChange={(event) => setText(event.target.value)}
         placeholder="buy milk tomorrow 5pm #home !2"
