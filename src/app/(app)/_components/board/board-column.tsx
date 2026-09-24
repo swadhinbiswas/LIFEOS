@@ -31,6 +31,7 @@ export function BoardColumn({
   onOpen,
   focusedCardId,
   selectedCardIds,
+  cardMeta,
   onToggleSelect,
   onAdd,
 }: {
@@ -42,6 +43,7 @@ export function BoardColumn({
   onOpen?: (cardId: string) => void;
   focusedCardId?: string | null;
   selectedCardIds?: string[];
+  cardMeta?: Record<string, Array<{ label: string; href?: string }>>;
   onToggleSelect?: (cardId: string) => void;
   onAdd: (columnId: string, title: string) => Promise<void> | void;
 }) {
@@ -72,6 +74,7 @@ export function BoardColumn({
       query={query}
       focused={card.id === focusedCardId}
       selected={selectedCardIds?.includes(card.id) ?? false}
+      meta={cardMeta?.[card.id]}
       onMove={onMove}
       onOpen={onOpen}
       onToggleSelect={onToggleSelect}

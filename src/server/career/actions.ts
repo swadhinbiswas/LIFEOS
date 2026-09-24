@@ -1,0 +1,77 @@
+"use server";
+
+import { ZodError } from "zod";
+
+import { BoardError } from "@/server/boards";
+import type { ActionResult } from "@/server/boards/actions";
+import { getServerSession } from "@/server/auth/session";
+
+import {
+  addInterview,
+  addOffer,
+  createJob,
+  getJobMeta,
+  updateJob,
+  type JobCardMeta,
+} from "@/server/career";
+import {
+  addInterviewInput,
+  addOfferInput,
+  createJobInput,
+  updateJobInput,
+} from "@/server/career/schemas";
+
+/**
+ * Thin Server-Action adapters over the career service (spec §7.2), same shape as the board
+ * actions: failures cross the boundary as a discriminated result because Next sanitizes thrown
+ * messages in production.
+ */
+
+async function run<T>(fn: (userId: string) => Promise<T>): Promise<ActionResult<T>> {
+  const session = await getServerSession();
+  if (!session) return { ok: false, code: "unauthorized", message: "you are signed out" };
+  try {
+    return { ok: true, data: await fn(session.user.id) };
+  } catch (error) {
+    if (error instanceof BoardError) return { ok: false, code: error.code, message: error.message };
+    if (error instanceof ZodError) {
+      return { ok: false, code: "invalid", message: "that input is not valid" };
+    }
+    console.error("[career] action failed", error);
+    return { ok: false, code: "invalid", message: "something went wrong — please retry" };
+  }
+}
+
+export async function createJobAction(
+  input: unknown,
+): Promise<ActionResult<{ cardId: string; applicationId: string }>> {
+  return run(async (userId) => {
+    const result = await createJob(userId, createJobInput.parse(input));
+    return { cardId: result.card.id, applicationId: result.application.id };
+  });
+}
+
+export async function updateJobAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    await updateJob(userId, updateJobInput.parse(input));
+    return null;
+  });
+}
+
+export async function jobMetaAction(): Promise<ActionResult<Record<string, JobCardMeta[]>>> {
+  return run((userId) => getJobMeta(userId));
+}
+
+export async function addInterviewAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    await addInterview(userId, addInterviewInput.parse(input));
+    return null;
+  });
+}
+
+export async function addOfferAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    await addOffer(userId, addOfferInput.parse(input));
+    return null;
+  });
+}

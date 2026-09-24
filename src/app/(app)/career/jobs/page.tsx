@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 
+import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
 import { getBoard } from "@/server/boards";
-import { ensureJobBoard } from "@/server/career";
+import { ensureJobBoard, getJobMeta } from "@/server/career";
 
 import { BoardView } from "../../_components/board/board-view";
+import { NewJobForm } from "./_components/new-job-form";
 
 export const metadata = { title: "Jobs" };
 
@@ -12,22 +14,35 @@ export const metadata = { title: "Jobs" };
  * `/career/jobs` (spec §6.3): the job pipeline *is* the board engine (ADR-044), so the page
  * creates the spec's pipeline board on first visit and hands it to the same `BoardView` the
  * task board uses — ordering, versions, filters, saved views, virtualisation and the keyboard
- * layer all come with it.
- *
- * The job-specific surfaces (company on the card face, interview log, offer comparison,
- * funnel) land in the following chunks.
+ * layer all come with it. Cards carry company / excitement / source chips and link to the
+ * job's own page.
  */
 export default async function JobsPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
   const board = await ensureJobBoard(session.user.id);
-  const payload = await getBoard(session.user.id, board.id);
+  const [payload, meta] = await Promise.all([
+    getBoard(session.user.id, board.id),
+    getJobMeta(session.user.id),
+  ]);
+
+  const cardMeta = Object.fromEntries(
+    Object.entries(meta).map(([cardId, chips]) => [
+      cardId,
+      chips.map((chip) => ({ label: chip.label, href: chip.detailHref })),
+    ]),
+  );
 
   return (
     <>
       <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Jobs</h1>
-      <BoardView boardId={board.id} initialData={payload} />
+      <div className="grid gap-4">
+        <Panel title="Add a job">
+          <NewJobForm boardId={board.id} />
+        </Panel>
+        <BoardView boardId={board.id} initialData={payload} cardMeta={cardMeta} />
+      </div>
     </>
   );
 }

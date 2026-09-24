@@ -68,6 +68,29 @@ export const moveJobStageInput = z.object({
   nextCardId: z.string().min(1).nullable(),
 });
 
+export const addInterviewInput = z.object({
+  applicationId: z.string().min(1),
+  kind: interviewKindSchema,
+  startsAt: z.coerce.date().nullable().optional(),
+  durationMin: z.number().int().min(0).max(1_440).nullable().optional(),
+  /** Interviewers as free text or JSON; stored as text, typed at the boundary. */
+  interviewers: optionalText(2_000),
+  feedback: optionalText(20_000),
+  rating: z.number().int().min(1).max(5).nullable().optional(),
+});
+
+export const addOfferInput = z.object({
+  applicationId: z.string().min(1),
+  base: minorUnits,
+  equity: minorUnits,
+  bonus: minorUnits,
+  currency: z.string().trim().length(3).nullable().optional(),
+  receivedAt: z.coerce.date().nullable().optional(),
+  notes: optionalText(20_000),
+});
+
 export type CreateJobInput = z.infer<typeof createJobInput>;
 export type UpdateJobInput = z.infer<typeof updateJobInput>;
 export type MoveJobStageInput = z.infer<typeof moveJobStageInput>;
+export type AddInterviewInput = z.infer<typeof addInterviewInput>;
+export type AddOfferInput = z.infer<typeof addOfferInput>;

@@ -43,9 +43,12 @@ const byPosition = (a: Card, b: Card) =>
 export function BoardView({
   boardId,
   initialData,
+  cardMeta,
 }: {
   boardId: string;
   initialData: BoardPayload;
+  /** Extra chips per card (the job board passes company/excitement; the task board none). */
+  cardMeta?: Record<string, Array<{ label: string; href?: string }>>;
 }) {
   const { payload, isFetching, moveCard, createCard, updateCard, removeCard } = useBoard(
     boardId,
@@ -372,6 +375,7 @@ export function BoardView({
                 onOpen={(cardId) => void setCardParam(cardId)}
                 focusedCardId={focusedId}
                 selectedCardIds={selectedIds}
+                cardMeta={cardMeta}
                 onToggleSelect={toggleSelect}
                 onAdd={(columnId, title) => {
                   createCard.mutate({ columnId, title });

@@ -1,8 +1,16 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
-import { board_columns, boards, cards, companies, job_applications } from "@/server/db/schema";
+import {
+  board_columns,
+  boards,
+  cards,
+  companies,
+  interviews,
+  job_applications,
+  offers,
+} from "@/server/db/schema";
 import {
   BoardError,
   createBoard,
@@ -13,7 +21,13 @@ import {
   type Card,
 } from "@/server/boards";
 
-import type { CreateJobInput, MoveJobStageInput, UpdateJobInput } from "./schemas";
+import type {
+  AddInterviewInput,
+  AddOfferInput,
+  CreateJobInput,
+  MoveJobStageInput,
+  UpdateJobInput,
+} from "./schemas";
 
 /**
  * Career service (spec §6.3, ADR-044). A job is a card, so ordering, versions and views stay
@@ -205,6 +219,138 @@ export async function moveJobStage(userId: string, input: MoveJobStageInput): Pr
     .where(and(eq(job_applications.id, application.id), eq(job_applications.user_id, userId)));
 
   return card;
+}
+
+/** Chip data for the job board's card faces, keyed by card id (the tasks board passes none). */
+export interface JobCardMeta {
+  label: string;
+  detailHref?: string;
+}
+
+export async function getJobMeta(userId: string): Promise<Record<string, JobCardMeta[]>> {
+  const rows = await db
+    .select({
+      cardId: job_applications.card_id,
+      company: companies.name,
+      excitement: job_applications.excitement,
+      source: job_applications.source,
+    })
+    .from(job_applications)
+    .leftJoin(companies, eq(companies.id, job_applications.company_id))
+    .where(eq(job_applications.user_id, userId));
+
+  const meta: Record<string, JobCardMeta[]> = {};
+  for (const row of rows) {
+    const chips: JobCardMeta[] = [];
+    if (row.company) chips.push({ label: row.company });
+    if (row.excitement !== null) chips.push({ label: `★${row.excitement}` });
+    if (row.source) chips.push({ label: row.source });
+    // The board leads to the job's own page; the card sheet stays for quick edits.
+    chips.push({ label: "detail →", detailHref: `/career/jobs/${row.cardId}` });
+    meta[row.cardId] = chips;
+  }
+  return meta;
+}
+
+export interface JobDetail {
+  card: Card;
+  application: JobApplication;
+  company: { id: string; name: string } | null;
+  interviews: Array<typeof interviews.$inferSelect>;
+  offers: Array<typeof offers.$inferSelect>;
+}
+
+/** The job's page: application fields, company, interview log and offers. Null when unknown. */
+export async function getJobDetail(userId: string, cardId: string): Promise<JobDetail | null> {
+  const [application] = await db
+    .select()
+    .from(job_applications)
+    .where(and(eq(job_applications.user_id, userId), eq(job_applications.card_id, cardId)))
+    .limit(1);
+  if (!application) return null;
+
+  const [card] = await db
+    .select()
+    .from(cards)
+    .where(and(eq(cards.id, cardId), eq(cards.user_id, userId), isNull(cards.deleted_at)))
+    .limit(1);
+  if (!card) return null;
+
+  let company: { id: string; name: string } | null = null;
+  if (application.company_id) {
+    const [row] = await db
+      .select({ id: companies.id, name: companies.name })
+      .from(companies)
+      .where(and(eq(companies.id, application.company_id), eq(companies.user_id, userId)))
+      .limit(1);
+    company = row ?? null;
+  }
+
+  const interviewRows = await db
+    .select()
+    .from(interviews)
+    .where(and(eq(interviews.user_id, userId), eq(interviews.job_application_id, application.id)))
+    .orderBy(desc(interviews.starts_at));
+
+  const offerRows = await db
+    .select()
+    .from(offers)
+    .where(and(eq(offers.user_id, userId), eq(offers.job_application_id, application.id)))
+    .orderBy(desc(offers.received_at));
+
+  return {
+    card,
+    application,
+    company,
+    interviews: interviewRows,
+    offers: offerRows,
+  };
+}
+
+export async function addInterview(
+  userId: string,
+  input: AddInterviewInput,
+): Promise<typeof interviews.$inferSelect> {
+  await requireApplication(userId, input.applicationId);
+  const [row] = await db
+    .insert(interviews)
+    .values({
+      id: newId(),
+      user_id: userId,
+      job_application_id: input.applicationId,
+      kind: input.kind,
+      starts_at: input.startsAt ?? null,
+      duration_min: input.durationMin ?? null,
+      interviewers: input.interviewers ?? null,
+      feedback: input.feedback ?? null,
+      rating: input.rating ?? null,
+    })
+    .returning();
+  if (!row) throw new BoardError("invalid", "interview insert returned no row");
+  return row;
+}
+
+export async function addOffer(
+  userId: string,
+  input: AddOfferInput,
+): Promise<typeof offers.$inferSelect> {
+  await requireApplication(userId, input.applicationId);
+  const [row] = await db
+    .insert(offers)
+    .values({
+      id: newId(),
+      user_id: userId,
+      job_application_id: input.applicationId,
+      base: input.base ?? null,
+      equity: input.equity ?? null,
+      bonus: input.bonus ?? null,
+      currency: input.currency ?? null,
+      received_at: input.receivedAt ?? null,
+      notes: input.notes ?? null,
+    })
+    .returning();
+  if (!row) throw new BoardError("invalid", "offer insert returned no row");
+  return row;
 }
 
 export interface FunnelStage {

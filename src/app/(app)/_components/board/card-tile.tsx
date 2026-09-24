@@ -24,6 +24,7 @@ export function CardTile({
   query,
   focused,
   selected,
+  meta,
   onMove,
   onOpen,
   onToggleSelect,
@@ -32,6 +33,7 @@ export function CardTile({
   query: string;
   focused?: boolean;
   selected?: boolean;
+  meta?: Array<{ label: string; href?: string }>;
   onMove: (cardId: string, direction: MoveDirection) => void;
   onOpen?: (cardId: string) => void;
   onToggleSelect?: (cardId: string) => void;
@@ -80,6 +82,21 @@ export function CardTile({
             {due ? <time dateTime={due}>{due}</time> : null}
             {matches ? <span className="text-primary">match</span> : null}
           </p>
+          {meta && meta.length > 0 ? (
+            <p className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[10px]">
+              {meta.map((chip) =>
+                chip.href ? (
+                  <a key={chip.label} href={chip.href} className="text-primary hover:underline">
+                    {chip.label}
+                  </a>
+                ) : (
+                  <span key={chip.label} className="text-muted-foreground">
+                    {chip.label}
+                  </span>
+                ),
+              )}
+            </p>
+          ) : null}
         </div>
       </div>
 
