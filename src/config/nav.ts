@@ -7,6 +7,7 @@ import {
   Palette,
   MessageSquareQuote,
   Repeat,
+  Target,
   Sparkles,
   UserRound,
   type LucideIcon,
@@ -25,6 +26,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: "/tasks", label: "Tasks", icon: ListTodo },
   { href: "/habits", label: "Habits", icon: Repeat },
+  { href: "/goals", label: "Goals", icon: Target },
   { href: "/inbox", label: "Inbox", icon: Inbox },
   { href: "/boards", label: "Boards", icon: LayoutGrid },
   { href: "/career/jobs", label: "Jobs", icon: Briefcase },

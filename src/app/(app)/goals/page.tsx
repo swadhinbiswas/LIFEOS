@@ -1,0 +1,112 @@
+import { redirect } from "next/navigation";
+
+import { Panel } from "@/components/tui/panel";
+import { getServerSession } from "@/server/auth/session";
+import { listGoals } from "@/server/goals";
+
+import {
+  AddGoalForm,
+  AddKeyResultForm,
+  GoalStatusButton,
+  KeyResultControls,
+} from "./_components/goals-controls";
+
+export const metadata = { title: "Goals" };
+
+/**
+ * `/goals` (spec §6.4): objectives with key results. Every percentage is derived (key results
+ * over their targets, linked results over the cards and habits behind them), so an objective can
+ * never report progress its work does not support. The check-in banner is derived too: an active
+ * goal whose key results have not moved for a week.
+ */
+export default async function GoalsPage() {
+  const session = await getServerSession();
+  if (!session) redirect("/sign-in");
+
+  const goals = await listGoals(session.user.id);
+  const stale = goals.filter((goal) => goal.needsCheckIn).length;
+
+  return (
+    <>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Goals</h1>
+
+      <div className="grid max-w-4xl gap-4">
+        {stale > 0 ? (
+          <Panel title="Check-in" hint={`${stale}`}>
+            <p role="status" className="font-mono text-xs text-warning">
+              {stale} objective{stale === 1 ? "" : "s"} have not moved in a week — a five-minute
+              check-in keeps the numbers honest.
+            </p>
+          </Panel>
+        ) : null}
+
+        <Panel title="New objective">
+          <AddGoalForm />
+        </Panel>
+
+        {goals.length === 0 ? (
+          <Panel title="Objectives">
+            <p className="font-mono text-xs text-muted-foreground">
+              no objectives yet — add one above and give it measurable key results
+            </p>
+          </Panel>
+        ) : (
+          goals.map((goal) => (
+            <Panel
+              key={goal.goal.id}
+              title={goal.goal.title}
+              hint={`${goal.progress}% · ${goal.goal.period ?? "no cycle"}${goal.goal.status !== "active" ? ` · ${goal.goal.status}` : ""}`}
+            >
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <span aria-hidden="true" className="font-mono text-[10px] text-primary">
+                    {"▇".repeat(Math.round(goal.progress / 10))}
+                  </span>
+                  <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
+                    {goal.progress}%
+                  </span>
+                  {goal.links.total > 0 ? (
+                    <span className="font-mono text-[10px] text-muted-foreground">
+                      linked {goal.links.done}/{goal.links.total}
+                    </span>
+                  ) : null}
+                  <span className="ml-auto">
+                    <GoalStatusButton goalId={goal.goal.id} status={goal.goal.status} />
+                  </span>
+                </div>
+
+                {goal.keyResults.length === 0 ? (
+                  <p className="font-mono text-xs text-muted-foreground">
+                    no key results yet — what would make this objective true?
+                  </p>
+                ) : (
+                  <ul className="flex flex-col gap-1">
+                    {goal.keyResults.map((entry) => (
+                      <li
+                        key={entry.row.id}
+                        data-slot="key-result-row"
+                        data-key-result-id={entry.row.id}
+                        className="flex flex-wrap items-center gap-3 border border-border px-2 py-1 font-mono text-xs"
+                      >
+                        <span className="min-w-0 flex-1 truncate">{entry.row.title}</span>
+                        <span className="text-muted-foreground">{entry.row.kind}</span>
+                        <KeyResultControls
+                          keyResultId={entry.row.id}
+                          current={entry.row.current}
+                          kind={entry.row.kind}
+                        />
+                        <span className="w-10 text-right tabular-nums">{entry.progress}%</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <AddKeyResultForm goalId={goal.goal.id} />
+              </div>
+            </Panel>
+          ))
+        )}
+      </div>
+    </>
+  );
+}
