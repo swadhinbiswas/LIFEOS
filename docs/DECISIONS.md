@@ -1166,6 +1166,34 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-051 — Offline quick capture: a localStorage queue replayed on reconnect (PWA rest deferred)
+
+- **Status:** accepted (2026-09-24)
+- **Context:** MVP #29 lists installable PWA, offline read cache and an offline quick-capture queue.
+  The Phase 4 acceptance names only the last one ("offline quick-capture syncs after reconnect").
+  The §4.3 grammar box lives on `/inbox` and calls `captureTaskAction`, which needs the network.
+- **Decision:**
+  - **Ship the capture queue now.** `src/lib/capture-queue.ts` is a `localStorage`-backed queue of
+    `{text, columnName}` entries; when `navigator.onLine` returns, a shell component replays them
+    oldest-first through the existing `captureTaskAction` and stops at the first failure so the
+    rest survive for the next attempt. It is pure and takes its sender as an argument, so the
+    queue logic is unit-tested without a network.
+  - **No service worker and no offline read cache yet.** Installability and reading the app
+    offline are separate, larger surfaces that the acceptance does not require; a partial service
+    worker risks serving stale caches. They are deferred to a later PWA chunk and MVP-SCOPE #29 is
+    annotated to say so.
+  - **A queue is safe here because capture is append-only.** Replay creates exactly one card per
+    entry; a general offline mutation queue would need the conflict policy this deliberately
+    avoids.
+  - Replay is triggered on the `online` event and on mount, and invalidates the board query so a
+    synced card appears without a manual reload.
+- **Consequences:** captures are never lost to a tunnel, and the offline path reuses the same
+  service as the online one rather than a second writer. Cost: one small module and a shell
+  status; the PWA installability/read-cache work is now an explicit remaining item rather than an
+  assumption.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { Kbd } from "@/components/tui/kbd";
+import { enqueue } from "@/lib/capture-queue";
 import type { ParsedCapture } from "@/server/capture";
 import { captureTaskAction, previewCaptureAction } from "@/server/capture/actions";
 import { boardQueryKey } from "./use-board";
@@ -39,10 +40,15 @@ export function CaptureBox({
   useEffect(() => {
     const trimmed = text.trim();
     if (trimmed === "") return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) return; // no preview offline
     const timer = setTimeout(() => {
-      void previewCaptureAction({ text: trimmed }).then((result) => {
-        if (result.ok) setPreview(result.data);
-      });
+      void previewCaptureAction({ text: trimmed })
+        .then((result) => {
+          if (result.ok) setPreview(result.data);
+        })
+        .catch(() => {
+          /* offline mid-typing — the preview is a nicety, never an error */
+        });
     }, 200);
     return () => clearTimeout(timer);
   }, [text]);
@@ -55,15 +61,35 @@ export function CaptureBox({
     if (trimmed === "") return;
     setBusy(true);
     setError("");
-    const result = await captureTaskAction({ text: trimmed, columnName });
-    setBusy(false);
-    if (!result.ok) {
-      setError(result.message);
+
+    const queueIt = () => {
+      enqueue({ text: trimmed, columnName });
+      setPreview(null);
+      setText("");
+    };
+
+    // Offline (ADR-051): hold it in the queue and let the shell replay it on reconnect.
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      queueIt();
+      setBusy(false);
       return;
     }
-    setPreview(null);
-    setText("");
-    void queryClient.invalidateQueries({ queryKey: boardQueryKey(boardId) });
+
+    try {
+      const result = await captureTaskAction({ text: trimmed, columnName });
+      setBusy(false);
+      if (!result.ok) {
+        setError(result.message);
+        return;
+      }
+      setPreview(null);
+      setText("");
+      void queryClient.invalidateQueries({ queryKey: boardQueryKey(boardId) });
+    } catch {
+      // The connection dropped mid-request; keep the capture rather than lose it.
+      queueIt();
+      setBusy(false);
+    }
   }
 
   return (

@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { CommandPalette } from "./command-palette";
 import { GlobalKeyboard } from "./global-keyboard";
 import { HelpOverlay } from "./help-overlay";
+import { OfflineCapture } from "./offline-capture";
 
 /** Cycle order per ADR-028: `[` walks expanded → icon → full → expanded. */
 const SIDEBAR_MODES: readonly string[] = ["expanded", "icon", "full"];
@@ -197,6 +198,7 @@ export function AppShell({
               stop focus
             </Button>
           ) : null}
+          <OfflineCapture />
           <Link
             href="/notifications"
             data-slot="notification-bell"
