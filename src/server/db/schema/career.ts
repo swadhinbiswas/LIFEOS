@@ -203,6 +203,8 @@ export const skills = sqliteTable(
     level: integer("level"),
     /** JSON list of `{label, url}` evidence links. */
     evidence: text("evidence"),
+    /** Imported sample rows are labelled (spec §12) and never mixed in silently. */
+    is_demo: integer("is_demo", { mode: "boolean" }).notNull().default(false),
     ...timestamps(),
   },
   (t) => [uniqueIndex("skills_user_name_unq").on(t.user_id, t.name)],
@@ -221,6 +223,7 @@ export const achievements = sqliteTable(
     impact: text("impact"),
     occurred_at: integer("occurred_at", { mode: "timestamp_ms" }),
     links: text("links"),
+    is_demo: integer("is_demo", { mode: "boolean" }).notNull().default(false),
     ...timestamps(),
   },
   (t) => [index("achievements_user_idx").on(t.user_id, t.occurred_at)],
@@ -239,6 +242,7 @@ export const projects = sqliteTable(
     repo: text("repo"),
     tech: text("tech"),
     featured: integer("featured", { mode: "boolean" }).notNull().default(false),
+    is_demo: integer("is_demo", { mode: "boolean" }).notNull().default(false),
     ...timestamps(),
   },
   (t) => [index("projects_user_idx").on(t.user_id, t.name)],

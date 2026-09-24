@@ -15,6 +15,11 @@ import {
   type JobCardMeta,
 } from "@/server/career";
 import {
+  clearSampleGrowth,
+  importSamplePortfolio,
+  type ImportSummary,
+} from "@/server/career/growth";
+import {
   addInterviewInput,
   addOfferInput,
   createJobInput,
@@ -74,4 +79,12 @@ export async function addOfferAction(input: unknown): Promise<ActionResult<null>
     await addOffer(userId, addOfferInput.parse(input));
     return null;
   });
+}
+
+export async function importSamplePortfolioAction(): Promise<ActionResult<ImportSummary>> {
+  return run((userId) => importSamplePortfolio(userId));
+}
+
+export async function clearSampleGrowthAction(): Promise<ActionResult<{ removed: number }>> {
+  return run(async (userId) => ({ removed: await clearSampleGrowth(userId) }));
 }

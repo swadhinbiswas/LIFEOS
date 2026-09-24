@@ -22,6 +22,13 @@
       "when": 1790239790675,
       "tag": "0002_acoustic_sumo",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1790243729569,
+      "tag": "0003_stiff_skrulls",
+      "breakpoints": true
     }
   ]
 }

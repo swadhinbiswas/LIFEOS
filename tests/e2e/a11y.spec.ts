@@ -64,6 +64,7 @@ const SHELL_ROUTES = [
   "/boards",
   "/career/jobs",
   "/career/analytics",
+  "/career/portfolio",
 ];
 
 /**
