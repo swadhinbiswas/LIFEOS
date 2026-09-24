@@ -1248,6 +1248,31 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-054 — Reminders: one pending reminder per card, delivered through the notification sweep
+
+- **Status:** accepted (2026-09-24)
+- **Context:** the `reminders` table (polymorphic `entity_type`/`entity_id`, `fire_at`, `sent_at`)
+  has existed since the board schema with no consumer. ADR-050 routed subscription renewals through
+  the notification sweep rather than a scheduler; the same reasoning applies to an explicit
+  "remind me" the user sets on a card.
+- **Decision:**
+  - **One pending reminder per entity.** Setting a reminder again replaces the previous unsent row,
+    and clearing deletes it; a list of reminders per card is a bigger UI than the MVP needs.
+  - **The card sheet gets the control** (`remind me`, a `datetime-local` input with set and clear),
+    read and written through `src/server/reminders`.
+  - **Delivery is the notification sweep** (kind `task`, title `reminder: <card title>`), not a
+    worker: a due, unsent reminder becomes a notification keyed `reminder:<id>` and is marked sent
+    in the same pass, so the sweep stays idempotent and `reminders` finally has a consumer.
+  - **Card reminders only for now** — the polymorphic column is already there for notes and jobs, but
+    nothing depends on them yet.
+  - **One-shot, no recurrence:** a reminder fires once; recurring nudges are what the subscription
+    sweep is for (ADR-050).
+- **Consequences:** a user can be nudged at a chosen moment, and the two "when should this surface"
+  features share one delivery path with one set of read/mark semantics. Cost: a small service, one
+  more sweep source, and a card-sheet control.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

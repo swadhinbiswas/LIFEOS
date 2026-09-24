@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Card } from "@/server/boards";
 
 import { CardGoals } from "./card-goals";
+import { CardReminder } from "./card-reminder";
 import type { UpdateCardVars } from "./use-board";
 
 const PRIORITIES = [
@@ -202,8 +203,9 @@ export function CardSheet({
             </Button>
           </div>
 
-          <div className="border-t border-border pt-3">
+          <div className="flex flex-col gap-3 border-t border-border pt-3">
             <CardGoals cardId={card.id} />
+            <CardReminder cardId={card.id} />
           </div>
 
           <div className="flex items-center gap-2 border-t border-border pt-3">

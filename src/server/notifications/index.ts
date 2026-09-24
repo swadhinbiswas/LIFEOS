@@ -8,6 +8,7 @@ import { listSubscriptions } from "@/server/finance";
 import { formatMinor } from "@/server/finance/money";
 import { listHabits } from "@/server/habits";
 import { dayKey, shiftDay } from "@/server/habits/streak";
+import { dueReminders, markReminderSent } from "@/server/reminders";
 
 import { endOfUtcDay, startOfUtcDay, weekKey } from "./windows";
 
@@ -176,6 +177,23 @@ async function subscriptionDrafts(userId: string, now: Date): Promise<Draft[]> {
 }
 
 /**
+ * A due card reminder becomes a notification once, keyed by the reminder row itself, and is marked
+ * sent in the same pass (ADR-054) — so the sweep stays idempotent and no worker is needed.
+ */
+async function reminderDrafts(userId: string, now: Date): Promise<Draft[]> {
+  const due = await dueReminders(userId, now);
+  const drafts = due.map((reminder) => ({
+    kind: "task" as const,
+    title: `reminder: ${reminder.title}`,
+    body: "you asked to be reminded",
+    href: reminder.href,
+    dedupeKey: `reminder:${reminder.id}`,
+  }));
+  for (const reminder of due) await markReminderSent(userId, reminder.id, now);
+  return drafts;
+}
+
+/**
  * Evaluate every source and insert the drafts that are not already present. Returns how many
  * rows the sweep actually created (0 on a repeat), which is what the tests assert on.
  */
@@ -185,6 +203,7 @@ export async function sweepNotifications(userId: string, now: Date = new Date())
     ...(await habitDrafts(userId, now)),
     ...(await jobDrafts(userId, now)),
     ...(await subscriptionDrafts(userId, now)),
+    ...(await reminderDrafts(userId, now)),
   ];
   if (drafts.length === 0) return 0;
 
