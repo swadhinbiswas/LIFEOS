@@ -1,0 +1,15 @@
+{
+  "About": {
+    "title": "About",
+    "panelTitle": "What LifeOS is",
+    "intro": "A personal operating system: boards, career, habits and money, in a keyboard-first, terminal-styled web app.",
+    "features": {
+      "boards": "Boards: kanban and table views, calendar, trash and offline capture.",
+      "career": "Career: a job pipeline, CV, interview prep and growth surfaces.",
+      "life": "Life: habits, goals, notes, focus, finance, health and learning.",
+      "global": "Global: notifications, tags, search and a command palette."
+    },
+    "language": "Language",
+    "languageHint": "This page is translated. The rest of the app is English while the locales are filled in."
+  }
+}

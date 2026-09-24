@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Fira_Code, IBM_Plex_Mono, JetBrains_Mono } from "next/font/google";
 import { GeistMono } from "geist/font/mono";
 import { cookies } from "next/headers";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 
 import { APP_DESCRIPTION, APP_NAME, THEME_COOKIE } from "@/config/app";
 import { accentCssVars, parseThemeOverrides, themeAttrs } from "@/config/themes";
@@ -48,10 +50,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const overrides = parseThemeOverrides(cookieStore.get(THEME_COOKIE)?.value);
   // SSR cannot know the OS preference → assume dark; SYSTEM_MODE_SCRIPT corrects before paint.
   const attrs = themeAttrs(overrides, true);
+  // Locale is a cookie (ADR-053), so it is available before any session is resolved.
+  const locale = await getLocale();
+  const messages = await getMessages();
 
   return (
     <html
-      lang="en"
+      lang={locale}
       suppressHydrationWarning
       className={cn(
         jetbrains.variable,
@@ -69,7 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <script dangerouslySetInnerHTML={{ __html: SYSTEM_MODE_SCRIPT }} />
       </head>
       <body className="min-h-dvh antialiased">
-        {children}
+        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
         <Toaster />
       </body>
     </html>

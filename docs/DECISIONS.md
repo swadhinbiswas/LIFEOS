@@ -1223,6 +1223,31 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-053 — i18n scaffold: next-intl with a cookie locale, no locale-prefixed routing
+
+- **Status:** accepted (2026-09-24)
+- **Context:** §6.9 asks to be "i18n-ready from day one (next-intl; ship en, scaffold bn with a
+  working example page)" (MVP #30). Locale-prefixed routing (`/[locale]/…`) is next-intl's default
+  but would move every route and rewrite every e2e/a11y path for a scaffold; lifeOS already has a
+  `proxy.ts` (ADR-026) that it would have to compose with.
+- **Decision:**
+  - Use next-intl **without locale-based routing**. `i18n/request.ts` reads a `NEXT_LOCALE`
+    cookie (English fallback); the root layout provides `NextIntlClientProvider` and sets
+    `<html lang>` from `getLocale()`. No route restructuring, no new middleware.
+  - Ship **`en` and `bn`** catalogs and one fully translated example page, **`/about`**, with a
+    locale switch (a server action sets the cookie). The rest of the app stays English for now —
+    the scaffold proves the pipeline end to end, and translation is incremental.
+  - **Locale lives in a cookie, not `user_settings`**, for now: it must be readable during SSR
+    before the session resolves (the auth pages need it too). A per-user setting can mirror it
+    later without changing how the locale is read.
+  - Date and number formatting stay UTC/`en`; per-user timezone formatting is the separate §6.9
+    timezone item (ADR-052 already uses UTC day keys).
+- **Consequences:** locale switching works today with a ten-line provider and no routing churn, and
+  adding a locale is one JSON file. Cost: translated pathnames and per-user locale persistence are
+  not claimed yet; they arrive with the settings suite.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

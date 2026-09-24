@@ -14,6 +14,7 @@ import {
   ClipboardCheck,
   GraduationCap,
   HeartPulse,
+  Info,
   Wallet,
   Target,
   Sparkles,
@@ -53,4 +54,5 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/career/interview-prep", label: "Prep", icon: MessageSquareQuote },
   { href: "/settings", label: "Profile", icon: UserRound },
   { href: "/settings/appearance", label: "Appearance", icon: Palette },
+  { href: "/about", label: "About", icon: Info },
 ];
