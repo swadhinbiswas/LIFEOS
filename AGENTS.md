@@ -12,7 +12,7 @@ career/CV, habits, notes, finance) rendered as a keyboard-first, TUI-skinned web
    is not optional, never commit secrets, ask only when genuinely blocked.
 2. **Phase gate:** do not start phase N+1 until phase N's checks pass and a status report has been
    given to the user. The user asked to stop at each phase boundary and report.
-   - Current phase: **4 → complete** (dashboards + life modules; gate green: 198 unit, 40 e2e,
+   - Current phase: **4 → complete** (dashboards + life modules; gate green: 200 unit, 41 e2e,
      build, typecheck, lint). Next: **Phase 5, awaiting the user's go-ahead**.
 
 ## Repository map

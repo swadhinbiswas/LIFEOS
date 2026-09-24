@@ -1297,6 +1297,30 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-056 — Card links: card↔card relations from the card sheet
+
+- **Status:** accepted (2026-09-24)
+- **Context:** §6.9 asks for "tags and linking everywhere"; `card_links` (polymorphic
+  `src_type`/`src_id`, `dst_type`/`dst_id`, `link_kind` in `relates | blocks | duplicates`) has
+  existed since the board schema with no UI. ADR-049 wired card→goal links and left card↔card open.
+- **Decision:**
+  - **Card→card links, directional, with a kind.** The sheet links the open card to another of the
+    user's cards and chooses `relates` / `blocks` / `duplicates`; the list shows the open card's
+    outgoing links with unlink. Incoming links are not rendered (the same relation read the other
+    way), which keeps the sheet to one growing list.
+  - **Both endpoints are ownership-checked on write**, and the read joins `cards` on the user, so a
+    forged id cannot create or surface a link across tenants.
+  - **A simple picker, not a search UI:** up to the hundred most recently updated cards as a
+    `<select>` (the same shape as the goal picker). A searchable combobox is a later refinement;
+    building one now would be UI the MVP does not need.
+  - **Duplicate (src, dst, kind) links are ignored on insert** rather than erroring — clicking link
+    twice is not a failure.
+- **Consequences:** "linking everywhere" now covers goals and cards on the surfaces that exist.
+  Cost: a small service plus a sheet section; the polymorphic columns still leave notes/jobs open
+  for when they need the same relation.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

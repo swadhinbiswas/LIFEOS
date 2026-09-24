@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import type { Card } from "@/server/boards";
 
 import { CardGoals } from "./card-goals";
+import { CardLinks } from "./card-links";
 import { CardReminder } from "./card-reminder";
 import type { UpdateCardVars } from "./use-board";
 
@@ -206,6 +207,7 @@ export function CardSheet({
           <div className="flex flex-col gap-3 border-t border-border pt-3">
             <CardGoals cardId={card.id} />
             <CardReminder cardId={card.id} />
+            <CardLinks cardId={card.id} />
           </div>
 
           <div className="flex items-center gap-2 border-t border-border pt-3">
