@@ -26,6 +26,7 @@ import { BoardColumn } from "./board-column";
 import { BoardToolbar, type GroupBy } from "./board-toolbar";
 import { CardSheet } from "./card-sheet";
 import { type MoveDirection } from "./card-tile";
+import { SavedViews } from "./saved-views";
 import { TableView } from "./table-view";
 import { useBoard } from "./use-board";
 
@@ -162,6 +163,23 @@ export function BoardView({
     void setFilterParam(serializeQuickFilters(next));
   };
 
+  /** The current URL state, captured by "save view" and replayed by "apply". */
+  const currentQuery = useMemo(() => {
+    const state: Record<string, string> = {};
+    if (viewParam === "table") state.view = "table";
+    if (filterParam) state.filter = filterParam;
+    if (groupParam) state.group = groupParam;
+    if (query) state.q = query;
+    return state;
+  }, [viewParam, filterParam, groupParam, query]);
+
+  const applyView = (state: Record<string, string>) => {
+    void setViewParam(state.view === "table" ? "table" : null);
+    void setFilterParam(state.filter ?? null);
+    void setGroupParam(state.group ?? null);
+    void setQuery(state.q ?? null);
+  };
+
   return (
     <div className="flex flex-col gap-3">
       <BoardToolbar
@@ -176,6 +194,12 @@ export function BoardView({
         count={visibleCards.length}
         syncing={isFetching}
         showGroup={view === "table"}
+      />
+
+      <SavedViews
+        scope={payload.board.is_system ? "tasks" : "board"}
+        current={currentQuery}
+        onApply={applyView}
       />
 
       {view === "table" ? (

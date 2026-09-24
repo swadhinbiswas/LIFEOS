@@ -173,4 +173,15 @@ test("table view: sorting, quick filters and grouping", async ({ page }) => {
   await page.getByLabel("group").selectOption("priority");
   await expect(table.locator("section h2")).toHaveCount(2);
   await expect(table.locator("section", { hasText: "p0" })).toContainText("alpha task");
+
+  // Save the current view, reload, and apply it back from the saved-views list.
+  await page.getByLabel("name for the current view").fill("grouped table");
+  await page.getByRole("button", { name: "save view" }).click();
+  await page.goto("/tasks");
+  const viewSelect = page.getByLabel("views");
+  await expect(viewSelect.locator("option", { hasText: "grouped table" })).toHaveCount(1);
+  await viewSelect.selectOption({ label: "grouped table" });
+  await expect(page).toHaveURL(/view=table/u);
+  await expect(page).toHaveURL(/group=priority/u);
+  await expect(table.locator("section h2")).toHaveCount(2);
 });

@@ -22,8 +22,17 @@ import {
   createBoardInput,
   createCardInput,
   moveCardInput,
+  savedViewIdInput,
+  savedViewInput,
+  savedViewScopeInput,
   updateCardInput,
 } from "@/server/boards/schemas";
+import {
+  createSavedView,
+  deleteSavedView,
+  listSavedViews,
+  type SavedView,
+} from "@/server/boards/views";
 import { getServerSession } from "@/server/auth/session";
 import type { Board } from "@/server/boards";
 
@@ -117,6 +126,21 @@ export async function deleteCardAction(input: unknown): Promise<ActionResult<nul
 export async function restoreCardAction(input: unknown): Promise<ActionResult<null>> {
   return run(async (userId) => {
     await restoreCardService(userId, cardIdInput.parse(input).cardId);
+    return null;
+  });
+}
+
+export async function listSavedViewsAction(input: unknown): Promise<ActionResult<SavedView[]>> {
+  return run((userId) => listSavedViews(userId, savedViewScopeInput.parse(input).scope));
+}
+
+export async function createSavedViewAction(input: unknown): Promise<ActionResult<SavedView>> {
+  return run((userId) => createSavedView(userId, savedViewInput.parse(input)));
+}
+
+export async function deleteSavedViewAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    await deleteSavedView(userId, savedViewIdInput.parse(input).id);
     return null;
   });
 }

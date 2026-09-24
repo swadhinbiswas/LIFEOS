@@ -101,6 +101,19 @@ export const moveCardInput = z.object({
 
 export const cardIdInput = z.object({ cardId: z.string().min(1) });
 
+export const savedViewScopeSchema = z.enum(["tasks", "jobs", "board"]);
+
+export const savedViewInput = z.object({
+  scope: savedViewScopeSchema,
+  name: z.string().trim().min(1).max(80),
+  /** The board URL state (view/filter/group/q) as string params. */
+  query: z.record(z.string(), z.string().max(500)),
+});
+
+export const savedViewScopeInput = z.object({ scope: savedViewScopeSchema });
+
+export const savedViewIdInput = z.object({ id: z.string().min(1) });
+
 export type CreateBoardInput = z.infer<typeof createBoardInput>;
 export type UpdateBoardInput = z.infer<typeof updateBoardInput>;
 export type CreateColumnInput = z.infer<typeof createColumnInput>;
