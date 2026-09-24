@@ -2,16 +2,25 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useState } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useRef, useState } from "react";
 
 import type { BoardColumn as Column, Card } from "@/server/boards";
 import { cn } from "@/lib/utils";
 
 import { CardTile, type MoveDirection } from "./card-tile";
 
+/** Below this many cards a plain list is simpler; above it the column virtualizes. */
+export const VIRTUALIZE_AFTER = 100;
+
 /**
  * One kanban column: droppable body, WIP meter (soft warning per spec §6.1), collapsible
  * header and a quick-add row that keeps focus so Enter adds another card.
+ *
+ * Long columns virtualize with `@tanstack/react-virtual` (spec §6.1 "render 1,000+ cards
+ * smoothly", Phase 2 acceptance at 500): only the visible rows mount, and dynamic measurement
+ * keeps variable-height cards honest. The list is a `role="list"` of `role="listitem"` cards
+ * so the virtualized wrapper stays valid markup.
  */
 export function BoardColumn({
   column,
@@ -38,6 +47,30 @@ export function BoardColumn({
 
   const overLimit = column.wip_limit !== null && cards.length > column.wip_limit;
   const sorted = [...cards].sort((a, b) => (a.position < b.position ? -1 : 1));
+
+  const listRef = useRef<HTMLUListElement | null>(null);
+  const virtualize = sorted.length > VIRTUALIZE_AFTER;
+  // TanStack Virtual returns functions that are intentionally not memoizable; the rule's
+  // warning is a documented false positive for this API.
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const virtualizer = useVirtualizer({
+    count: sorted.length,
+    getScrollElement: () => listRef.current,
+    estimateSize: () => 84,
+    overscan: 8,
+    enabled: virtualize,
+  });
+  const virtualRows = virtualizer.getVirtualItems();
+
+  const renderCard = (card: Card) => (
+    <CardTile
+      card={card}
+      query={query}
+      focused={card.id === focusedCardId}
+      onMove={onMove}
+      onOpen={onOpen}
+    />
+  );
 
   return (
     <section
@@ -79,26 +112,67 @@ export function BoardColumn({
       {!collapsed ? (
         <>
           <ul
-            ref={setNodeRef}
-            className={cn("flex min-h-16 flex-col gap-1 p-1", isOver && "bg-accent")}
+            ref={(node) => {
+              setNodeRef(node);
+              listRef.current = node;
+            }}
+            data-virtualized={virtualize ? "true" : undefined}
+            className={cn(
+              "flex min-h-16 flex-col gap-1 p-1",
+              isOver && "bg-accent",
+              virtualize && "max-h-[70vh] overflow-y-auto",
+            )}
           >
             <SortableContext
               items={sorted.map((card) => card.id)}
               strategy={verticalListSortingStrategy}
             >
-              {sorted.map((card) => (
-                <CardTile
-                  key={card.id}
-                  card={card}
-                  query={query}
-                  focused={card.id === focusedCardId}
-                  onMove={onMove}
-                  onOpen={onOpen}
-                />
-              ))}
+              {virtualize ? (
+                <li
+                  style={{
+                    height: virtualizer.getTotalSize(),
+                    position: "relative",
+                    width: "100%",
+                    listStyle: "none",
+                  }}
+                >
+                  {virtualRows.map((virtualRow) => {
+                    const card = sorted[virtualRow.index];
+                    if (!card) return null;
+                    return (
+                      <div
+                        key={card.id}
+                        data-index={virtualRow.index}
+                        ref={virtualizer.measureElement}
+                        style={{
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          width: "100%",
+                          transform: `translateY(${virtualRow.start}px)`,
+                          paddingBottom: "0.25rem",
+                        }}
+                      >
+                        {renderCard(card)}
+                      </div>
+                    );
+                  })}
+                </li>
+              ) : (
+                sorted.map((card) => (
+                  <li key={card.id} style={{ listStyle: "none" }}>
+                    {renderCard(card)}
+                  </li>
+                ))
+              )}
             </SortableContext>
             {sorted.length === 0 ? (
-              <li className="px-2 py-3 font-mono text-[10px] text-muted-foreground">no cards</li>
+              <li
+                style={{ listStyle: "none" }}
+                className="px-2 py-3 font-mono text-[10px] text-muted-foreground"
+              >
+                no cards
+              </li>
             ) : null}
           </ul>
 

@@ -41,7 +41,7 @@ export function CardTile({
   const matches = query.length > 0 && card.title.toLowerCase().includes(query.toLowerCase());
 
   return (
-    <li
+    <div
       ref={setNodeRef}
       data-slot="card"
       data-card-id={card.id}
@@ -121,6 +121,6 @@ export function CardTile({
           open
         </button>
       </div>
-    </li>
+    </div>
   );
 }
