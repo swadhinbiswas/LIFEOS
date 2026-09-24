@@ -8,7 +8,7 @@ not decisions (those are in `docs/DECISIONS.md`).
 - Phases 0–4 complete and reported. **Phase 5 in progress** (API, MCP, webhooks, docs).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
   `pnpm test` **232 passed** ✓ · `pnpm e2e` **47 passed, twice** ✓.
-- ADR-044 … ADR-071 record the decisions. Nothing is pushed; all work is on local `master`.
+- ADR-044 … ADR-072 record the decisions. Nothing is pushed; all work is on local `master`.
 
 ## Phase 5 so far
 
@@ -38,8 +38,8 @@ not decisions (those are in `docs/DECISIONS.md`).
   server-rendered reference at `/docs/api` (ADR-067).
 - Two-user isolation suite across the REST and MCP surfaces, plus an MCP wire-level acceptance e2e
   (initialize → tools/list → the four tools → the moved card live on the board) (ADR-068).
-- Next: the Phase 5 acceptance/report. Deferred: the incremental i18n surface pass (the API/MCP/
-  webhook limits are closed).
+- Next: the Phase 5 acceptance/report. Deferred: **authenticated page bodies** are still English —
+  translated surface by surface per ADR-072 (the chrome, auth pages and `/about` are done).
 
 ## The Phase-4 chunks
 
