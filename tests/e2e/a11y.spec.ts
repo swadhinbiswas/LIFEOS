@@ -66,6 +66,7 @@ const SHELL_ROUTES = [
   "/focus",
   "/finance",
   "/health",
+  "/learning",
   "/inbox",
   "/boards",
   "/career/jobs",
