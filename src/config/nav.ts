@@ -1,7 +1,7 @@
-import { Palette, UserRound, type LucideIcon } from "lucide-react";
+import { LayoutGrid, ListTodo, Palette, UserRound, type LucideIcon } from "lucide-react";
 
 /**
- * Phase 1 navigation (ADR-025): only routes that exist today. Later phases append their own
+ * Phase 1/2 navigation (ADR-025): only routes that exist today. Later phases append their own
  * groups here; out-of-phase destinations are never stubbed (spec §1 — no dead UI).
  */
 export interface NavItem {
@@ -11,6 +11,8 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
+  { href: "/tasks", label: "Tasks", icon: ListTodo },
+  { href: "/boards", label: "Boards", icon: LayoutGrid },
   { href: "/settings", label: "Profile", icon: UserRound },
   { href: "/settings/appearance", label: "Appearance", icon: Palette },
 ];

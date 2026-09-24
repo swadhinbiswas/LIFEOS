@@ -9,6 +9,7 @@ import { getThemeOverrides } from "@/server/settings";
 
 import { AppShell } from "./_components/app-shell";
 import { ThemeSync } from "./_components/theme-sync";
+import { AppProviders } from "./_providers/app-providers";
 
 /**
  * Signed-in shell. The real session check lives here — proxy.ts (ADR-026) only redirects on
@@ -24,9 +25,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const fromDb = await getThemeOverrides(session.user.id);
 
   return (
-    <>
+    <AppProviders>
       <ThemeSync initial={initial} fromDb={fromDb} />
       <AppShell user={{ name: session.user.name }}>{children}</AppShell>
-    </>
+    </AppProviders>
   );
 }

@@ -7,6 +7,7 @@ import { APP_DESCRIPTION, APP_NAME, THEME_COOKIE } from "@/config/app";
 import { accentCssVars, parseThemeOverrides, themeAttrs } from "@/config/themes";
 
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 
 const jetbrains = JetBrains_Mono({
@@ -67,7 +68,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             user input, not an inline event handler. */}
         <script dangerouslySetInnerHTML={{ __html: SYSTEM_MODE_SCRIPT }} />
       </head>
-      <body className="min-h-dvh antialiased">{children}</body>
+      <body className="min-h-dvh antialiased">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

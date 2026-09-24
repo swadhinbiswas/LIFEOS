@@ -1,0 +1,56 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { Panel } from "@/components/tui/panel";
+import { getServerSession } from "@/server/auth/session";
+import { listBoards } from "@/server/boards";
+
+import { CreateBoardForm } from "./_components/create-board-form";
+
+export const metadata = { title: "Boards" };
+
+/** `/boards` — the user's boards, plus one-click creation from a template (spec §6.1). */
+export default async function BoardsPage() {
+  const session = await getServerSession();
+  if (!session) redirect("/sign-in");
+
+  const boards = await listBoards(session.user.id);
+
+  return (
+    <>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Boards</h1>
+
+      <div className="grid gap-4">
+        <Panel title="New board">
+          <CreateBoardForm />
+        </Panel>
+
+        <Panel title="Your boards" hint={`${boards.length}`}>
+          {boards.length === 0 ? (
+            <p className="font-mono text-xs text-muted-foreground">
+              nothing here yet — create one above
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {boards.map((board) => (
+                <li key={board.id}>
+                  <Link
+                    href={`/boards/${board.id}`}
+                    className="flex items-center gap-2 px-1 py-1 font-mono text-xs hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <span className="min-w-0 flex-1 truncate">{board.name}</span>
+                    {board.is_system ? (
+                      <span className="text-muted-foreground">tasks</span>
+                    ) : (
+                      <span className="text-muted-foreground">{board.template ?? "blank"}</span>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      </div>
+    </>
+  );
+}
