@@ -10,6 +10,7 @@ import {
   Repeat,
   NotebookPen,
   Timer,
+  ClipboardCheck,
   GraduationCap,
   HeartPulse,
   Wallet,
@@ -31,6 +32,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/reviews", label: "Reviews", icon: ClipboardCheck },
   { href: "/tasks", label: "Tasks", icon: ListTodo },
   { href: "/habits", label: "Habits", icon: Repeat },
   { href: "/goals", label: "Goals", icon: Target },
