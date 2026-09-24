@@ -38,8 +38,9 @@ not decisions (those are in `docs/DECISIONS.md`).
   server-rendered reference at `/docs/api` (ADR-067).
 - Two-user isolation suite across the REST and MCP surfaces, plus an MCP wire-level acceptance e2e
   (initialize → tools/list → the four tools → the moved card live on the board) (ADR-068).
-- Next: the Phase 5 acceptance/report. Deferred: **authenticated page bodies** are still English —
-  translated surface by surface per ADR-072 (the chrome, auth pages and `/about` are done).
+- Next: the Phase 5 acceptance/report. Deferred: **authenticated page-body i18n** (ADR-072). Done:
+  chrome, auth pages, `/about`, dashboard, trash, inbox, health, learning. Remaining: calendar,
+  reviews, tasks, habits, goals, notes, focus, finance, boards, career pages, settings, `docs/api`.
 
 ## The Phase-4 chunks
 
