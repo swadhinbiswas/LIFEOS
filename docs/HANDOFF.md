@@ -38,9 +38,14 @@ not decisions (those are in `docs/DECISIONS.md`).
   server-rendered reference at `/docs/api` (ADR-067).
 - Two-user isolation suite across the REST and MCP surfaces, plus an MCP wire-level acceptance e2e
   (initialize → tools/list → the four tools → the moved card live on the board) (ADR-068).
-- Next: the Phase 5 acceptance/report. Deferred: **authenticated page-body i18n** (ADR-072). Done:
-  chrome, auth pages, `/about`, dashboard, trash, inbox, health, learning. Remaining: calendar,
-  reviews, tasks, habits, goals, notes, focus, finance, boards, career pages, settings, `docs/api`.
+- The i18n backlog (ADR-072) is complete: every authenticated surface — chrome, auth pages,
+  `/about`, dashboard, trash, inbox, health, learning, calendar, reviews, focus, goals, habits,
+  notes, finance, settings, appearance, integrations, `docs/api`, tasks, boards, the whole board
+  surface and the career pages (jobs, analytics, portfolio, interview prep), plus the command
+  palette, shell chrome and the status line — reads from the catalog in en/bn. English values are
+  byte-identical to the previous literals, so the tests and axe pass hold. Operation summaries in
+  the OpenAPI document and server-provided enum values stay English by design.
+- Next: the Phase 5 acceptance/report.
 
 ## The Phase-4 chunks
 
@@ -68,10 +73,11 @@ not decisions (those are in `docs/DECISIONS.md`).
 
 ## Outstanding gaps (deliberate, with next steps)
 
-1. **i18n is incremental** (ADR-053/060): `/about` and the shell chrome (nav + tagline) are
-   translated (en/bn); page bodies, the status-line hints and the `?` cheat-sheet are still
-   English — the same mechanical pass, to be done surface by surface. This is the only open
-   Phase-4 backlog item.
+1. **i18n is complete for en/bn** (ADR-053/060/072): every authenticated page body, its client
+   components, the command palette, the shell chrome and the status line read from the catalog.
+   Two boundaries are deliberate: OpenAPI operation summaries (the machine-readable document) and
+   server-provided enum values (card/priorities, interview round kinds, difficulty levels) stay
+   English. No open backlog item remains here.
 
 ## Next: Phase 5 (awaiting the user's go-ahead)
 

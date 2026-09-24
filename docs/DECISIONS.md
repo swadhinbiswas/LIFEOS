@@ -1707,6 +1707,18 @@ build` per run, cached by `.next` locally and cold in CI.
 - **Consequences:** everything a signed-out visitor or a shell user reads is localized, and the
   remaining translation is an incremental, reviewable pass rather than a big-bang rewrite. Cost: the
   authenticated pages remain English until each is picked up.
+- **Completion (2026-09-25):** the surface-by-surface pass is finished. Every authenticated page body
+  and its client components — dashboard, trash, inbox, health, learning, calendar, reviews, focus,
+  goals, habits, notes, finance, settings, appearance, integrations, `docs/api`, tasks, boards, the
+  whole board surface and the career pages (jobs, analytics, portfolio, interview prep) — plus the
+  command palette, the shell chrome (stop focus, notifications, sidebar, sign out) and the status
+  line (sync words, focus label) now read from `messages/{en,bn}.json`. Two boundaries stay English
+  by design: OpenAPI **operation summaries** (they come from the machine-readable document served at
+  `/api/v1/openapi.json`) and server-provided **enum values** (card priorities, interview round
+  kinds, difficulty levels). `StatusLine` gained optional `syncLabels`/`timerLabel` props with
+  English defaults, so the shared TUI component stays locale-agnostic. English catalog values are
+  byte-identical to the literals they replaced, so no test or axe expectation moved; the i18n e2e now
+  also asserts a translated page body and a translated client component under Bangla.
 
 ---
 

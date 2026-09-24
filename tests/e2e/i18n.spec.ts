@@ -32,6 +32,15 @@ test("i18n: the about page switches to Bangla and persists", async ({ page }) =>
   await page.reload();
   await expect(page.getByRole("heading", { name: "ড্যাশবোর্ড", level: 1 })).toBeVisible();
 
+  // The grind covered every authenticated surface, not only the dashboard (ADR-072).
+  await page.goto("/tasks");
+  await expect(page.getByRole("heading", { name: "কাজ", level: 1 })).toBeVisible();
+  await expect(page.getByRole("button", { name: "টেবিল" })).toBeVisible();
+  await page.goto("/finance");
+  await expect(page.getByRole("heading", { name: "অর্থ", level: 1 })).toBeVisible();
+  await page.goto("/career/jobs");
+  await expect(page.getByRole("heading", { name: "চাকরি", level: 1 })).toBeVisible();
+
   // The switch lives on the about page; switching back restores English.
   await page.goto("/about");
   await page.getByRole("button", { name: "English" }).click();
