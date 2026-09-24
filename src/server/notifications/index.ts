@@ -4,6 +4,8 @@ import { newId } from "@/lib/id";
 import { getFollowUpsDue } from "@/server/career/analytics";
 import { db } from "@/server/db";
 import { boards, cards, notifications } from "@/server/db/schema";
+import { listSubscriptions } from "@/server/finance";
+import { formatMinor } from "@/server/finance/money";
 import { listHabits } from "@/server/habits";
 import { dayKey, shiftDay } from "@/server/habits/streak";
 
@@ -151,6 +153,29 @@ async function jobDrafts(userId: string, now: Date): Promise<Draft[]> {
 }
 
 /**
+ * A renewal nudge for a subscription due within three days (or overdue by up to a week), once a
+ * week per subscription (ADR-050). The `billing` kind already exists in the schema for this.
+ */
+async function subscriptionDrafts(userId: string, now: Date): Promise<Draft[]> {
+  const subscriptions = await listSubscriptions(userId, now);
+  const key = weekKey(now);
+  return subscriptions
+    .filter(({ dueInDays }) => dueInDays !== null && dueInDays <= 3 && dueInDays >= -7)
+    .map(({ subscription, dueInDays }) => ({
+      kind: "billing" as const,
+      title:
+        dueInDays !== null && dueInDays > 0
+          ? `renews in ${dueInDays} day${dueInDays === 1 ? "" : "s"}: ${subscription.name}`
+          : dueInDays === 0
+            ? `renews today: ${subscription.name}`
+            : `renewal overdue: ${subscription.name}`,
+      body: `${formatMinor(subscription.amount_minor, subscription.currency)} / ${subscription.cadence}`,
+      href: "/finance",
+      dedupeKey: `subscription:${subscription.id}:${key}`,
+    }));
+}
+
+/**
  * Evaluate every source and insert the drafts that are not already present. Returns how many
  * rows the sweep actually created (0 on a repeat), which is what the tests assert on.
  */
@@ -159,6 +184,7 @@ export async function sweepNotifications(userId: string, now: Date = new Date())
     ...(await taskDrafts(userId, now)),
     ...(await habitDrafts(userId, now)),
     ...(await jobDrafts(userId, now)),
+    ...(await subscriptionDrafts(userId, now)),
   ];
   if (drafts.length === 0) return 0;
 

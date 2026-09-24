@@ -2,10 +2,17 @@ import { redirect } from "next/navigation";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
-import { listAccounts, listTransactions, monthSummary } from "@/server/finance";
+import { listAccounts, listSubscriptions, listTransactions, monthSummary } from "@/server/finance";
 import { formatMinor } from "@/server/finance/money";
+import { subscriptionTotals } from "@/server/finance/subscriptions";
 
-import { AddAccountForm, AddBudgetForm, AddTransactionForm } from "./_components/finance-forms";
+import {
+  AddAccountForm,
+  AddBudgetForm,
+  AddSubscriptionForm,
+  AddTransactionForm,
+} from "./_components/finance-forms";
+import { SubscriptionControls } from "./_components/subscription-controls";
 
 export const metadata = { title: "Finance" };
 
@@ -18,11 +25,19 @@ export default async function FinancePage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
-  const [accounts, summary, recent] = await Promise.all([
+  const [accounts, summary, recent, subscriptions] = await Promise.all([
     listAccounts(session.user.id),
     monthSummary(session.user.id),
     listTransactions(session.user.id),
+    listSubscriptions(session.user.id),
   ]);
+  const subscriptionTotal = subscriptionTotals(
+    subscriptions.map(({ subscription }) => ({
+      amountMinor: subscription.amount_minor,
+      currency: subscription.currency,
+      cadence: subscription.cadence,
+    })),
+  );
   const accountName = (id: string) =>
     accounts.find((row) => row.account.id === id)?.account.name ?? "";
 
@@ -112,6 +127,62 @@ export default async function FinancePage() {
               </ul>
             )}
           </div>
+        </Panel>
+
+        <Panel title="Subscriptions" hint={`${subscriptions.length}`}>
+          <AddSubscriptionForm />
+          {subscriptionTotal.length > 0 ? (
+            <p
+              data-slot="subscription-total"
+              className="font-mono text-[10px] text-muted-foreground"
+            >
+              {subscriptionTotal
+                .map((total) => `${formatMinor(total.monthlyMinor, total.currency)} / mo`)
+                .join(" · ")}{" "}
+              — month-normalised
+            </p>
+          ) : null}
+          {subscriptions.length === 0 ? (
+            <p className="font-mono text-xs text-muted-foreground">
+              no subscriptions tracked yet — add one to see its real monthly cost
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {subscriptions.map(({ subscription, monthlyMinor, dueInDays }) => (
+                <li
+                  key={subscription.id}
+                  data-slot="subscription-row"
+                  className="flex flex-wrap items-center gap-2 border border-border px-2 py-1 font-mono text-xs"
+                >
+                  <span className="min-w-0 flex-1 truncate">{subscription.name}</span>
+                  <span className="tabular-nums">
+                    {formatMinor(subscription.amount_minor, subscription.currency)} /{" "}
+                    {subscription.cadence}
+                  </span>
+                  {subscription.cadence !== "month" ? (
+                    <span className="text-muted-foreground tabular-nums">
+                      {formatMinor(monthlyMinor, subscription.currency)} / mo
+                    </span>
+                  ) : null}
+                  <span className="text-muted-foreground">
+                    {subscription.renews_at ? (
+                      <>
+                        <time dateTime={new Date(subscription.renews_at).toISOString()}>
+                          {new Date(subscription.renews_at).toISOString().slice(0, 10)}
+                        </time>
+                        {dueInDays !== null
+                          ? ` (${dueInDays > 0 ? `in ${dueInDays}d` : dueInDays === 0 ? "today" : `${-dueInDays}d late`})`
+                          : ""}
+                      </>
+                    ) : (
+                      "no renewal date"
+                    )}
+                  </span>
+                  <SubscriptionControls subscriptionId={subscription.id} name={subscription.name} />
+                </li>
+              ))}
+            </ul>
+          )}
         </Panel>
 
         <Panel title="Activity" hint={`${recent.length}`}>

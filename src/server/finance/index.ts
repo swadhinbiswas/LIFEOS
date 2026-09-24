@@ -1,10 +1,11 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
-import { accounts_fin, budgets, transactions } from "@/server/db/schema";
+import { accounts_fin, budgets, subscriptions_tracked, transactions } from "@/server/db/schema";
 
 import { accountBalance, budgetPercent, spendByCategory, type CategorySpend } from "./money";
+import { monthlyMinorFor, nextRenewalAfter } from "./subscriptions";
 
 /**
  * Finance-lite (spec §6.6): manually entered accounts and transactions, monthly budgets with
@@ -188,4 +189,103 @@ export async function monthSummary(
   });
 
   return { month, spend, budgets: budgetsWithProgress, totals: [...totalsByCurrency.values()] };
+}
+
+// ---------------------------------------------------------------------------
+// Tracked subscriptions (§6.6, ADR-050)
+// ---------------------------------------------------------------------------
+
+export type SubscriptionRow = typeof subscriptions_tracked.$inferSelect;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const dayStart = (date: Date): number =>
+  Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+
+export interface SubscriptionView {
+  subscription: SubscriptionRow;
+  /** Cost on a monthly footing, so cadences compare (ADR-050). */
+  monthlyMinor: number;
+  /** Whole days until renewal by calendar day; negative overdue, null when no date is set. */
+  dueInDays: number | null;
+}
+
+export async function listSubscriptions(
+  userId: string,
+  now: Date = new Date(),
+): Promise<SubscriptionView[]> {
+  const rows = await db
+    .select()
+    .from(subscriptions_tracked)
+    .where(eq(subscriptions_tracked.user_id, userId))
+    .orderBy(asc(subscriptions_tracked.renews_at), subscriptions_tracked.name);
+
+  return rows.map((subscription) => ({
+    subscription,
+    monthlyMinor: monthlyMinorFor(subscription.amount_minor, subscription.cadence),
+    dueInDays:
+      subscription.renews_at === null
+        ? null
+        : Math.round((dayStart(new Date(subscription.renews_at)) - dayStart(now)) / DAY_MS),
+  }));
+}
+
+export async function createSubscription(
+  userId: string,
+  input: {
+    name: string;
+    amountMinor: number;
+    currency: string;
+    cadence?: string;
+    renewsAt?: Date | null;
+    note?: string | null;
+  },
+): Promise<SubscriptionRow> {
+  const [row] = await db
+    .insert(subscriptions_tracked)
+    .values({
+      id: newId(),
+      user_id: userId,
+      name: input.name.trim(),
+      amount_minor: input.amountMinor,
+      currency: input.currency.toUpperCase(),
+      cadence: input.cadence ?? "month",
+      renews_at: input.renewsAt ?? null,
+      note: input.note ?? null,
+    })
+    .returning();
+  if (!row) throw new Error("subscription insert returned no row");
+  return row;
+}
+
+export async function deleteSubscription(userId: string, id: string): Promise<void> {
+  await db
+    .delete(subscriptions_tracked)
+    .where(and(eq(subscriptions_tracked.id, id), eq(subscriptions_tracked.user_id, userId)));
+}
+
+/** Move the renewal on by one cadence; the date only moves because the user said it did. */
+export async function markSubscriptionRenewed(
+  userId: string,
+  id: string,
+  now: Date = new Date(),
+): Promise<SubscriptionRow> {
+  const [current] = await db
+    .select()
+    .from(subscriptions_tracked)
+    .where(and(eq(subscriptions_tracked.id, id), eq(subscriptions_tracked.user_id, userId)))
+    .limit(1);
+  if (!current) throw new Error("subscription not found");
+
+  const next = nextRenewalAfter(
+    current.renews_at ? new Date(current.renews_at) : now,
+    current.cadence,
+    now,
+  );
+  const [row] = await db
+    .update(subscriptions_tracked)
+    .set({ renews_at: next })
+    .where(and(eq(subscriptions_tracked.id, id), eq(subscriptions_tracked.user_id, userId)))
+    .returning();
+  if (!row) throw new Error("subscription not found");
+  return row;
 }

@@ -1137,6 +1137,35 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-050 — Subscriptions tracker: month-normalised cost, renewal nudges through the centre
+
+- **Status:** accepted (2026-09-24)
+- **Context:** #26 puts tracked subscriptions in the Phase-4 finance-lite slice; the
+  `subscriptions_tracked` table exists (name, amount, currency, `cadence` month|year, `renews_at`,
+  note) but has no service or UI. The handoff asked where renewal reminders should live: the
+  `reminders` table (unused, no UI) or the notifications centre (ADR-047). Renewals are
+  time-based and recurring, which is exactly what the notification sweep already solves.
+- **Decision:**
+  - **The finance module owns the table** and gains list/create/delete plus `markRenewed`; pure
+    month-normalisation (`year → round(amount / 12)`) and next-renewal arithmetic live in
+    `finance/subscriptions.ts` so the figure on the page is hand-checkable.
+  - **Renewal nudges go through the notification sweep** (kind `billing`), never the `reminders`
+    table: a subscription renewing within 3 days, or overdue by up to 7, yields one nudge per
+    subscription per week (`subscription:<id>:<week>`), so it does not nag daily and the
+    read/mark machinery is shared.
+  - **One line per currency, never summed across currencies** (ADR-045): the panel shows the
+    month-normalised total per currency.
+  - **A subscription is a note to self, not an accounting entry** — it does not post to
+    transactions. The MVP is manual; auto-posting would invent money movements the user did not
+    record.
+  - Renewals are advanced by an explicit "renewed" control rather than a clock, so the date only
+    moves when the user says it did.
+- **Consequences:** one place to see recurring cost and one place to be reminded of it, both using
+  services that already exist. Cost: a small finance module addition and one more sweep source;
+  a future bank-import feature must decide how a real charge reconciles with this manual row.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

@@ -16,6 +16,7 @@ const { db } = await import("@/server/db");
 const { job_applications, users } = await import("@/server/db/schema");
 const { createCard, ensureSystemTasksBoard, getBoard } = await import("@/server/boards");
 const { createJob } = await import("@/server/career");
+const { createSubscription } = await import("@/server/finance");
 const { createHabit, setHabitLog } = await import("@/server/habits");
 const { dayKey, shiftDay } = await import("@/server/habits/streak");
 const {
@@ -132,6 +133,27 @@ describe("notification centre (spec 6.9, adr-047)", () => {
     expect(jobs[0]?.body).toContain("no movement for 10 days");
 
     expect(await sweepNotifications(USER, NOW)).toBe(0); // once this week
+  });
+
+  it("nudges a subscription renewal due soon, once a week", async () => {
+    await createSubscription(USER, {
+      name: "Cloud storage",
+      amountMinor: 999,
+      currency: "EUR",
+      cadence: "month",
+      renewsAt: new Date("2026-09-25T00:00:00.000Z"), // tomorrow
+    });
+
+    expect(await sweepNotifications(USER, NOW)).toBe(1);
+    const billing = (await listNotifications(USER, NOW)).items.filter(
+      (item) => item.kind === "billing",
+    );
+    expect(billing).toHaveLength(1);
+    expect(billing[0]?.title).toBe("renews in 1 day: Cloud storage");
+    expect(billing[0]?.body).toBe("9.99 EUR / month");
+    expect(billing[0]?.href).toBe("/finance");
+
+    expect(await sweepNotifications(USER, NOW)).toBe(0);
   });
 
   it("marks read across the centre, scoped to the user", async () => {

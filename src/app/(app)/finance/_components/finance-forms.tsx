@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   addTransactionAction,
   createAccountAction,
+  createSubscriptionAction,
   setBudgetAction,
 } from "@/server/finance/actions";
 
@@ -278,6 +279,108 @@ export function AddBudgetForm() {
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || category.trim() === ""}>
         set budget
+      </Button>
+      {error ? (
+        <span role="alert" className="text-destructive">
+          {error}
+        </span>
+      ) : null}
+    </form>
+  );
+}
+
+export function AddSubscriptionForm() {
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState("EUR");
+  const [cadence, setCadence] = useState<"month" | "year">("month");
+  const [renews, setRenews] = useState("");
+  const { busy, error, submit } = useSubmit();
+
+  return (
+    <form
+      data-slot="add-subscription"
+      className="flex flex-wrap items-end gap-2 text-xs"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (name.trim() === "" || amount.trim() === "") return;
+        void submit(
+          () =>
+            createSubscriptionAction({
+              name: name.trim(),
+              amountMinor: Math.abs(toMinor(amount)),
+              currency: currency.trim().toUpperCase(),
+              cadence,
+              renewsAt: renews === "" ? null : new Date(`${renews}T00:00:00.000Z`),
+            }),
+          () => {
+            setName("");
+            setAmount("");
+            setRenews("");
+          },
+        );
+      }}
+    >
+      <label className={label}>
+        subscription
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="cloud storage"
+          className={field}
+          aria-label="subscription name"
+        />
+      </label>
+      <label className={label}>
+        amount
+        <input
+          inputMode="decimal"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="9.99"
+          className={`${field} w-24`}
+          aria-label="subscription amount"
+        />
+      </label>
+      <label className={label}>
+        currency
+        <input
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value)}
+          maxLength={3}
+          className={`${field} w-16`}
+          aria-label="subscription currency"
+        />
+      </label>
+      <label className={label}>
+        cadence
+        <select
+          value={cadence}
+          onChange={(e) => setCadence(e.target.value as "month" | "year")}
+          className={field}
+          aria-label="subscription cadence"
+        >
+          <option value="month">monthly</option>
+          <option value="year">yearly</option>
+        </select>
+      </label>
+      <label className={label}>
+        next renewal
+        <input
+          type="date"
+          value={renews}
+          onChange={(e) => setRenews(e.target.value)}
+          className={field}
+          aria-label="subscription renewal date"
+        />
+      </label>
+      <Button
+        type="submit"
+        size="sm"
+        variant="outline"
+        disabled={busy || name.trim() === "" || amount.trim() === ""}
+      >
+        add subscription
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">

@@ -4,7 +4,14 @@ import { ZodError, z } from "zod";
 
 import { getServerSession } from "@/server/auth/session";
 import type { ActionResult } from "@/server/boards/actions";
-import { addTransaction, createAccount, setBudget } from "@/server/finance";
+import {
+  addTransaction,
+  createAccount,
+  createSubscription,
+  deleteSubscription,
+  markSubscriptionRenewed,
+  setBudget,
+} from "@/server/finance";
 
 const accountInput = z.object({
   name: z.string().trim().min(1).max(120),
@@ -25,6 +32,17 @@ const budgetInput = z.object({
   limitMinor: z.number().int().min(1).max(1_000_000_000),
   currency: z.string().trim().length(3),
 });
+
+const subscriptionInput = z.object({
+  name: z.string().trim().min(1).max(120),
+  amountMinor: z.number().int().min(0).max(1_000_000_000),
+  currency: z.string().trim().length(3),
+  cadence: z.enum(["month", "year"]).optional(),
+  renewsAt: z.coerce.date().nullable().optional(),
+  note: z.string().trim().max(300).nullable().optional(),
+});
+
+const subscriptionIdInput = z.object({ subscriptionId: z.string().min(1).max(64) });
 
 async function run<T>(fn: (userId: string) => Promise<T>): Promise<ActionResult<T>> {
   const session = await getServerSession();
@@ -57,6 +75,27 @@ export async function addTransactionAction(input: unknown): Promise<ActionResult
 export async function setBudgetAction(input: unknown): Promise<ActionResult<null>> {
   return run(async (userId) => {
     await setBudget(userId, budgetInput.parse(input));
+    return null;
+  });
+}
+
+export async function createSubscriptionAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    await createSubscription(userId, subscriptionInput.parse(input));
+    return null;
+  });
+}
+
+export async function deleteSubscriptionAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    await deleteSubscription(userId, subscriptionIdInput.parse(input).subscriptionId);
+    return null;
+  });
+}
+
+export async function markSubscriptionRenewedAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    await markSubscriptionRenewed(userId, subscriptionIdInput.parse(input).subscriptionId);
     return null;
   });
 }
