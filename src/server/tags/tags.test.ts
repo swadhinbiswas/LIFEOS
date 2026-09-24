@@ -15,6 +15,7 @@ for (const suffix of ["", "-journal", "-wal", "-shm"]) {
 const { migrate } = await import("drizzle-orm/libsql/migrator");
 const { db } = await import("@/server/db");
 const { users } = await import("@/server/db/schema");
+const { createCard, ensureSystemTasksBoard, getBoard } = await import("@/server/boards");
 const { createNote } = await import("@/server/notes");
 const { getTags, listIdsByTag, listTags, listTagsForMany, parseTagInput, setTags } =
   await import("./index");
@@ -78,5 +79,28 @@ describe("tags on notes (spec 6.9, adr-049)", () => {
     await expect(setTags(OTHER, { type: "note", id: mine.id, names: ["stolen"] })).rejects.toThrow(
       /note not found/u,
     );
+  });
+
+  it("tags a card too, and refuses another tenant's card", async () => {
+    const board = await ensureSystemTasksBoard(USER);
+    const payload = await getBoard(USER, board.id);
+    const inbox = payload.columns.find((column) => column.name === "Inbox");
+    if (!inbox) throw new Error("the system board has no Inbox column");
+    const card = await createCard(USER, {
+      boardId: board.id,
+      columnId: inbox.id,
+      title: "tagged card",
+    });
+
+    await setTags(USER, { type: "card", id: card.id, names: ["alpha", "gamma"] });
+    expect(await getTags(USER, "card", card.id)).toEqual(["alpha", "gamma"]);
+    expect(await listTagsForMany(USER, "card", [card.id])).toEqual({
+      [card.id]: ["alpha", "gamma"],
+    });
+
+    await expect(setTags(OTHER, { type: "card", id: card.id, names: ["stolen"] })).rejects.toThrow(
+      /card not found/u,
+    );
+    expect(await getTags(OTHER, "card", card.id)).toEqual([]);
   });
 });

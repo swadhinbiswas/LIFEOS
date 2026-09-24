@@ -79,3 +79,34 @@ test("goal links: a card links to a goal from the sheet and feeds its progress",
     page.locator('[data-slot="card-goal-link"]', { hasText: "Ship LifeOS properly" }),
   ).toHaveCount(0);
 });
+
+/**
+ * Cross-module tags on a card (spec §6.9, ADR-059): the sheet saves them and they come back on
+ * reload, distinct from the board's own labels.
+ */
+test("tags: a card carries cross-module tags from its sheet", async ({ page }) => {
+  test.setTimeout(90_000);
+  const email = uniqueEmail("cardtags");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/tasks");
+
+  const title = "tagged card";
+  const adder = page.getByLabel("add a card to Inbox");
+  await adder.click();
+  await adder.fill(title);
+  await adder.press("Enter");
+  const card = serverCard(page, "Inbox", title);
+  await expect(card).toBeVisible();
+  const cardId = await card.getAttribute("data-card-id");
+  expect(cardId).toBeTruthy();
+
+  await page.goto(`/tasks?card=${cardId}`);
+  const tags = page.getByRole("dialog").locator('[data-slot="card-tags"]');
+  await tags.getByLabel("card tags").fill("alpha, gamma");
+  await tags.getByRole("button", { name: "save tags" }).click();
+
+  await page.reload();
+  await expect(page.getByRole("dialog").getByLabel("card tags")).toHaveValue("alpha, gamma");
+});

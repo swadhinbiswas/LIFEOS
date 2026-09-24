@@ -2,15 +2,15 @@ import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
-import { notes, taggings, tags } from "@/server/db/schema";
+import { cards, notes, taggings, tags } from "@/server/db/schema";
 
 /**
- * Tags (spec §6.9, ADR-049). The generic cross-module tagging system: a `tag` is a name, a
- * `tagging` is the edge to one entity. Notes are the first entity; board cards keep their own
- * board-scoped labels (ADR-049), so a card never shows two disagreeing tag lists.
+ * Tags (spec §6.9, ADR-049/059). The generic cross-module tagging system: a `tag` is a name, a
+ * `tagging` is the edge to one entity. Board **labels** stay card-scoped (colour + board filter);
+ * these tags are the cross-module concept and cover notes and cards.
  */
 
-export type TaggableType = "note";
+export type TaggableType = "note" | "card";
 
 export interface TagCount {
   name: string;
@@ -105,19 +105,28 @@ export async function listIdsByTag(
 
 /**
  * Replace an entity's tags in one call: upsert the names, swap the edges, then drop tag rows
- * nothing references. Validates that the note belongs to the user, so a forged id cannot tag
- * someone else's note.
+ * nothing references. Validates that the entity belongs to the user, so a forged id cannot tag
+ * someone else's note or card.
  */
 export async function setTags(
   userId: string,
   input: { type: TaggableType; id: string; names: string[] },
 ): Promise<string[]> {
-  const [note] = await db
-    .select({ id: notes.id })
-    .from(notes)
-    .where(and(eq(notes.id, input.id), eq(notes.user_id, userId), isNull(notes.deleted_at)))
-    .limit(1);
-  if (!note) throw new Error("note not found");
+  if (input.type === "note") {
+    const [note] = await db
+      .select({ id: notes.id })
+      .from(notes)
+      .where(and(eq(notes.id, input.id), eq(notes.user_id, userId), isNull(notes.deleted_at)))
+      .limit(1);
+    if (!note) throw new Error("note not found");
+  } else {
+    const [card] = await db
+      .select({ id: cards.id })
+      .from(cards)
+      .where(and(eq(cards.id, input.id), eq(cards.user_id, userId), isNull(cards.deleted_at)))
+      .limit(1);
+    if (!card) throw new Error("card not found");
+  }
 
   const wanted = [...new Set(input.names.map(normalizeTag).filter((name) => name !== ""))];
 

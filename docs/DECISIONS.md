@@ -1375,6 +1375,30 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-059 — Cross-module tags on cards, distinct from board-scoped labels
+
+- **Status:** accepted (2026-09-24)
+- **Context:** §6.9 says "tags and linking everywhere"; ADR-049 put generic tags on notes and kept
+  cards on board labels, warning that "a card does not carry two tag lists that can disagree". The
+  capture grammar's `#tag` still writes labels.
+- **Decision:**
+  - The generic tags service now covers **cards as well as notes** (`TaggableType = "note" |
+"card"`), with the same normalisation, orphan pruning and per-entity ownership check.
+  - The two systems keep **distinct scopes and are not presented as one list**: board **labels**
+    are board-scoped (colour, the board's own `#` quick-filter, the tile chips); generic **tags**
+    are cross-module (the card sheet and notes) and group an entity with anything else carrying the
+    name.
+  - The **card sheet gains a tags field**; the tile keeps its label chips, so the sheet is where
+    cross-module grouping is edited.
+  - **Capture's `#tag` keeps writing labels**: labels are what the board filters on, and changing
+    that would silently change board filtering. A future unification would migrate both sides, not
+    one.
+- **Consequences:** "tags everywhere" holds for notes and cards without pretending the two concepts
+  are identical; each has one writer and one place it is edited. Cost: a card may carry a label and
+  a tag of the same name — intentional, because they are different scopes, not two views of one.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
