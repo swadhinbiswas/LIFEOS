@@ -109,6 +109,73 @@ The **UI** was implemented and reverted, not deferred by choice:
   block, which names the resolved elements in a strict-mode violation. Then run the full suite
   twice before committing.
 
+## Phase 4 remainder — plan for a fresh session
+
+State at `6cfdbc9` (all gates green: 168 unit tests, 27/27 e2e). What exists: ADR-045 schema
+(migration 0004), habits+streaks, goals/OKR, notes (FTS5 migration 0005, editor, backlinks),
+focus timer, finance-lite, health-lite, learning-lite, dashboard Overview (KPI module + page),
+review wizard. Work the three items below in order.
+
+### 1. Dashboard widgets and the four variants (§6.8) — do this first
+
+Exists: `src/server/dashboard/kpis.ts` (pure, fixture-tested, each KPI has label + definition +
+`href`), `src/server/dashboard/index.ts` (`getDashboardKpis`), `/dashboard` page rendering the
+Today panel (reuses `getDailyBrief`) and an Overview KPI table.
+
+Missing, in dependency order:
+
+1. **Widget model + persistence.** Add `dashboard_widgets` (or reuse `user_settings` JSON — decide
+   and record it as an ADR): `user_id`, `variant`, `widget_id`, `visible`, `position`,
+   `size` (`s|m|l`). Decide whether the config is per variant (spec implies yes: "four variants…
+   saved per user").
+2. **Widget registry**: `src/config/dashboard-widgets.ts` with `{ id, variant, label, size }` per
+   widget, so the config can be validated by Zod and unknown ids cannot be persisted.
+3. **Reordering**: `@dnd-kit` is already a dependency — reuse the board's pointer+keyboard sensors
+   and the ADR-016 rule (explicit move buttons alongside drag) rather than inventing a second DnD.
+   `p`, and keyboard reorder, must go through the same server action.
+4. **The missing variants**: Career (funnel + applications/week from `getCareerAnalytics`, stage
+   distribution, next interviews, follow-ups due, resume-version performance — the last needs
+   `resumes`, which exist as a table but have no service) and Productivity (completed-task trend,
+   cycle time, focus by day/hour, backlog age, review streak). Every number must reuse the owning
+   module's service — never re-query tables in the page.
+5. **Charts.** Spec asks for a braille sparkline (`Spark` exists in `src/components/tui/spark.tsx`)
+   and an activity heatmap. Keep the rule already established on `/dashboard`: every chart ships an
+   accessible table alongside, and colour is never the only signal (§4.4). Prefer server-rendered
+   SVG/sparklines over a charting library (no new dependency without a decision).
+6. **Acceptance for this item**: extend `kpis.test.ts`-style fixtures per KPI (hand-calculated),
+   and e2e: toggle a widget off → reload → still off; reorder → reload → order kept.
+
+### 2. Global (§6.9)
+
+- **Notification centre**: `notifications` table exists (migration 0004). Needs a service, a
+  header bell with unread count, mark-read, and per-type generation at the points that already
+  exist (task due, habit missed, job follow-up). Decide where generation happens (on read vs on
+  write) — record it.
+- **Trash/restore across modules**: boards already has soft delete + a Trash panel
+  (`src/server/boards/trash.ts`). Notes have `deleted_at` but no trash UI; cards/notes are the
+  two that matter for Phase 4. Consider a shared `trash` service rather than a third copy.
+- **Tags/linking UI**: `tags`/`taggings` and `card_links`/`goal_links`/`note_links` exist with no
+  UI. Minimum: tag a note, filter by tag, link a card to a goal from the card sheet.
+- **Export/import**: board CSV/JSON export exists (`/api/boards/[boardId]/export`). Phase-wide
+  export (all modules) and import are new; findance CSV import is the same work and is already a
+  stated gap — do them together.
+- **PWA / i18n**: decide scope with the user before starting; both are large and the phase
+  acceptance only names offline capture.
+
+### 3. Acceptance remainder and stated gaps
+
+- **Offline quick capture syncing** (phase acceptance): needs a service worker, an IndexedDB (or
+  localStorage) queue, a sync-on-reconnect flush through the existing `captureTaskAction`, and a
+  conflict policy (the capture path is append-only, so "create on flush" is safe). Test with
+  Playwright `context.setOffline(true)` → capture → `setOffline(false)` → assert the card appears.
+- **Subscriptions tracker** (`subscriptions_tracked` exists): service + renewal reminders; decide
+  whether reminders use `reminders` (already in the board schema) or `notifications`.
+- **CSV import** for finance (see export/import above).
+- **Ambient status-line focus timer**: the timer is a DB row already (`getRunningSession`); render
+  it in `StatusLine` from the `(app)` layout and stop it from anywhere. Small and self-contained.
+
+Then: full gate + browser pass + the Phase 4 status report, and only then Phase 5.
+
 ## Conventions that bit me (worth remembering)
 
 - Tests must select the **server-confirmed** card (`[data-card-id]:not([data-card-id^="pending-"])`);
