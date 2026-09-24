@@ -1466,6 +1466,34 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-063 — REST `/api/v1`: thin adapters, one envelope, keyset cursor, conditional writes
+
+- **Status:** accepted (2026-09-24)
+- **Context:** §9.1 requires resource-oriented JSON with cursor pagination, sparse fields,
+  filtering, `ETag`/`If-Match`, an `Idempotency-Key` on POSTs and one consistent error shape,
+  authenticated by a Bearer key (ADR-062) or the session cookie. The service layer already owns
+  every write, so the REST layer must not become a second writer.
+- **Decision:**
+  - **Route handlers are thin adapters** over the existing services (the board service for cards);
+    no business logic lives in a route, matching the single-service rule (spec §7.2).
+  - **One context helper** authenticates Bearer key or session and yields `{ userId, scopes, actor }`;
+    **one error helper** emits `{ error: { code, message, details, request_id } }`.
+  - **Pagination is an opaque keyset cursor** (`created_at, id`, base64), not an offset: a page stays
+    stable while rows are inserted.
+  - **Sparse fields** (`?fields=`) filter the serialized row; an unknown name is ignored, never
+    invented.
+  - **Updates are conditional:** GET/PATCH return `ETag: "v<version>"` and a mismatched `If-Match` is
+    `412`, so a lost update cannot happen.
+  - **POSTs accept `Idempotency-Key`**, cached (successful responses only) in the existing Redis for
+    24 h; the per-actor rate limit is fail-open on a Redis error (ADR-014).
+  - **The card JSON is an explicit shape** (`serializeCard`), not the database row, so columns can
+    move without breaking clients.
+- **Consequences:** the REST surface cannot drift from the UI — same services, same version checks —
+  and clients get predictable pagination and conflicts. Cost: each resource needs its own serializer
+  and keyset query, and the cursor depends on the `(created_at, id)` ordering being preserved.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
