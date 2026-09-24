@@ -956,6 +956,35 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-044 — Career module sits on the board engine, with an append-only stage history
+
+- **Status:** accepted (2026-09-24)
+- **Context:** spec §6.3 requires the job pipeline to reuse 6.1 ("uses the shared Kanban engine,
+  so all of 6.1 applies") and ERD §2.3 fixes the career tables, including
+  `job_applications.card_id` as a **unique** FK to `cards`. Funnel analytics (research (d) §5)
+  are derived: research (b) #7 records that job postings vanish and stage timings matter.
+- **Decision:**
+  - A job **is a card** (`kind = 'job'`, the `job-pipeline` template): drag, ordering, versions,
+    filters, saved views, virtualization and the keyboard layer all apply unchanged.
+    `job_applications` is the side table holding what a board does not model (company, salary,
+    work mode, visa status, source, URL, JD snapshot, resume used, excitement, fit).
+  - `stage_history` is a **JSON array appended** on every stage change (`{from, to, at}`), never
+    rewritten: time-in-stage, conversion rates and "ghosted" detection are derived from it
+    (no summary table in v1, per ERD §2.3).
+  - Money is stored as **integer minor units** plus a currency code, matching the finance-lite
+    convention in ERD §2.4 — no floats for money anywhere in LifeOS.
+  - `jd_snapshot` is stored as text at capture time because postings disappear; that is the
+    only copy the funnel/analytics can rely on later.
+  - Interview prep entities (`star_stories`, `question_bank`, `coding_problems`) and the growth
+    set (`skills`, `achievements`, `projects`) ship their schema now and their UI in the chunks
+    that use them — schema-first keeps later migrations out of the acceptance path.
+- **Consequences:** the pipeline inherits every board guarantee for free and Phase 3's service
+  layer is small (side-table CRUD + stage transitions). Stage history grows with moves, which is
+  exactly the audit trail the funnel needs. Resume versions are snapshots (JSON) rather than
+  diffs, so a CV export is reproducible from a row alone.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

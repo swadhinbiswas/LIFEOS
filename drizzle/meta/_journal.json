@@ -15,6 +15,13 @@
       "when": 1790228353501,
       "tag": "0001_sharp_beyonder",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790239790675,
+      "tag": "0002_acoustic_sumo",
+      "breakpoints": true
     }
   ]
 }
