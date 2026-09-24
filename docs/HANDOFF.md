@@ -1,14 +1,31 @@
-# Handoff — LifeOS in Phase 5
+# Handoff — LifeOS in Phase 6
 
 Read `AGENTS.md` and `prompt.md` first; this file records **state, outstanding gaps and gotchas**,
 not decisions (those are in `docs/DECISIONS.md`).
 
 ## Status
 
-- Phases 0–4 complete and reported. **Phase 5 in progress** (API, MCP, webhooks, docs).
+- Phases 0–5 complete and reported. **Phase 6 in progress** (AI copilot).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **232 passed** ✓ · `pnpm e2e` **47 passed, twice** ✓.
-- ADR-044 … ADR-072 record the decisions. Nothing is pushed; all work is on local `master`.
+  `pnpm test` **252 passed** ✓ · `pnpm e2e` **47 passed** ✓.
+- ADR-044 … ADR-078 record the decisions. Nothing is pushed; all work is on local `master`.
+
+## Phase 6 so far (AI copilot)
+
+- Foundation: AI env contract, AES-256-GCM at-rest helper with a documented dev/test fallback,
+  `ai_credentials`/`ai_conversations`/`ai_messages`/`ai_usage`/`ai_memories` + `audit_log`
+  (migration 0011), the credential store (encrypted, masked, tenant-scoped), audit and usage
+  services, and AI prefs on `user_settings` (ADR-073/074).
+- Safety: a pure tool catalogue and the single `approvalFor` policy — read free, write proposes,
+  destructive never auto-approvable, unknown denied (ADR-076/078 unit tests).
+- Tools: all 28 §8 tool adapters over the shared services (ADR-076).
+- Runtime: `agent.ts` attaches the policy, wraps untrusted content, streams with a step cap and
+  usage callback; tests prove a write cannot execute without an approval response (ADR-076/077).
+- **Remaining Phase 6**: the model factory + scripted model (ADR-075), `/api/ai/chat` streaming
+  route with conversation persistence and the budget cap, the `/ai` page + Ctrl/Cmd+J slide-over +
+  command-palette "Ask AI…" row + contextual buttons with an approve/reject UI, `/settings/ai`
+  (provider, model, privacy, memory), and the `evals/` suite (30+ tool-selection prompts,
+  no-fact-invention CV rewrite, malicious-JD injection) run by `pnpm eval`.
 
 ## Phase 5 so far
 
