@@ -12,9 +12,10 @@ career/CV, habits, notes, finance) rendered as a keyboard-first, TUI-skinned web
    is not optional, never commit secrets, ask only when genuinely blocked.
 2. **Phase gate:** do not start phase N+1 until phase N's checks pass and a status report has been
    given to the user. The user asked to stop at each phase boundary and report.
-   - Current phase: **5 → in progress** (API keys, REST `/api/v1/cards`, MCP `/api/mcp`,
-     `/api/v1/ingest`, webhooks, OpenAPI + `/docs/api` shipped, ADR-062…067; gate green: 221 unit,
-     46 e2e, build, typecheck, lint). Next in phase: the REST/MCP isolation suite (`#31`).
+   - Current phase: **5 → complete** (API keys, REST `/api/v1`, MCP `/api/mcp`, ingest, webhooks,
+     OpenAPI + `/docs/api`, isolation suite; ADR-062…068; gate green: 224 unit, 47 e2e, build,
+     typecheck, lint). Next: the Phase 5 status report, then **Phase 6 (AI copilot), awaiting the
+     user's go-ahead**.
 
 ## Repository map
 

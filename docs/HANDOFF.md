@@ -7,8 +7,8 @@ not decisions (those are in `docs/DECISIONS.md`).
 
 - Phases 0–4 complete and reported. **Phase 5 in progress** (API, MCP, webhooks, docs).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **221 passed** ✓ · `pnpm e2e` **46 passed, twice** ✓.
-- ADR-044 … ADR-067 record the decisions. Nothing is pushed; all work is on local `master`.
+  `pnpm test` **224 passed** ✓ · `pnpm e2e` **47 passed, twice** ✓.
+- ADR-044 … ADR-068 record the decisions. Nothing is pushed; all work is on local `master`.
 
 ## Phase 5 so far
 
@@ -28,7 +28,10 @@ not decisions (those are in `docs/DECISIONS.md`).
   panel in `/settings/integrations` (ADR-066). Scheduled retries are deferred until a queue exists.
 - OpenAPI 3.1 generated from the route Zod schemas at `/api/v1/openapi.json`, with a themed
   server-rendered reference at `/docs/api` (ADR-067).
-- Next in phase: the cross-tenant isolation suite for the REST and MCP surfaces (`#31`).
+- Two-user isolation suite across the REST and MCP surfaces, plus an MCP wire-level acceptance e2e
+  (initialize → tools/list → the four tools → the moved card live on the board) (ADR-068).
+- Next: the Phase 5 acceptance/report. Deferred: scheduled webhook retries (needs a queue), and a
+  live external MCP client transcript (the protocol is exercised over HTTP in the e2e).
 
 ## The Phase-4 chunks
 

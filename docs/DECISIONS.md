@@ -1586,6 +1586,27 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-068 — Tenant isolation is a service-layer invariant, proven per surface
+
+- **Status:** accepted (2026-09-24)
+- **Context:** §10 requires a two-user suite proving user A can never read, update, move, delete,
+  search or export user B's data "through each surface (UI actions, REST, MCP, AI tools, webhooks,
+  export)". #31 starts that suite in Phase 5 and grows it each phase.
+- **Decision:**
+  - The invariant lives in the **service layer**: every function takes the authenticated `userId`
+    and every query filters on it (ADR-026). Server Actions, REST, MCP and webhooks are thin
+    adapters that pass the id from the authenticated context, so a surface cannot bypass isolation
+    without calling a service without an id.
+  - The **isolation suite** creates two users and asserts the _negative_ per surface: REST (read /
+    update / delete / list), MCP (`search`, `move_card`, `get_daily_brief`), alongside the existing
+    per-service tests. Webhooks carry their own tenant case; export and AI tools are added when
+    those surfaces land.
+  - A cross-tenant access is **`404`, not `403`** — existence must not leak.
+- **Consequences:** a new endpoint inherits isolation by passing `context.userId`, and the suite
+  proves it. Cost: each new surface must add its negative cases to the suite.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
