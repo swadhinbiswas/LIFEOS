@@ -14,6 +14,7 @@ import {
   getBoard as getBoardService,
   listBoards as listBoardsService,
   moveCard as moveCardService,
+  restoreCard as restoreCardService,
   updateCard as updateCardService,
 } from "@/server/boards";
 import {
@@ -109,6 +110,13 @@ export async function archiveCardAction(input: unknown): Promise<ActionResult<nu
 export async function deleteCardAction(input: unknown): Promise<ActionResult<null>> {
   return run(async (userId) => {
     await deleteCardService(userId, cardIdInput.parse(input).cardId);
+    return null;
+  });
+}
+
+export async function restoreCardAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    await restoreCardService(userId, cardIdInput.parse(input).cardId);
     return null;
   });
 }

@@ -18,6 +18,7 @@ import { useState } from "react";
 import type { BoardPayload, Card } from "@/server/boards";
 
 import { BoardColumn } from "./board-column";
+import { CardSheet } from "./card-sheet";
 import { type MoveDirection } from "./card-tile";
 import { useBoard } from "./use-board";
 
@@ -36,8 +37,12 @@ export function BoardView({
   boardId: string;
   initialData: BoardPayload;
 }) {
-  const { payload, isFetching, moveCard, createCard } = useBoard(boardId, initialData);
+  const { payload, isFetching, moveCard, createCard, updateCard, removeCard } = useBoard(
+    boardId,
+    initialData,
+  );
   const [query, setQuery] = useQueryState("q");
+  const [cardParam, setCardParam] = useQueryState("card");
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -59,6 +64,8 @@ export function BoardView({
   };
 
   const activeCard = activeCardId ? (cards.find((card) => card.id === activeCardId) ?? null) : null;
+  /** The open detail sheet, resolved from the URL so the card is deep-linkable (ADR-042). */
+  const openCard = cardParam ? (cards.find((card) => card.id === cardParam) ?? null) : null;
 
   function handleDragStart(event: DragStartEvent) {
     setActiveCardId(String(event.active.id));
@@ -191,6 +198,7 @@ export function BoardView({
               query={query ?? ""}
               busy={isFetching}
               onMove={handleMove}
+              onOpen={(cardId) => void setCardParam(cardId)}
               onAdd={(columnId, title) => {
                 createCard.mutate({ columnId, title });
               }}
@@ -205,6 +213,25 @@ export function BoardView({
           ) : null}
         </DragOverlay>
       </DndContext>
+
+      {openCard ? (
+        <CardSheet
+          key={openCard.id}
+          card={openCard}
+          onOpenChange={(open) => {
+            if (!open) void setCardParam(null);
+          }}
+          onUpdate={(vars) => updateCard.mutate(vars)}
+          onArchive={(cardId) => {
+            void setCardParam(null);
+            removeCard.mutate({ cardId, archive: true });
+          }}
+          onDelete={(cardId) => {
+            void setCardParam(null);
+            removeCard.mutate({ cardId });
+          }}
+        />
+      ) : null}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
   deleteCardAction,
   fetchBoardAction,
   moveCardAction,
+  restoreCardAction,
   updateCardAction,
   type ActionResult,
 } from "@/server/boards/actions";
@@ -67,8 +68,12 @@ export interface UpdateCardVars {
   cardId: string;
   version: number;
   title?: string;
+  description?: string | null;
   priority?: string | null;
   dueAt?: string | null;
+  startAt?: string | null;
+  estimateMin?: number | null;
+  recurrence?: string | null;
 }
 
 const byPosition = (a: { position: string }, b: { position: string }) =>
@@ -199,6 +204,8 @@ export function useBoard(boardId: string, initialData: BoardPayload) {
       const previous = snapshot();
       queryClient.setQueryData<BoardPayload>(key, (current) => {
         if (!current) return current;
+        const toDate = (value: string | null | undefined, existing: Date | null) =>
+          value === undefined ? existing : value === null ? null : new Date(value);
         return {
           ...current,
           cards: current.cards.map((card) =>
@@ -206,13 +213,13 @@ export function useBoard(boardId: string, initialData: BoardPayload) {
               ? {
                   ...card,
                   title: vars.title ?? card.title,
+                  description: vars.description !== undefined ? vars.description : card.description,
                   priority: vars.priority !== undefined ? vars.priority : card.priority,
-                  due_at:
-                    vars.dueAt !== undefined
-                      ? vars.dueAt === null
-                        ? null
-                        : new Date(vars.dueAt)
-                      : card.due_at,
+                  due_at: toDate(vars.dueAt, card.due_at),
+                  start_at: toDate(vars.startAt, card.start_at),
+                  estimate_min:
+                    vars.estimateMin !== undefined ? vars.estimateMin : card.estimate_min,
+                  recurrence: vars.recurrence !== undefined ? vars.recurrence : card.recurrence,
                   version: card.version + 1,
                 }
               : card,
@@ -225,6 +232,12 @@ export function useBoard(boardId: string, initialData: BoardPayload) {
       restore(context?.previous);
       fail(error);
     },
+    onSettled: settle,
+  });
+
+  const restoreCard = useMutation({
+    mutationFn: async (vars: { cardId: string }) => unwrap(await restoreCardAction(vars)),
+    onError: fail,
     onSettled: settle,
   });
 
@@ -247,6 +260,14 @@ export function useBoard(boardId: string, initialData: BoardPayload) {
       restore(context?.previous);
       fail(error);
     },
+    onSuccess: (_data, vars) => {
+      if (vars.archive) return;
+      // Forgiving by default (spec §6.1): destructive writes are one toast away from undone.
+      toast("card moved to trash", {
+        description: "restore it any time within 30 days",
+        action: { label: "undo", onClick: () => restoreCard.mutate({ cardId: vars.cardId }) },
+      });
+    },
     onSettled: settle,
   });
 
@@ -257,5 +278,6 @@ export function useBoard(boardId: string, initialData: BoardPayload) {
     createCard,
     updateCard,
     removeCard,
+    restoreCard,
   };
 }

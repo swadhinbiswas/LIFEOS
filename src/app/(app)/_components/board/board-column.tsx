@@ -41,6 +41,7 @@ export function BoardColumn({
     <section
       data-slot="board-column"
       data-column-id={column.id}
+      data-column-name={column.name}
       className="flex w-64 shrink-0 flex-col border border-border bg-card"
       aria-label={column.name}
     >
