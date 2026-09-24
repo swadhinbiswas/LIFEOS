@@ -77,6 +77,38 @@ missing one, and this repo treats red gates as blocking.
    analytics verified against fixtures (already true at service level), axe on every new route,
    then the phase gate + status report.
 
+## Open problem 2: notes editor UI (reverted, needs a debugging pass)
+
+The notes **backend** is done and tested (`src/server/notes`, migration `0005`): FTS5 index synced
+by the service, hostile-query-safe search, prefix matching, backlinks rebuilt on every write, and
+order-independent `[[wiki links]]` (a reference written before its target resolves when the target
+is created — `5c7d99b`).
+
+The **UI** was implemented and reverted, not deferred by choice:
+
+- Files that existed and were removed: `src/app/(app)/notes/page.tsx` (list + `?q=` FTS search +
+  new-note/today's-journal buttons), `src/app/(app)/notes/[id]/page.tsx` (editor + backlink panel),
+  `src/app/(app)/notes/[id]/_components/note-editor.tsx` (title/body/save/pin/delete),
+  `src/app/(app)/notes/_components/new-note.tsx`, `src/server/notes/actions.ts`
+  (`createNoteAction`/`updateNoteAction`/`deleteNoteAction`/`dailyNoteAction`), plus
+  `tests/e2e/notes.spec.ts` and nav/a11y additions.
+- `tests/e2e/notes.spec.ts` failed twice: first at ~12 s (I only saw that a locator was not
+  found), then at **1.7 s after the service fix** — a fast failure like that usually means a
+  **strict-mode violation** (a locator matching more than one element), not a timeout. Prime
+  suspects to check first, in this order:
+  1. `getByRole("status")` — the editor renders one status span, but toasts (`sonner`) and any
+     `PlanMyDay`-style panel also expose `role="status"`; scope the assertion to
+     `[data-slot="note-editor"] [role="status"]`.
+  2. `getByRole("button", { name: "new note" })` — assert it is unique on `/notes` (the nav has a
+     "Notes" link, which should not match, but verify).
+  3. The save button's label flips between `save changes` and `saved`; if `fill()` on the
+     controlled textarea does not flip `dirty`, the name will not match. Assert the flow with
+     `page.getByLabel("note body (markdown)").fill(...)` then `press("Tab")` if needed.
+- Practical next step: re-create the files above (the service is unchanged), run
+  `pnpm exec playwright test tests/e2e/notes.spec.ts --reporter=list` and read the **first** error
+  block, which names the resolved elements in a strict-mode violation. Then run the full suite
+  twice before committing.
+
 ## Conventions that bit me (worth remembering)
 
 - Tests must select the **server-confirmed** card (`[data-card-id]:not([data-card-id^="pending-"])`);
