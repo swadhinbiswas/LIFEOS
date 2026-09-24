@@ -32,7 +32,6 @@ type StringAxis =
   | "sidebarVariant"
   | "sidebarMode";
 
-const PRESET_OPTIONS = THEME_PRESET_IDS.map((id) => ({ id, label: themes[id].label }));
 const LIGATURE_OPTIONS = [
   { id: "off", label: "Off" },
   { id: "on", label: "On" },
@@ -85,6 +84,45 @@ function Segmented<K extends StringAxis>({
   );
 }
 
+function PresetControl() {
+  const preset = useThemeStore((state) => state.overrides.preset);
+  const setOverride = useThemeStore((state) => state.set);
+
+  return (
+    <fieldset className="flex flex-col gap-1">
+      <legend className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
+        preset
+      </legend>
+      <div role="radiogroup" aria-label="preset" className="flex flex-wrap gap-1">
+        {THEME_PRESET_IDS.map((id) => {
+          const checked = preset === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={checked}
+              onClick={() => {
+                // ADR-024: choosing a preset switches to that preset's native colour mode.
+                setOverride("preset", id);
+                setOverride("colorMode", themes[id].nativeMode);
+              }}
+              className={cn(
+                "rounded-[var(--radius)] border px-2 py-1 font-mono text-xs",
+                checked
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-background text-foreground",
+              )}
+            >
+              {themes[id].label}
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}
+
 function AccentControl() {
   const accent = useThemeStore((state) => state.overrides.accent);
   const preset = useThemeStore((state) => state.overrides.preset);
@@ -129,7 +167,7 @@ export function ThemeCustomizer() {
   return (
     <div className="grid gap-4">
       <Panel title="Palette">
-        <Segmented axis="preset" legend="preset" options={PRESET_OPTIONS} />
+        <PresetControl />
         <Segmented axis="colorMode" legend="color mode" options={COLOR_MODES} />
       </Panel>
 

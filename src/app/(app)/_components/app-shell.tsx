@@ -13,6 +13,9 @@ import { authClient } from "@/lib/auth-client";
 import { useThemeStore } from "@/lib/theme-store";
 import { cn } from "@/lib/utils";
 
+import { CommandPalette } from "./command-palette";
+import { HelpOverlay } from "./help-overlay";
+
 /** Cycle order per ADR-028: `[` walks expanded → icon → full → expanded. */
 const SIDEBAR_MODES: readonly string[] = ["expanded", "icon", "full"];
 
@@ -28,6 +31,8 @@ export function AppShell({ user, children }: { user: { name: string }; children:
   const setOverride = useThemeStore((state) => state.set);
   const [overlayDismissed, setOverlayDismissed] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   // Derived, not synced: entering `full` reveals the bar; Esc/`[` dismiss it (ADR-028).
   const overlayOpen = sidebarMode === "full" && !overlayDismissed;
@@ -42,16 +47,24 @@ export function AppShell({ user, children }: { user: { name: string }; children:
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (
         target &&
         (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
       ) {
         return;
       }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen(true);
+        return;
+      }
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.key === "[") {
         event.preventDefault();
         cycleSidebar();
+      } else if (event.key === "?") {
+        event.preventDefault();
+        setHelpOpen(true);
       } else if (event.key === "Escape" && overlayOpen) {
         setOverlayDismissed(true);
       }
@@ -144,6 +157,13 @@ export function AppShell({ user, children }: { user: { name: string }; children:
 
         <StatusLine path={pathname} sync="synced" hints={SHELL_HINTS} />
       </div>
+
+      {/* Mounted only while open: shadcn's CommandDialog renders its sr-only header outside
+          the portal even when closed, which axe reports as content outside a landmark. */}
+      {paletteOpen ? (
+        <CommandPalette open onOpenChange={setPaletteOpen} onSignOut={() => void signOut()} />
+      ) : null}
+      <HelpOverlay open={helpOpen} onOpenChange={setHelpOpen} />
     </div>
   );
 }
