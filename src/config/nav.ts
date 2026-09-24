@@ -16,6 +16,7 @@ import {
   Wallet,
   Target,
   Sparkles,
+  Trash2,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
@@ -43,6 +44,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/learning", label: "Learning", icon: GraduationCap },
   { href: "/inbox", label: "Inbox", icon: Inbox },
   { href: "/boards", label: "Boards", icon: LayoutGrid },
+  { href: "/trash", label: "Trash", icon: Trash2 },
   { href: "/career/jobs", label: "Jobs", icon: Briefcase },
   { href: "/career/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/career/portfolio", label: "Portfolio", icon: Sparkles },

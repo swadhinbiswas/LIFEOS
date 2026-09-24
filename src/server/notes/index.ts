@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
@@ -196,6 +196,56 @@ export async function deleteNote(userId: string, noteId: string): Promise<void> 
     .returning();
   if (!row) throw new Error("note not found");
   await db.run(sql`delete from search_index where note_id = ${noteId}`);
+}
+
+/**
+ * Trash (spec §6.9, ADR-048). Deleting removed the FTS row, so restoring must re-index and
+ * re-sync links — otherwise the note would exist but be unfindable and unlinked.
+ */
+export async function listTrashedNotes(userId: string): Promise<NoteRow[]> {
+  return db
+    .select()
+    .from(notes)
+    .where(and(eq(notes.user_id, userId), isNotNull(notes.deleted_at)))
+    .orderBy(desc(notes.deleted_at));
+}
+
+export async function restoreNote(userId: string, noteId: string): Promise<void> {
+  const [row] = await db
+    .update(notes)
+    .set({ deleted_at: null })
+    .where(and(eq(notes.id, noteId), eq(notes.user_id, userId), isNotNull(notes.deleted_at)))
+    .returning();
+  if (!row) throw new Error("note is not in the trash");
+  await indexNote(row);
+  await syncLinks(userId, row);
+  await resolveIncoming(userId, row.title);
+}
+
+/** Hard delete, only ever a note already trashed — a mis-click cannot destroy live work. */
+export async function purgeNote(userId: string, noteId: string): Promise<void> {
+  await db
+    .delete(notes)
+    .where(and(eq(notes.id, noteId), eq(notes.user_id, userId), isNotNull(notes.deleted_at)));
+}
+
+/** Permanently delete trashed notes past the retention window. Returns how many rows went. */
+export async function purgeTrashedNotes(
+  userId: string,
+  olderThanDays = 30,
+  now: Date = new Date(),
+): Promise<number> {
+  const cutoff = new Date(now.getTime() - olderThanDays * 24 * 60 * 60 * 1000);
+  const removed = await db
+    .delete(notes)
+    .where(
+      and(eq(notes.user_id, userId), isNotNull(notes.deleted_at), lt(notes.deleted_at, cutoff)),
+    )
+    .returning({ id: notes.id });
+  for (const note of removed) {
+    await db.run(sql`delete from search_index where note_id = ${note.id}`);
+  }
+  return removed.length;
 }
 
 /** Today's note, created on first open and found again afterwards (spec §6.5). */

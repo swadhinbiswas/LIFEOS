@@ -1081,6 +1081,34 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-048 — Trash across modules: one shared view, per-module restore/purge, retention on read
+
+- **Status:** accepted (2026-09-24)
+- **Context:** spec §6.1 gave cards soft delete and a board-scoped Trash panel, and §6.9 asks for
+  trash/restore as a global feature; notes already soft-delete (`notes.deleted_at`) but had no
+  route back, and their `deleteNote` removes the FTS row so a naive restore would leave a note
+  that exists but is unfindable.
+- **Decision:**
+  - **One service composes the modules** (`src/server/trash`): it lists cards and notes into a
+    single `{kind, id, title, deletedAt, context}` shape and dispatches restore/purge back to the
+    owning service. There is no third copy of the soft-delete logic; the board service stays the
+    only writer of cards and the notes service the only writer of notes.
+  - **Restoring a note re-indexes it.** `restoreNote` clears `deleted_at`, re-inserts the FTS5 row
+    and re-syncs `[[wiki-link]]` edges, so a restored note is searchable and backlinked again
+    rather than a ghost.
+  - **Retention runs on read.** Listing the trash first hard-deletes rows past the 30-day window
+    (cards via the existing `purgeTrash`, notes via a new `purgeTrashedNotes`), so retention needs
+    no cron. The board panel's explicit "purge older than 30 days" stays for in-context use.
+  - **The board panel stays; a `/trash` route is added.** A user who loses a card looks on the
+    board first, so the in-context panel keeps its job; `/trash` is the durable, cross-module route
+    back (linked from the sidebar) and the only place notes are recoverable.
+  - An activity feed / audit trail is **not** built here — §6.9's cut-line item is trash/restore.
+- **Consequences:** one retention rule and one place the UI reads, while each module keeps
+  ownership of its rows. Cost: two small purge/list functions in the notes service and a dispatch
+  switch; "delete forever" is still only ever offered for rows already trashed.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
