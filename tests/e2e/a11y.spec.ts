@@ -59,6 +59,7 @@ const AUTH_ROUTES = [
 const SHELL_ROUTES = [
   "/settings",
   "/settings/appearance",
+  "/settings/integrations",
   "/about",
   "/tasks",
   "/dashboard",

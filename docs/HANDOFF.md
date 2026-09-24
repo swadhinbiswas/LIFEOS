@@ -1,14 +1,23 @@
-# Handoff — LifeOS after Phase 4
+# Handoff — LifeOS in Phase 5
 
 Read `AGENTS.md` and `prompt.md` first; this file records **state, outstanding gaps and gotchas**,
 not decisions (those are in `docs/DECISIONS.md`).
 
 ## Status
 
-- Phases 0–3 complete and reported. **Phase 4 complete** (dashboards + life modules).
+- Phases 0–4 complete and reported. **Phase 5 in progress** (API, MCP, webhooks, docs).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **207 passed** ✓ · `pnpm e2e` **43 passed** (three consecutive full runs) ✓.
-- ADR-044 … ADR-053 record the phase's decisions. Nothing is pushed; all work is on local `master`.
+  `pnpm test` **210 passed** ✓ · `pnpm e2e` **44 passed, twice** ✓.
+- ADR-044 … ADR-062 record the decisions. Nothing is pushed; all work is on local `master`.
+
+## Phase 5 so far
+
+- `api_keys` table (migration 0008) + `src/server/api-keys`: `lifeos_live_<prefix>_<secret>` tokens,
+  SHA-256 hash + prefix, scopes, expiry, last-used, soft revoke (ADR-062).
+- `/settings/integrations` management UI: create (token shown once), list, revoke.
+- Next in phase: REST `/api/v1` (cursor pagination, sparse fields, ETag/If-Match, Idempotency-Key,
+  the `{ error: { code, message, details, request_id } }` shape), MCP `/api/mcp`, `/api/v1/ingest`,
+  outgoing webhooks, OpenAPI 3.1 + `/docs/api`.
 
 ## The Phase-4 chunks
 
@@ -38,8 +47,8 @@ not decisions (those are in `docs/DECISIONS.md`).
 
 1. **i18n is incremental** (ADR-053/060): `/about` and the shell chrome (nav + tagline) are
    translated (en/bn); page bodies, the status-line hints and the `?` cheat-sheet are still
-   English — the same mechanical pass, to be done surface by surface. **This is the only
-   remaining backlog item; nothing else is outstanding.**
+   English — the same mechanical pass, to be done surface by surface. This is the only open
+   Phase-4 backlog item.
 
 ## Next: Phase 5 (awaiting the user's go-ahead)
 

@@ -1440,6 +1440,32 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-062 — Personal API keys: an own table with SHA-256 + prefix and scopes
+
+- **Status:** accepted (2026-09-24)
+- **Context:** §9.1 / MVP #33 require personal API keys: created in the UI, **shown once**, stored as
+  a SHA-256 hash plus prefix, scoped, optionally expiring, last-used tracked, instantly revocable.
+  Better Auth ships an `apiKey` plugin, but its own table and hashing model would tie key
+  management to the auth library and diverge from the "SHA-256 + prefix" the cut-list fixes.
+- **Decision:**
+  - A dedicated **`api_keys` table** (migration 0008) owned by `src/server/api-keys`, not the auth
+    library: name, unique **prefix**, SHA-256 **hash**, scopes JSON, expiry, `last_used_at`,
+    `revoked_at`.
+  - Token format **`lifeos_live_<prefix>_<secret>`**; verification looks the prefix up (one indexed
+    row) and compares the hash in **constant time** (`timingSafeEqual`), so a leak of the table is
+    not a leak of usable keys.
+  - Scopes are validated against `API_SCOPES` at the boundary; `read:*` grants a whole namespace,
+    and no scope grants nothing.
+  - **Revocation is soft** (`revoked_at`) for the audit trail, and `last_used_at` is stamped on each
+    successful verification.
+  - The management UI is **`/settings/integrations`**: create (token shown once), list (prefix +
+    scopes + last use), revoke.
+- **Consequences:** the REST and MCP surfaces authenticate through one key model and one helper;
+  the UI never sees a token again after creation. Cost: a table, a bearer path that must stay in
+  step with session auth, and the one-time-display contract the UI must honour.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

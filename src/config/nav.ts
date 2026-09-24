@@ -18,6 +18,7 @@ import {
   Target,
   Sparkles,
   Info,
+  KeyRound,
   Trash2,
   UserRound,
   type LucideIcon,
@@ -55,6 +56,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/career/portfolio", key: "portfolio", icon: Sparkles },
   { href: "/career/interview-prep", key: "prep", icon: MessageSquareQuote },
   { href: "/settings", key: "profile", icon: UserRound },
+  { href: "/settings/integrations", key: "integrations", icon: KeyRound },
   { href: "/settings/appearance", key: "appearance", icon: Palette },
   { href: "/about", key: "about", icon: Info },
 ];
