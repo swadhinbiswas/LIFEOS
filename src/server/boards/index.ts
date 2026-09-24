@@ -9,7 +9,7 @@ import {
 import { DEFAULT_CARD_FIELDS, DEFAULT_VIEW_CONFIG } from "@/config/boards";
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
-import { board_columns, boards, cards } from "@/server/db/schema";
+import { board_columns, boards, card_labels, cards, labels } from "@/server/db/schema";
 
 import type {
   CreateBoardInput,
@@ -49,6 +49,55 @@ export type Card = typeof cards.$inferSelect;
 
 /** ADR-009 / research (d) §1: rebalance a column once a key outgrows this length. */
 export const REBALANCE_THRESHOLD = 128;
+
+/**
+ * Attach labels by name, creating the ones the board does not have yet (spec §6.1 labels,
+ * used by the `#tag` capture grammar in §4.3). Idempotent: re-capturing the same tag is a
+ * no-op thanks to the composite primary key.
+ */
+export async function attachLabels(
+  userId: string,
+  boardId: string,
+  cardId: string,
+  names: string[],
+): Promise<void> {
+  for (const rawName of names) {
+    const name = rawName.trim().toLowerCase();
+    if (!name) continue;
+
+    const [existing] = await db
+      .select({ id: labels.id })
+      .from(labels)
+      .where(and(eq(labels.board_id, boardId), eq(labels.user_id, userId), eq(labels.name, name)))
+      .limit(1);
+
+    let labelId = existing?.id;
+    if (!labelId) {
+      const [created] = await db
+        .insert(labels)
+        .values({ id: newId(), board_id: boardId, user_id: userId, name })
+        .onConflictDoNothing()
+        .returning({ id: labels.id });
+      labelId = created?.id;
+      if (!labelId) {
+        const [again] = await db
+          .select({ id: labels.id })
+          .from(labels)
+          .where(
+            and(eq(labels.board_id, boardId), eq(labels.user_id, userId), eq(labels.name, name)),
+          )
+          .limit(1);
+        labelId = again?.id;
+      }
+    }
+    if (!labelId) continue;
+
+    await db
+      .insert(card_labels)
+      .values({ card_id: cardId, label_id: labelId, user_id: userId })
+      .onConflictDoNothing();
+  }
+}
 
 /** Insert positions for a fresh set of columns/cards: short, ascending keys (ADR-009). */
 function sequentialKeys(count: number): string[] {
@@ -570,8 +619,7 @@ export async function restoreCard(userId: string, cardId: string): Promise<void>
     .where(and(eq(cards.id, cardId), eq(cards.user_id, userId)));
 }
 
-/**
- * Rebuild one column's keys as short ascending strings (ADR-009). Idempotent and cheap for the
+/** Rebuild one column's keys as short ascending strings (ADR-009). Idempotent and cheap for the
  * sizes a board actually reaches; positions are not bumped (`version` stays put, so optimistic
  * caches do not conflict).
  */

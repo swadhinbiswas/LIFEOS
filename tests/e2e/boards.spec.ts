@@ -1,22 +1,6 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
-import { createVerifiedUser, signIn, uniqueEmail } from "./helpers";
-
-/**
- * A column section by name. Attribute-based on purpose: while the detail sheet (a modal) is
- * open, Radix marks the board `aria-hidden`, so role-based locators cannot see it.
- */
-const column = (page: Page, name: string) =>
-  page.locator(`section[data-slot="board-column"][data-column-name="${name}"]`);
-
-/**
- * The server-confirmed card. Optimistic rows carry a `pending-…` id, so selecting the
- * non-pending one is how a test waits for the write to have actually landed.
- */
-const serverCard = (page: Page, columnName: string, title: string) =>
-  column(page, columnName).locator(`[data-slot="card"]:not([data-card-id^="pending-"])`, {
-    hasText: title,
-  });
+import { column, createVerifiedUser, serverCard, signIn, uniqueEmail } from "./helpers";
 
 /**
  * Phase 2 first slice (spec §6.1/§6.2, ADR-042): the Tasks board accepts a quick add and the
