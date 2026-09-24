@@ -101,3 +101,23 @@ test("axe: signed-in shell passes in every preset", async ({ page }) => {
     }
   }
 });
+
+/**
+ * The job detail route is dynamic, so it needs a job to exist before it can be scanned. Built
+ * through the real UI rather than a fixture so the scan covers the route as users reach it.
+ */
+test("axe: the job detail route passes", async ({ page }) => {
+  test.setTimeout(120_000);
+  const email = uniqueEmail("axe-job");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/career/jobs");
+  await page.getByLabel("job title").fill("Axe check job");
+  await page.getByLabel("company").fill("Acme");
+  await page.getByRole("button", { name: "add job" }).click();
+  await page.waitForURL(/\/career\/jobs\/[^/]+$/u);
+
+  const violations = await scan(page);
+  expect(violations, `job detail: ${describe(violations)}`).toEqual([]);
+});
