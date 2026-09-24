@@ -3,7 +3,7 @@ import { and, desc, eq, gte } from "drizzle-orm";
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
 import { health_logs } from "@/server/db/schema";
-import { dayKey } from "@/server/habits/streak";
+import { getUserDayKey } from "@/server/settings";
 
 import { kindTrends, windowDays, type KindTrend } from "./trends";
 
@@ -29,7 +29,7 @@ export async function logHealth(
     note?: string | null;
   },
 ): Promise<HealthLogRow> {
-  const date = input.date ?? dayKey(new Date());
+  const date = input.date ?? (await getUserDayKey(userId));
   await db
     .delete(health_logs)
     .where(
@@ -60,7 +60,7 @@ export async function listHealth(
   userId: string,
   options: { days?: number; today?: string } = {},
 ): Promise<HealthLogRow[]> {
-  const today = options.today ?? dayKey(new Date());
+  const today = options.today ?? (await getUserDayKey(userId));
   const [from] = windowDays(today, options.days ?? 28);
   if (!from) return [];
   return db
@@ -75,19 +75,17 @@ export interface HealthSummary {
   today: Array<{ kind: string; value: number; unit: string | null }>;
 }
 
-export async function healthSummary(
-  userId: string,
-  today: string = dayKey(new Date()),
-): Promise<HealthSummary> {
-  const rows = await listHealth(userId, { days: 28, today });
+export async function healthSummary(userId: string, today?: string): Promise<HealthSummary> {
+  const day = today ?? (await getUserDayKey(userId));
+  const rows = await listHealth(userId, { days: 28, today: day });
   return {
     trends: kindTrends(
       rows.map((row) => ({ kind: row.kind, value: row.value, unit: row.unit, date: row.date })),
-      today,
+      day,
       28,
     ),
     today: rows
-      .filter((row) => row.date === today)
+      .filter((row) => row.date === day)
       .map((row) => ({ kind: row.kind, value: row.value, unit: row.unit })),
   };
 }

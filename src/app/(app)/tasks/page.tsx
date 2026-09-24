@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "@/server/auth/session";
 import { ensureSystemTasksBoard, getBoard } from "@/server/boards";
 import { getDailyBrief } from "@/server/boards/brief";
+import { getTimeZone } from "@/server/settings";
 
 import { BoardView } from "../_components/board/board-view";
 import { PlanMyDay } from "../_components/board/plan-my-day";
@@ -19,7 +20,11 @@ export default async function TasksPage() {
 
   const board = await ensureSystemTasksBoard(session.user.id);
   const payload = await getBoard(session.user.id, board.id);
-  const brief = await getDailyBrief(session.user.id);
+  const brief = await getDailyBrief(
+    session.user.id,
+    new Date(),
+    await getTimeZone(session.user.id),
+  );
 
   return (
     <>

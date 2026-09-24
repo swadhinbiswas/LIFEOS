@@ -7,7 +7,7 @@ not decisions (those are in `docs/DECISIONS.md`).
 
 - Phases 0–3 complete and reported. **Phase 4 complete** (dashboards + life modules).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **200 passed** ✓ · `pnpm e2e` **41 passed, twice** ✓.
+  `pnpm test` **204 passed** ✓ · `pnpm e2e` **42 passed, twice** ✓.
 - ADR-044 … ADR-053 record the phase's decisions. Nothing is pushed; all work is on local `master`.
 
 ## The Phase-4 chunks
@@ -28,14 +28,16 @@ not decisions (those are in `docs/DECISIONS.md`).
 - per-card reminders delivered by the notification sweep (ADR-054)
 - PWA: installable manifest + network-first shell cache (ADR-055)
 - card↔card links from the card sheet (ADR-056)
+- timezone preference + day bucketing in the user's zone (ADR-057)
 
 ## Outstanding gaps (deliberate, with next steps)
 
 1. **i18n is a scaffold** (ADR-053): `/about` is translated (en/bn) with a cookie locale; the shell
    is English. Translated pathnames and a per-user locale setting are pending.
-2. **Dates are UTC everywhere** (ADR-045/052/053); per-user timezone rendering is the open §6.9
-   timezone item.
-3. **Generic tags apply to notes only** (ADR-049); cards keep their board-scoped labels.
+2. **Generic tags apply to notes only** (ADR-049); cards keep their board-scoped labels — extending
+   needs a design call on how the two relate.
+3. **Configurable `week_start`** and the dashboard's Monday-anchored week, plus finance's month
+   keys, are still UTC (ADR-057 chose not to half-convert them).
 
 ## Next: Phase 5 (awaiting the user's go-ahead)
 

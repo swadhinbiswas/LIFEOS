@@ -1321,6 +1321,34 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-057 — Timezone: one user setting, one day-key helper, applied at every default
+
+- **Status:** accepted (2026-09-24)
+- **Context:** §6.9 asks for "timezone-correct dates (store UTC, render in user tz, week start
+  configurable)". Instants have been stored UTC since ADR-015 and day keys (habits, health,
+  journal) since ADR-045, both in **UTC**; `user_settings.timezone` exists but is unused. A user
+  east or west of UTC would see habit days, the calendar and "due today" bucket on the wrong day
+  near midnight.
+- **Decision:**
+  - **`user_settings.timezone` holds an IANA name**, `UTC` is the default, and an unusable value
+    resolves to UTC rather than throwing — a bad row must never break a page (`src/lib/timezone.ts`).
+  - **One conversion, one place.** `dayKeyInTimeZone` / `startOfDayInTimeZone` are the only
+    timezone maths; **every service that defaulted to `dayKey(new Date())` now defaults to
+    `getUserDayKey(userId)`** (habits, health, journal, goals, reviews). An explicit date argument
+    still wins, so tests and deterministic callers are unaffected.
+  - **Window-based features take the timezone explicitly** from their caller and convert their day
+    boundaries with the same helper: the daily brief and carry-over, the notification sweep (task
+    due window, "missed yesterday", subscription renewals), the calendar's range and day buckets,
+    and a subscription's "due in N days".
+  - **Instants stay UTC; only day bucketing and "today" move.** Configurable `week_start` and the
+    dashboard's Monday-anchored week, plus finance's month keys, are a separate item and stay UTC
+    for now rather than being half-converted.
+- **Consequences:** a user in any timezone gets the day they are actually in; the invariant is
+  single-sourced, so the surfaces cannot drift into disagreeing days. Cost: one extra settings read
+  on the services that resolve a default day, and the settings UI control.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

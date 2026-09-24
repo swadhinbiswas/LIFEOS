@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
 import { healthSummary, listHealth } from "@/server/health";
-import { dayKey } from "@/server/habits/streak";
+import { getUserDayKey } from "@/server/settings";
 
 import { HealthForm } from "./_components/health-form";
 
@@ -17,7 +17,7 @@ export default async function HealthPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
-  const today = dayKey(new Date());
+  const today = await getUserDayKey(session.user.id);
   const [summary, recent] = await Promise.all([
     healthSummary(session.user.id, today),
     listHealth(session.user.id, { days: 28, today }),

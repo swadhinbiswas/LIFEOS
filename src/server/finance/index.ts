@@ -1,6 +1,7 @@
 import { and, asc, desc, eq } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
+import { DEFAULT_TIME_ZONE, dayKeyInTimeZone } from "@/lib/timezone";
 import { db } from "@/server/db";
 import { accounts_fin, budgets, subscriptions_tracked, transactions } from "@/server/db/schema";
 
@@ -198,8 +199,11 @@ export async function monthSummary(
 export type SubscriptionRow = typeof subscriptions_tracked.$inferSelect;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const dayStart = (date: Date): number =>
-  Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+/** Days since the epoch for a `YYYY-MM-DD` key — lets day differences ignore time-of-day. */
+const dayNumber = (dayKey: string): number => {
+  const [year, month, day] = dayKey.split("-").map(Number);
+  return Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1) / DAY_MS;
+};
 
 export interface SubscriptionView {
   subscription: SubscriptionRow;
@@ -212,6 +216,7 @@ export interface SubscriptionView {
 export async function listSubscriptions(
   userId: string,
   now: Date = new Date(),
+  timeZone: string = DEFAULT_TIME_ZONE,
 ): Promise<SubscriptionView[]> {
   const rows = await db
     .select()
@@ -219,13 +224,14 @@ export async function listSubscriptions(
     .where(eq(subscriptions_tracked.user_id, userId))
     .orderBy(asc(subscriptions_tracked.renews_at), subscriptions_tracked.name);
 
+  const today = dayNumber(dayKeyInTimeZone(now, timeZone));
   return rows.map((subscription) => ({
     subscription,
     monthlyMinor: monthlyMinorFor(subscription.amount_minor, subscription.cadence),
     dueInDays:
       subscription.renews_at === null
         ? null
-        : Math.round((dayStart(new Date(subscription.renews_at)) - dayStart(now)) / DAY_MS),
+        : dayNumber(dayKeyInTimeZone(new Date(subscription.renews_at), timeZone)) - today,
   }));
 }
 

@@ -3,7 +3,7 @@ import { and, desc, eq, inArray, isNotNull, isNull, lt, sql } from "drizzle-orm"
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
 import { note_links, notes } from "@/server/db/schema";
-import { dayKey } from "@/server/habits/streak";
+import { getUserDayKey } from "@/server/settings";
 
 import { extractWikiLinks, toPlainText } from "./wiki";
 
@@ -249,10 +249,8 @@ export async function purgeTrashedNotes(
 }
 
 /** Today's note, created on first open and found again afterwards (spec §6.5). */
-export async function dailyNote(
-  userId: string,
-  date: string = dayKey(new Date()),
-): Promise<NoteRow> {
+export async function dailyNote(userId: string, date?: string): Promise<NoteRow> {
+  const day = date ?? (await getUserDayKey(userId));
   const [existing] = await db
     .select()
     .from(notes)
@@ -260,13 +258,13 @@ export async function dailyNote(
       and(
         eq(notes.user_id, userId),
         eq(notes.kind, "daily"),
-        eq(notes.daily_date, date),
+        eq(notes.daily_date, day),
         isNull(notes.deleted_at),
       ),
     )
     .limit(1);
   if (existing) return existing;
-  return createNote(userId, { kind: "daily", dailyDate: date, title: date });
+  return createNote(userId, { kind: "daily", dailyDate: day, title: day });
 }
 
 /**

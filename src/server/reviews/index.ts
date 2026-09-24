@@ -4,7 +4,7 @@ import { newId } from "@/lib/id";
 import { db } from "@/server/db";
 import { reviews } from "@/server/db/schema";
 import { createNote } from "@/server/notes";
-import { dayKey } from "@/server/habits/streak";
+import { getUserDayKey } from "@/server/settings";
 
 /**
  * Review wizard (spec §6.2/§6.4): a guided weekly or monthly review whose output **is a note**
@@ -71,7 +71,7 @@ export async function completeReview(
   input: { period?: ReviewPeriod; answers: ReviewAnswers; day?: string },
 ): Promise<ReviewRow> {
   const period = input.period ?? "weekly";
-  const day = input.day ?? dayKey(new Date());
+  const day = input.day ?? (await getUserDayKey(userId));
   const note = await createNote(userId, {
     title: `${period === "weekly" ? "Weekly" : "Monthly"} review — ${day}`,
     body: renderReviewNote(period, day, input.answers),

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
 import { listNotifications } from "@/server/notifications";
+import { getTimeZone } from "@/server/settings";
 
 import { NotificationsList } from "./_components/notifications-list";
 
@@ -17,7 +18,8 @@ export default async function NotificationsPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
-  const { items, unread } = await listNotifications(session.user.id);
+  const timeZone = await getTimeZone(session.user.id);
+  const { items, unread } = await listNotifications(session.user.id, new Date(), timeZone);
 
   return (
     <>

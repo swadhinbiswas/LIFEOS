@@ -1,5 +1,6 @@
 import { and, eq, gte, isNull, lt, or } from "drizzle-orm";
 
+import { DEFAULT_TIME_ZONE, dayKeyInTimeZone, startOfDayInTimeZone } from "@/lib/timezone";
 import { db } from "@/server/db";
 import {
   boards,
@@ -36,21 +37,27 @@ export interface CalendarRange {
   to: string;
 }
 
-const instantOf = (value: Date): { at: string; date: string; time: string | null } => {
+/**
+ * An event's calendar day. Date-only values (stored at UTC midnight by the date inputs) keep their
+ * UTC day — that is the day the user picked — while a timed value lands on the user's local day.
+ */
+const instantOf = (
+  value: Date,
+  timeZone: string,
+): { at: string; date: string; time: string | null } => {
   const iso = value.toISOString();
-  const hh = iso.slice(11, 13);
-  const mm = iso.slice(14, 16);
-  return {
-    at: iso,
-    date: iso.slice(0, 10),
-    time: hh === "00" && mm === "00" ? null : `${hh}:${mm}`,
-  };
+  if (iso.endsWith("T00:00:00.000Z")) return { at: iso, date: iso.slice(0, 10), time: null };
+  return { at: iso, date: dayKeyInTimeZone(value, timeZone), time: iso.slice(11, 16) };
 };
 
-/** Every dated item in the inclusive UTC day range, oldest first. */
-export async function getCalendar(userId: string, range: CalendarRange): Promise<CalendarEvent[]> {
-  const from = new Date(`${range.from}T00:00:00.000Z`);
-  const to = new Date(`${shiftDay(range.to, 1)}T00:00:00.000Z`); // exclusive upper bound
+/** Every dated item in the inclusive day range, bucketed in the user's timezone (ADR-057). */
+export async function getCalendar(
+  userId: string,
+  range: CalendarRange,
+  timeZone: string = DEFAULT_TIME_ZONE,
+): Promise<CalendarEvent[]> {
+  const from = startOfDayInTimeZone(range.from, timeZone);
+  const to = startOfDayInTimeZone(shiftDay(range.to, 1), timeZone); // exclusive upper bound
 
   const [cardRows, interviewRows, subscriptionRows] = await Promise.all([
     db
@@ -122,7 +129,7 @@ export async function getCalendar(userId: string, range: CalendarRange): Promise
       id: `task:${row.id}`,
       kind: "task",
       title: row.title,
-      ...instantOf(chosen),
+      ...instantOf(chosen, timeZone),
       href: row.isSystem ? `/tasks?card=${row.id}` : `/boards/${row.boardId}?card=${row.id}`,
     });
   }
@@ -133,7 +140,7 @@ export async function getCalendar(userId: string, range: CalendarRange): Promise
       id: `interview:${row.id}`,
       kind: "interview",
       title: `${row.cardTitle} · ${row.kind}`,
-      ...instantOf(row.startsAt),
+      ...instantOf(row.startsAt, timeZone),
       href: `/career/jobs/${row.cardId}`,
     });
   }
@@ -144,7 +151,7 @@ export async function getCalendar(userId: string, range: CalendarRange): Promise
       id: `subscription:${row.id}`,
       kind: "subscription",
       title: row.name,
-      ...instantOf(row.renewsAt),
+      ...instantOf(row.renewsAt, timeZone),
       href: "/finance",
     });
   }

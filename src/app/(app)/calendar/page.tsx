@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Panel } from "@/components/tui/panel";
+import { dayKeyInTimeZone } from "@/lib/timezone";
 import { getServerSession } from "@/server/auth/session";
 import { getCalendar } from "@/server/calendar";
 import {
@@ -14,7 +15,7 @@ import {
   weekDays,
   type CalendarView,
 } from "@/server/calendar/grid";
-import { dayKey } from "@/server/habits/streak";
+import { getTimeZone } from "@/server/settings";
 
 import { AgendaView, MonthView, WeekView } from "./_components/calendar-views";
 
@@ -41,10 +42,11 @@ export default async function CalendarPage({ searchParams }: PageProps) {
   const activeView: CalendarView = (CALENDAR_VIEWS as readonly string[]).includes(view ?? "")
     ? (view as CalendarView)
     : "month";
-  const today = dayKey(new Date());
+  const timeZone = await getTimeZone(session.user.id);
+  const today = dayKeyInTimeZone(new Date(), timeZone);
   const anchor = isValidDayKey(d) ? d : today;
   const { from, to } = rangeFor(activeView, anchor);
-  const events = await getCalendar(session.user.id, { from, to });
+  const events = await getCalendar(session.user.id, { from, to }, timeZone);
 
   const label = activeView === "month" ? monthLabel(anchor) : `${from} → ${to}`;
   const href = (nextView: CalendarView, day: string) => `/calendar?view=${nextView}&d=${day}`;

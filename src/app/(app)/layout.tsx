@@ -7,7 +7,7 @@ import { parseThemeOverrides } from "@/config/themes";
 import { auth } from "@/server/auth";
 import { getRunningSession } from "@/server/focus";
 import { unreadCount } from "@/server/notifications";
-import { getThemeOverrides } from "@/server/settings";
+import { getThemeOverrides, getTimeZone } from "@/server/settings";
 
 import { AppShell } from "./_components/app-shell";
 import { ThemeSync } from "./_components/theme-sync";
@@ -27,8 +27,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const fromDb = await getThemeOverrides(session.user.id);
   // The focus session is a database row (ADR: /focus), so the shell can show it on any page.
   const focus = await getRunningSession(session.user.id);
-  // The bell sweeps the notification sources on read (ADR-047), so its number is always current.
-  const unread = await unreadCount(session.user.id);
+  // The bell sweeps the notification sources on read (ADR-047), bucketed by the user's day
+  // (ADR-057), so its number is always current.
+  const timeZone = await getTimeZone(session.user.id);
+  const unread = await unreadCount(session.user.id, new Date(), timeZone);
 
   return (
     <AppProviders>

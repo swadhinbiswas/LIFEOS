@@ -1,16 +1,22 @@
 import { and, desc, eq, isNull, lt, sql } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
+import {
+  DEFAULT_TIME_ZONE,
+  dayKeyInTimeZone,
+  endOfDayInTimeZone,
+  startOfDayInTimeZone,
+} from "@/lib/timezone";
 import { getFollowUpsDue } from "@/server/career/analytics";
 import { db } from "@/server/db";
 import { boards, cards, notifications } from "@/server/db/schema";
 import { listSubscriptions } from "@/server/finance";
 import { formatMinor } from "@/server/finance/money";
 import { listHabits } from "@/server/habits";
-import { dayKey, shiftDay } from "@/server/habits/streak";
+import { shiftDay } from "@/server/habits/streak";
 import { dueReminders, markReminderSent } from "@/server/reminders";
 
-import { endOfUtcDay, startOfUtcDay, weekKey } from "./windows";
+import { weekKey } from "./windows";
 
 /**
  * Notification centre (spec §6.9, ADR-047). Rows are **generated on read**: every call sweeps
@@ -64,9 +70,10 @@ const toView = (row: typeof notifications.$inferSelect): NotificationView => ({
  * wall of rows. Scoped to the system Tasks board (job and project cards can carry due dates too
  * and must not double-count here). The count is a snapshot; the link lands on the live board.
  */
-async function taskDrafts(userId: string, now: Date): Promise<Draft[]> {
-  const dayEnd = endOfUtcDay(now);
-  const dayStart = startOfUtcDay(now);
+async function taskDrafts(userId: string, now: Date, timeZone: string): Promise<Draft[]> {
+  const day = dayKeyInTimeZone(now, timeZone);
+  const dayStart = startOfDayInTimeZone(day, timeZone);
+  const dayEnd = endOfDayInTimeZone(day, timeZone);
   const rows = await db
     .select({ dueAt: cards.due_at })
     .from(cards)
@@ -105,7 +112,7 @@ async function taskDrafts(userId: string, now: Date): Promise<Draft[]> {
       title,
       body: "open the tasks board to clear them",
       href: "/tasks",
-      dedupeKey: `task:${dayKey(now)}`,
+      dedupeKey: `task:${day}`,
     },
   ];
 }
@@ -114,8 +121,8 @@ async function taskDrafts(userId: string, now: Date): Promise<Draft[]> {
  * A habit that was skipped yesterday while it was still active, and is still open today — the
  * "never miss twice" nudge. Per habit, so each one links somewhere the user can act on it.
  */
-async function habitDrafts(userId: string, now: Date): Promise<Draft[]> {
-  const today = dayKey(now);
+async function habitDrafts(userId: string, now: Date, timeZone: string): Promise<Draft[]> {
+  const today = dayKeyInTimeZone(now, timeZone);
   const yesterday = shiftDay(today, -1);
   const activeFrom = shiftDay(today, -14);
   const views = await listHabits(userId, today);
@@ -157,8 +164,8 @@ async function jobDrafts(userId: string, now: Date): Promise<Draft[]> {
  * A renewal nudge for a subscription due within three days (or overdue by up to a week), once a
  * week per subscription (ADR-050). The `billing` kind already exists in the schema for this.
  */
-async function subscriptionDrafts(userId: string, now: Date): Promise<Draft[]> {
-  const subscriptions = await listSubscriptions(userId, now);
+async function subscriptionDrafts(userId: string, now: Date, timeZone: string): Promise<Draft[]> {
+  const subscriptions = await listSubscriptions(userId, now, timeZone);
   const key = weekKey(now);
   return subscriptions
     .filter(({ dueInDays }) => dueInDays !== null && dueInDays <= 3 && dueInDays >= -7)
@@ -197,12 +204,16 @@ async function reminderDrafts(userId: string, now: Date): Promise<Draft[]> {
  * Evaluate every source and insert the drafts that are not already present. Returns how many
  * rows the sweep actually created (0 on a repeat), which is what the tests assert on.
  */
-export async function sweepNotifications(userId: string, now: Date = new Date()): Promise<number> {
+export async function sweepNotifications(
+  userId: string,
+  now: Date = new Date(),
+  timeZone: string = DEFAULT_TIME_ZONE,
+): Promise<number> {
   const drafts = [
-    ...(await taskDrafts(userId, now)),
-    ...(await habitDrafts(userId, now)),
+    ...(await taskDrafts(userId, now, timeZone)),
+    ...(await habitDrafts(userId, now, timeZone)),
     ...(await jobDrafts(userId, now)),
-    ...(await subscriptionDrafts(userId, now)),
+    ...(await subscriptionDrafts(userId, now, timeZone)),
     ...(await reminderDrafts(userId, now)),
   ];
   if (drafts.length === 0) return 0;
@@ -235,8 +246,12 @@ async function countUnread(userId: string): Promise<number> {
 }
 
 /** The bell's number: sweep first so a nudge that just became true is counted immediately. */
-export async function unreadCount(userId: string, now: Date = new Date()): Promise<number> {
-  await sweepNotifications(userId, now);
+export async function unreadCount(
+  userId: string,
+  now: Date = new Date(),
+  timeZone: string = DEFAULT_TIME_ZONE,
+): Promise<number> {
+  await sweepNotifications(userId, now, timeZone);
   return countUnread(userId);
 }
 
@@ -244,9 +259,10 @@ export async function unreadCount(userId: string, now: Date = new Date()): Promi
 export async function listNotifications(
   userId: string,
   now: Date = new Date(),
+  timeZone: string = DEFAULT_TIME_ZONE,
   limit = 100,
 ): Promise<NotificationPage> {
-  await sweepNotifications(userId, now);
+  await sweepNotifications(userId, now, timeZone);
 
   const rows = await db
     .select()

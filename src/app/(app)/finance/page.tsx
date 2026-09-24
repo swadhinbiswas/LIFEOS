@@ -5,6 +5,7 @@ import { getServerSession } from "@/server/auth/session";
 import { listAccounts, listSubscriptions, listTransactions, monthSummary } from "@/server/finance";
 import { formatMinor } from "@/server/finance/money";
 import { subscriptionTotals } from "@/server/finance/subscriptions";
+import { getTimeZone } from "@/server/settings";
 
 import {
   AddAccountForm,
@@ -29,7 +30,7 @@ export default async function FinancePage() {
     listAccounts(session.user.id),
     monthSummary(session.user.id),
     listTransactions(session.user.id),
-    listSubscriptions(session.user.id),
+    listSubscriptions(session.user.id, new Date(), await getTimeZone(session.user.id)),
   ]);
   const subscriptionTotal = subscriptionTotals(
     subscriptions.map(({ subscription }) => ({

@@ -1,25 +1,12 @@
 /**
- * Notification windows (ADR-047). Pure UTC date helpers, kept out of the service so the dedupe
- * keys a repeated sweep must reproduce are unit-testable without a database.
- *
- * `task` nudges are once a day and `job` nudges once a week; both windows are computed here so
- * the sweep and its tests agree by construction.
+ * Notification windows (ADR-047). `weekKey` is UTC-anchored: it only decides how often a weekly
+ * nudge may repeat, so a week boundary a few hours off the user's does not matter. Day bucketing
+ * for the actual nudges is the user's timezone (ADR-057, `src/lib/timezone.ts`).
  */
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-export function startOfUtcDay(date: Date): Date {
-  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-}
-
-/** The exclusive upper bound of `date`'s UTC day: a card due before it is due today or overdue. */
-export function endOfUtcDay(date: Date): Date {
-  return new Date(startOfUtcDay(date).getTime() + DAY_MS);
-}
 
 /** Monday (UTC) of `date`'s week as `YYYY-MM-DD` — the follow-up nudge repeats once a week. */
 export function weekKey(date: Date): string {
-  const day = startOfUtcDay(date);
+  const day = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
   day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7)); // Monday
   return day.toISOString().slice(0, 10);
 }

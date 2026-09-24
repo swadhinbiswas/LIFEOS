@@ -42,6 +42,7 @@ import { listTrash, purgeCard, purgeTrash } from "@/server/boards/trash";
 import type { Card } from "@/server/boards";
 import { getServerSession } from "@/server/auth/session";
 import type { Board } from "@/server/boards";
+import { getTimeZone } from "@/server/settings";
 
 /**
  * Thin Server-Action adapter over the board service (spec §7.2, ADR-042). Actions never throw
@@ -138,7 +139,9 @@ export async function restoreCardAction(input: unknown): Promise<ActionResult<nu
 }
 
 export async function carryOverAction(): Promise<ActionResult<{ moved: number }>> {
-  return run(async (userId) => ({ moved: await carryOverOverdue(userId) }));
+  return run(async (userId) => ({
+    moved: await carryOverOverdue(userId, new Date(), await getTimeZone(userId)),
+  }));
 }
 
 export async function listTrashAction(input: unknown): Promise<ActionResult<Card[]>> {

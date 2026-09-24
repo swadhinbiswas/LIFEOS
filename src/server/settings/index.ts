@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 
 import { parseThemeOverrides, themeOverridesSchema, type ThemeOverrides } from "@/config/themes";
 import { newId } from "@/lib/id";
+import { dayKeyInTimeZone, resolveTimeZone } from "@/lib/timezone";
 import { db } from "@/server/db";
 import { user_settings } from "@/server/db/schema";
 
@@ -40,4 +41,33 @@ export async function saveThemeOverrides(userId: string, overrides: ThemeOverrid
       target: user_settings.user_id,
       set: { theme: value.preset, theme_overrides: serialized, updated_at: new Date() },
     });
+}
+
+/**
+ * The user's IANA timezone, defaulting to UTC (ADR-057). All day bucketing flows through this, so a
+ * user in any zone gets the day they are actually in.
+ */
+export async function getTimeZone(userId: string): Promise<string> {
+  const rows = await db
+    .select({ timezone: user_settings.timezone })
+    .from(user_settings)
+    .where(eq(user_settings.user_id, userId))
+    .limit(1);
+  return resolveTimeZone(rows[0]?.timezone);
+}
+
+export async function setTimeZone(userId: string, timeZone: string): Promise<void> {
+  const zone = resolveTimeZone(timeZone);
+  await db
+    .insert(user_settings)
+    .values({ id: newId(), user_id: userId, timezone: zone })
+    .onConflictDoUpdate({
+      target: user_settings.user_id,
+      set: { timezone: zone, updated_at: new Date() },
+    });
+}
+
+/** The user's current calendar day — the one default every day-key service resolves to. */
+export async function getUserDayKey(userId: string, at: Date = new Date()): Promise<string> {
+  return dayKeyInTimeZone(at, await getTimeZone(userId));
 }

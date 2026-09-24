@@ -3,7 +3,7 @@ import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
 import { cards, goal_links, goals, habit_logs, key_results } from "@/server/db/schema";
-import { dayKey } from "@/server/habits/streak";
+import { getUserDayKey } from "@/server/settings";
 
 import { goalProgress, keyResultProgress, linkedProgress, type LinkedEntity } from "./progress";
 
@@ -30,8 +30,9 @@ export interface GoalView {
 export async function listGoals(
   userId: string,
   now: Date = new Date(),
-  today: string = dayKey(new Date()),
+  today?: string,
 ): Promise<GoalView[]> {
+  const day = today ?? (await getUserDayKey(userId, now));
   const goalRows = await db
     .select()
     .from(goals)
@@ -68,7 +69,7 @@ export async function listGoals(
           .where(
             and(
               eq(habit_logs.user_id, userId),
-              eq(habit_logs.date, today),
+              eq(habit_logs.date, day),
               inArray(habit_logs.habit_id, habitIds),
             ),
           )

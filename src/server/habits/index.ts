@@ -3,15 +3,9 @@ import { and, eq, gte } from "drizzle-orm";
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
 import { habit_logs, habits } from "@/server/db/schema";
+import { getUserDayKey } from "@/server/settings";
 
-import {
-  computeStreak,
-  dayKey,
-  recentDays,
-  shiftDay,
-  targetProgress,
-  type HabitDay,
-} from "./streak";
+import { computeStreak, recentDays, shiftDay, targetProgress, type HabitDay } from "./streak";
 
 /**
  * Habit service (spec §6.4). The log is the source of truth; streaks, heatmaps and progress are
@@ -35,10 +29,8 @@ export interface HabitView {
 
 const HISTORY_DAYS = 400; // plenty for a current streak even with freeze days
 
-export async function listHabits(
-  userId: string,
-  today: string = dayKey(new Date()),
-): Promise<HabitView[]> {
+export async function listHabits(userId: string, today?: string): Promise<HabitView[]> {
+  const day = today ?? (await getUserDayKey(userId));
   const rows = await db
     .select()
     .from(habits)
@@ -50,9 +42,7 @@ export async function listHabits(
   const logs = await db
     .select()
     .from(habit_logs)
-    .where(
-      and(eq(habit_logs.user_id, userId), gte(habit_logs.date, shiftDay(today, -HISTORY_DAYS))),
-    );
+    .where(and(eq(habit_logs.user_id, userId), gte(habit_logs.date, shiftDay(day, -HISTORY_DAYS))));
 
   const byHabit = new Map<string, Map<string, number>>();
   for (const log of logs) {
@@ -63,16 +53,16 @@ export async function listHabits(
 
   return rows.map((habit) => {
     const entries = byHabit.get(habit.id) ?? new Map<string, number>();
-    const value = entries.get(today) ?? 0;
+    const value = entries.get(day) ?? 0;
     return {
       habit,
-      today,
+      today: day,
       value,
-      streak: computeStreak(new Set(entries.keys()), today, {
+      streak: computeStreak(new Set(entries.keys()), day, {
         graceDays: 1,
         freezeDays: habit.freeze_days,
       }),
-      days: recentDays(entries, today, 28),
+      days: recentDays(entries, day, 28),
       progress: habit.kind === "numeric" ? targetProgress(value, habit.target) : null,
     };
   });
@@ -122,7 +112,7 @@ export async function setHabitLog(
     .limit(1);
   if (!habit) throw new Error("habit not found");
 
-  const date = input.date ?? dayKey(new Date());
+  const date = input.date ?? (await getUserDayKey(userId));
   if (input.value <= 0) {
     await db
       .delete(habit_logs)
