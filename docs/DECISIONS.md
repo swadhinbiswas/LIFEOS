@@ -897,6 +897,41 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-042 — Board engine wiring: one `BoardView` over TanStack Query, nuqs URL state, and a
+
+## per-user system Tasks board
+
+- **Status:** accepted (2026-09-24)
+- **Context:** spec §6.1 says "build one board component and reuse it everywhere"; §5 prescribes
+  `nuqs` for view/filter/sort state in the URL and TanStack Query for server state with
+  optimistic mutations; §6.2 needs an Inbox that triages into Today / Upcoming / Someday / a
+  board. ADR-009 (fractional index), ADR-011 (`version` → 409) and ADR-016 (dnd-kit sensors +
+  move buttons) already fix the mechanics, and ERD §2.2 fixes the tables.
+- **Decision:**
+  - **One data path.** Every board surface (Tasks, `/boards/[boardId]`, Phase 3 job boards)
+    renders the same `BoardView` keyed by `boardId`, backed by one query key `["board", id]`
+    and one service layer (`src/server/boards`) that Server Actions, REST and MCP all call.
+    Views (kanban/table/calendar/timeline/grid) are renderers over the same query result.
+  - **Server state:** TanStack Query 5.103.2; mutations are optimistic (ADR-011 pattern) and a
+    stale `version` rolls the cache back and raises a conflict toast.
+  - **URL state:** nuqs 2.10.1 owns `?view=`, `?group=`, `?filter=` and `?card=` (the
+    deep-linkable detail sheet), so any board state is shareable by URL (spec §5).
+  - **Tasks model:** each user gets exactly one **system Tasks board**, created lazily with the
+    columns **Inbox / Today / Upcoming / Someday / Done**. `/tasks` renders that board; `/inbox`
+    is the capture-and-triage surface over its Inbox column; "Today"/"Upcoming" are due-date
+    saved views over the _same_ cards, never a second storage location. No duplicate task model
+    next to `cards`.
+  - **Virtualization:** columns virtualize past 100 cards with `@tanstack/react-virtual`
+    (`useVirtualizer`), which is what makes the 500-card acceptance line hold.
+  - **Templates:** `src/config/board-templates.ts` is pure data (name + columns + optional cards);
+    the service seeds a board from it, so the Phase 8 template gallery needs no schema change.
+- **Consequences:** keyboard, pointer, REST and MCP share one `move_card`/`update_card` path
+  (ADR-016); jobs reuse boards instead of a parallel pipeline table; adding a view or a template
+  is config, not migration. Cost: a client query cache to keep coherent — mitigated by keeping
+  the service the only writer and invalidating `["board", id]` after each mutation settles.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

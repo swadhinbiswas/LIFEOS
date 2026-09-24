@@ -6,3 +6,4 @@
  */
 export * from "./identity";
 export * from "./user-settings";
+export * from "./boards";
