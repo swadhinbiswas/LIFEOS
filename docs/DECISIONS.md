@@ -1664,6 +1664,30 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-071 — MCP resources and prompts, with the official SDK as the acceptance harness
+
+- **Status:** accepted (2026-09-24)
+- **Context:** ADR-064 shipped MCP **tools only**, and no third-party client transcript existed — the
+  tools were exercised with raw JSON-RPC fetches.
+- **Decision:**
+  - Add **resources** — `lifeos://brief` (concrete) plus `lifeos://cards/{id}` and
+    `lifeos://notes/{id}` templates — and **prompts** (`daily-plan`, `job-follow-up`,
+    `weekly-review`), advertised in the `initialize` capabilities. `resources/read` and
+    `prompts/get` dispatch through the same services the app and REST use.
+  - Responses are **`application/json` by default**, falling back to a single-message
+    `text/event-stream` only when the client cannot accept JSON. Both are valid Streamable HTTP;
+    **progress notifications are not emitted** because the tools are synchronous and short — that is
+    documented rather than faked.
+  - The **official `@modelcontextprotocol/sdk` (1.30.1) is a dev-dependency used only by the
+    acceptance test**, which starts an HTTP server over the same route handler and drives a real
+    `Client` + `StreamableHTTPClientTransport` through the handshake, all four tools, a resource read
+    and a prompt get.
+- **Consequences:** an agent can pull read-only context and use prompt templates, and compatibility
+  is proven against the reference implementation rather than inferred from raw fetches. Cost: one
+  dev-only dependency and a small test harness wrapping the route.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
