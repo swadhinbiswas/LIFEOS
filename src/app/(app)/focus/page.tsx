@@ -1,0 +1,88 @@
+import { redirect } from "next/navigation";
+
+import { Panel } from "@/components/tui/panel";
+import { getServerSession } from "@/server/auth/session";
+import { focusTotals, getRunningSession, listSessions } from "@/server/focus";
+
+import { FocusTimer } from "./_components/focus-timer";
+
+export const metadata = { title: "Focus" };
+
+/**
+ * `/focus` (spec §6.7): the timer, today's and this week's totals, and the recent session log.
+ * A running session is a database row, so this page (or any other) shows the truth after a
+ * reload — nothing lives only in a component.
+ */
+export default async function FocusPage() {
+  const session = await getServerSession();
+  if (!session) redirect("/sign-in");
+
+  const [running, totals, sessions] = await Promise.all([
+    getRunningSession(session.user.id),
+    focusTotals(session.user.id),
+    listSessions(session.user.id),
+  ]);
+
+  return (
+    <>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Focus</h1>
+
+      <div className="grid max-w-3xl gap-4">
+        <Panel
+          title="Timer"
+          hint={`${totals.todayMin} min today · ${totals.weekMin} min this week`}
+        >
+          <FocusTimer
+            sessionId={running?.id ?? null}
+            startedAt={running ? new Date(running.started_at).toISOString() : null}
+            plannedMin={running?.planned_min ?? null}
+          />
+        </Panel>
+
+        <Panel title="Recent sessions" hint={`${sessions.length}`}>
+          {sessions.length === 0 ? (
+            <p className="font-mono text-xs text-muted-foreground">
+              no sessions yet — starting one logs it here automatically
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {sessions.map((row) => {
+                const minutes = row.ended_at
+                  ? Math.max(
+                      0,
+                      Math.round(
+                        (new Date(row.ended_at).getTime() - new Date(row.started_at).getTime()) /
+                          60000,
+                      ),
+                    )
+                  : null;
+                return (
+                  <li
+                    key={row.id}
+                    data-slot="focus-row"
+                    className="flex flex-wrap items-center gap-2 border border-border px-2 py-1 font-mono text-xs"
+                  >
+                    <time dateTime={new Date(row.started_at).toISOString()}>
+                      {new Date(row.started_at).toISOString().slice(0, 16).replace("T", " ")}
+                    </time>
+                    <span className="text-muted-foreground tabular-nums">
+                      {minutes === null ? "running" : `${minutes} min`}
+                    </span>
+                    {row.planned_min ? (
+                      <span className="text-muted-foreground">planned {row.planned_min}</span>
+                    ) : null}
+                    {row.ended_at ? (
+                      <span className={row.completed ? "text-success" : "text-warning"}>
+                        {row.completed ? "completed" : "cut short"}
+                      </span>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Panel>
+      </div>
+    </>
+  );
+}
