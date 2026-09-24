@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -21,6 +22,7 @@ export default async function NotesPage({ searchParams }: PageProps) {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Notes");
   const { q, tag } = await searchParams;
   const query = (q ?? "").trim();
   const activeTag = (tag ?? "").trim();
@@ -41,21 +43,23 @@ export default async function NotesPage({ searchParams }: PageProps) {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Notes</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("title")}
+      </h1>
 
       <div className="grid max-w-3xl gap-4">
-        <Panel title="Start writing">
+        <Panel title={t("startWriting")}>
           <div className="flex flex-col gap-2">
             <NewNote />
             <form method="get" className="flex flex-wrap items-center gap-2">
               <label className="sr-only" htmlFor="note-search-input">
-                search notes
+                {t("searchLabel")}
               </label>
               <input
                 id="note-search-input"
                 name="q"
                 defaultValue={query}
-                placeholder="search notes…"
+                placeholder={t("searchPlaceholder")}
                 className="w-64 border border-border bg-background px-2 py-1 font-mono text-xs outline-none placeholder:text-muted-foreground"
               />
               {activeTag !== "" ? <input type="hidden" name="tag" value={activeTag} /> : null}
@@ -63,21 +67,21 @@ export default async function NotesPage({ searchParams }: PageProps) {
                 type="submit"
                 className="rounded-[var(--radius)] border border-border bg-background px-2 py-1 font-mono text-xs hover:bg-accent hover:text-accent-foreground"
               >
-                search
+                {t("search")}
               </button>
               {query !== "" || activeTag !== "" ? (
                 <Link
                   href="/notes"
                   className="font-mono text-[10px] text-muted-foreground hover:underline"
                 >
-                  clear
+                  {t("clear")}
                 </Link>
               ) : null}
             </form>
 
             {allTags.length > 0 ? (
               <div className="flex flex-wrap items-center gap-2" data-slot="tag-filter">
-                <span className="font-mono text-[10px] text-muted-foreground">tags</span>
+                <span className="font-mono text-[10px] text-muted-foreground">{t("tags")}</span>
                 {allTags.map((entry) => (
                   <Link
                     key={entry.name}
@@ -102,16 +106,22 @@ export default async function NotesPage({ searchParams }: PageProps) {
         </Panel>
 
         <Panel
-          title={activeTag === "" ? (query === "" ? "Recent" : "Matches") : `Tagged #${activeTag}`}
+          title={
+            activeTag === ""
+              ? query === ""
+                ? t("recent")
+                : t("matches")
+              : t("tagged", { tag: activeTag })
+          }
           hint={`${hits.length}`}
         >
           {hits.length === 0 ? (
             <p className="font-mono text-xs text-muted-foreground">
               {activeTag !== ""
-                ? "no notes carry that tag"
+                ? t("emptyTagged")
                 : query === ""
-                  ? "nothing yet — start a note or today's journal"
-                  : "no notes match that"}
+                  ? t("emptyNone")
+                  : t("emptyNoMatch")}
             </p>
           ) : (
             <ul className="flex flex-col gap-1">
@@ -125,13 +135,13 @@ export default async function NotesPage({ searchParams }: PageProps) {
                     href={`/notes/${note.id}`}
                     className="font-mono text-xs text-primary hover:underline"
                   >
-                    {note.title === "" ? "(untitled)" : note.title}
+                    {note.title === "" ? t("untitled") : note.title}
                   </Link>
                   {note.kind !== "note" ? (
                     <span className="font-mono text-[10px] text-muted-foreground">{note.kind}</span>
                   ) : null}
                   {note.pinned ? (
-                    <span className="font-mono text-[10px] text-warning">pinned</span>
+                    <span className="font-mono text-[10px] text-warning">{t("pinned")}</span>
                   ) : null}
                   {(tagsByNote[note.id] ?? []).map((name) => (
                     <span

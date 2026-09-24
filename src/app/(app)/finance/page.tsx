@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -26,6 +27,7 @@ export default async function FinancePage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Finance");
   const [accounts, summary, recent, subscriptions] = await Promise.all([
     listAccounts(session.user.id),
     monthSummary(session.user.id),
@@ -44,18 +46,19 @@ export default async function FinancePage() {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Finance</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("title")}
+      </h1>
 
       <div className="grid max-w-4xl gap-4">
         <p className="font-mono text-[10px] text-muted-foreground" data-slot="finance-disclaimer">
-          manual accounts only — no bank connections, and this is not financial advice. Amounts are
-          kept in the currency you entered; nothing is converted without an exchange rate.
+          {t("disclaimer")}
         </p>
 
-        <Panel title="Accounts" hint={`${accounts.length}`}>
+        <Panel title={t("accounts")} hint={`${accounts.length}`}>
           <AddAccountForm />
           {accounts.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">no accounts yet</p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noAccounts")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {accounts.map(({ account, balanceMinor }) => (
@@ -75,9 +78,12 @@ export default async function FinancePage() {
           )}
         </Panel>
 
-        <Panel title={`This month · ${summary.month}`} hint={`${summary.totals.length} currencies`}>
+        <Panel
+          title={t("thisMonth", { month: summary.month })}
+          hint={t("currencies", { count: summary.totals.length })}
+        >
           {summary.totals.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">nothing recorded this month</p>
+            <p className="font-mono text-xs text-muted-foreground">{t("nothingRecorded")}</p>
           ) : (
             <ul className="flex flex-wrap gap-3 font-mono text-xs">
               {summary.totals.map((total) => (
@@ -101,9 +107,7 @@ export default async function FinancePage() {
           <div className="flex flex-col gap-2">
             <AddBudgetForm />
             {summary.budgets.length === 0 ? (
-              <p className="font-mono text-xs text-muted-foreground">
-                no budgets yet — set one per category you want to watch
-              </p>
+              <p className="font-mono text-xs text-muted-foreground">{t("noBudgets")}</p>
             ) : (
               <ul className="flex flex-col gap-1">
                 {summary.budgets.map((budget) => (
@@ -130,7 +134,7 @@ export default async function FinancePage() {
           </div>
         </Panel>
 
-        <Panel title="Subscriptions" hint={`${subscriptions.length}`}>
+        <Panel title={t("subscriptions")} hint={`${subscriptions.length}`}>
           <AddSubscriptionForm />
           {subscriptionTotal.length > 0 ? (
             <p
@@ -140,13 +144,11 @@ export default async function FinancePage() {
               {subscriptionTotal
                 .map((total) => `${formatMinor(total.monthlyMinor, total.currency)} / mo`)
                 .join(" · ")}{" "}
-              — month-normalised
+              {t("monthNormalised")}
             </p>
           ) : null}
           {subscriptions.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              no subscriptions tracked yet — add one to see its real monthly cost
-            </p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noSubscriptions")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {subscriptions.map(({ subscription, monthlyMinor, dueInDays }) => (
@@ -172,11 +174,11 @@ export default async function FinancePage() {
                           {new Date(subscription.renews_at).toISOString().slice(0, 10)}
                         </time>
                         {dueInDays !== null
-                          ? ` (${dueInDays > 0 ? `in ${dueInDays}d` : dueInDays === 0 ? "today" : `${-dueInDays}d late`})`
+                          ? ` ${t(dueInDays > 0 ? "dueIn" : dueInDays === 0 ? "dueToday" : "dueLate", { days: Math.abs(dueInDays) })}`
                           : ""}
                       </>
                     ) : (
-                      "no renewal date"
+                      t("noRenewal")
                     )}
                   </span>
                   <SubscriptionControls subscriptionId={subscription.id} name={subscription.name} />
@@ -186,7 +188,7 @@ export default async function FinancePage() {
           )}
         </Panel>
 
-        <Panel title="Activity" hint={`${recent.length}`}>
+        <Panel title={t("activity")} hint={`${recent.length}`}>
           <AddTransactionForm
             accounts={accounts.map(({ account }) => ({
               id: account.id,
@@ -195,7 +197,7 @@ export default async function FinancePage() {
             }))}
           />
           {recent.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">no transactions yet</p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noTransactions")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {recent.map((row) => (

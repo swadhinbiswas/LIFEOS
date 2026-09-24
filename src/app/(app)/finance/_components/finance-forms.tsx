@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ const label = "flex flex-col gap-1 font-mono text-[10px] text-muted-foreground u
 
 function useSubmit() {
   const router = useRouter();
+  const t = useTranslations("Pages.Finance");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const submit = async (
@@ -28,7 +30,7 @@ function useSubmit() {
     const result = await call();
     setBusy(false);
     if (!result.ok) {
-      setError(result.message ?? "could not save");
+      setError(result.message ?? t("couldNotSave"));
       return;
     }
     reset?.();
@@ -44,6 +46,7 @@ const toMinor = (value: string): number => {
 };
 
 export function AddAccountForm() {
+  const t = useTranslations("Pages.Finance");
   const [name, setName] = useState("");
   const [currency, setCurrency] = useState("EUR");
   const [opening, setOpening] = useState("");
@@ -71,38 +74,38 @@ export function AddAccountForm() {
       }}
     >
       <label className={label}>
-        account
+        {t("account")}
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="current account"
           className={field}
-          aria-label="account name"
+          aria-label={t("accountName")}
         />
       </label>
       <label className={label}>
-        currency
+        {t("currency")}
         <input
           value={currency}
           onChange={(e) => setCurrency(e.target.value)}
           maxLength={3}
           className={`${field} w-16`}
-          aria-label="account currency"
+          aria-label={t("accountCurrency")}
         />
       </label>
       <label className={label}>
-        opening balance
+        {t("opening")}
         <input
           inputMode="decimal"
           value={opening}
           onChange={(e) => setOpening(e.target.value)}
           placeholder="0.00"
           className={`${field} w-24`}
-          aria-label="opening balance"
+          aria-label={t("opening")}
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || name.trim() === ""}>
-        add account
+        {t("addAccount")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">
@@ -118,6 +121,7 @@ export function AddTransactionForm({
 }: {
   accounts: Array<{ id: string; name: string; currency: string }>;
 }) {
+  const t = useTranslations("Pages.Finance");
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
   const [direction, setDirection] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("");
@@ -125,11 +129,7 @@ export function AddTransactionForm({
   const { busy, error, submit } = useSubmit();
 
   if (accounts.length === 0) {
-    return (
-      <p className="font-mono text-xs text-muted-foreground">
-        add an account first — transactions belong to one
-      </p>
-    );
+    return <p className="font-mono text-xs text-muted-foreground">{t("needAccount")}</p>;
   }
 
   // The account list arrives from a later render (the first render has none), so the selected id
@@ -160,12 +160,12 @@ export function AddTransactionForm({
       }}
     >
       <label className={label}>
-        account
+        {t("account")}
         <select
           value={accountId}
           onChange={(e) => setAccountId(e.target.value)}
           className={field}
-          aria-label="transaction account"
+          aria-label={t("transactionAccount")}
         >
           {accounts.map((account) => (
             <option key={account.id} value={account.id}>
@@ -175,40 +175,40 @@ export function AddTransactionForm({
         </select>
       </label>
       <label className={label}>
-        type
+        {t("type")}
         <select
           value={direction}
           onChange={(e) => setDirection(e.target.value as "expense" | "income")}
           className={field}
-          aria-label="transaction type"
+          aria-label={t("transactionType")}
         >
-          <option value="expense">expense</option>
-          <option value="income">income</option>
+          <option value="expense">{t("expense")}</option>
+          <option value="income">{t("income")}</option>
         </select>
       </label>
       <label className={label}>
-        amount
+        {t("amount")}
         <input
           inputMode="decimal"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="12.50"
           className={`${field} w-24`}
-          aria-label="transaction amount"
+          aria-label={t("transactionAmount")}
         />
       </label>
       <label className={label}>
-        category
+        {t("category")}
         <input
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           placeholder="groceries"
           className={field}
-          aria-label="transaction category"
+          aria-label={t("transactionCategory")}
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || amount.trim() === ""}>
-        add transaction
+        {t("addTransaction")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">
@@ -220,6 +220,7 @@ export function AddTransactionForm({
 }
 
 export function AddBudgetForm() {
+  const t = useTranslations("Pages.Finance");
   const [category, setCategory] = useState("");
   const [limit, setLimit] = useState("");
   const [currency, setCurrency] = useState("EUR");
@@ -247,38 +248,38 @@ export function AddBudgetForm() {
       }}
     >
       <label className={label}>
-        category
+        {t("category")}
         <input
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           placeholder="groceries"
           className={field}
-          aria-label="budget category"
+          aria-label={t("budgetCategory")}
         />
       </label>
       <label className={label}>
-        monthly limit
+        {t("monthlyLimit")}
         <input
           inputMode="decimal"
           value={limit}
           onChange={(e) => setLimit(e.target.value)}
           placeholder="300.00"
           className={`${field} w-24`}
-          aria-label="budget limit"
+          aria-label={t("budgetLimit")}
         />
       </label>
       <label className={label}>
-        currency
+        {t("currency")}
         <input
           value={currency}
           onChange={(e) => setCurrency(e.target.value)}
           maxLength={3}
           className={`${field} w-16`}
-          aria-label="budget currency"
+          aria-label={t("budgetCurrency")}
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || category.trim() === ""}>
-        set budget
+        {t("setBudget")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">
@@ -290,6 +291,7 @@ export function AddBudgetForm() {
 }
 
 export function AddSubscriptionForm() {
+  const t = useTranslations("Pages.Finance");
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("EUR");
@@ -322,56 +324,56 @@ export function AddSubscriptionForm() {
       }}
     >
       <label className={label}>
-        subscription
+        {t("subscription")}
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="cloud storage"
           className={field}
-          aria-label="subscription name"
+          aria-label={t("subscriptionName")}
         />
       </label>
       <label className={label}>
-        amount
+        {t("amount")}
         <input
           inputMode="decimal"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="9.99"
           className={`${field} w-24`}
-          aria-label="subscription amount"
+          aria-label={t("subscriptionAmount")}
         />
       </label>
       <label className={label}>
-        currency
+        {t("currency")}
         <input
           value={currency}
           onChange={(e) => setCurrency(e.target.value)}
           maxLength={3}
           className={`${field} w-16`}
-          aria-label="subscription currency"
+          aria-label={t("subscriptionCurrency")}
         />
       </label>
       <label className={label}>
-        cadence
+        {t("cadence")}
         <select
           value={cadence}
           onChange={(e) => setCadence(e.target.value as "month" | "year")}
           className={field}
-          aria-label="subscription cadence"
+          aria-label={t("subscriptionCadence")}
         >
-          <option value="month">monthly</option>
-          <option value="year">yearly</option>
+          <option value="month">{t("monthly")}</option>
+          <option value="year">{t("yearly")}</option>
         </select>
       </label>
       <label className={label}>
-        next renewal
+        {t("nextRenewal")}
         <input
           type="date"
           value={renews}
           onChange={(e) => setRenews(e.target.value)}
           className={field}
-          aria-label="subscription renewal date"
+          aria-label={t("subscriptionRenewal")}
         />
       </label>
       <Button
@@ -380,7 +382,7 @@ export function AddSubscriptionForm() {
         variant="outline"
         disabled={busy || name.trim() === "" || amount.trim() === ""}
       >
-        add subscription
+        {t("addSubscription")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">

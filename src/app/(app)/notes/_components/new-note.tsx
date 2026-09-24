@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { createNoteAction, dailyNoteAction } from "@/server/notes/actions";
 /** Two entry points that match how notes start: a blank note, or today's journal. */
 export function NewNote() {
   const router = useRouter();
+  const t = useTranslations("Pages.Notes");
   const [busy, setBusy] = useState<"note" | "daily" | null>(null);
   const [error, setError] = useState("");
 
@@ -34,7 +36,7 @@ export function NewNote() {
         disabled={busy !== null}
         onClick={() => void open("note")}
       >
-        {busy === "note" ? "creating…" : "new note"}
+        {busy === "note" ? t("creating") : t("newNote")}
       </Button>
       <Button
         type="button"
@@ -43,7 +45,7 @@ export function NewNote() {
         disabled={busy !== null}
         onClick={() => void open("daily")}
       >
-        {busy === "daily" ? "opening…" : "today's journal"}
+        {busy === "daily" ? t("opening") : t("todaysJournal")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">

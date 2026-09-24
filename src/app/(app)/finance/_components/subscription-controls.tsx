@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ export function SubscriptionControls({
   name: string;
 }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Finance");
   const [busy, setBusy] = useState(false);
 
   const run = async (call: () => Promise<{ ok: boolean }>) => {
@@ -36,17 +38,17 @@ export function SubscriptionControls({
         disabled={busy}
         onClick={() => void run(() => markSubscriptionRenewedAction({ subscriptionId }))}
       >
-        renewed
+        {t("renewed")}
       </Button>
       <Button
         type="button"
         variant="ghost"
         size="sm"
         disabled={busy}
-        aria-label={`delete ${name}`}
+        aria-label={t("deleteAria", { name })}
         onClick={() => void run(() => deleteSubscriptionAction({ subscriptionId }))}
       >
-        delete
+        {t("delete")}
       </Button>
     </>
   );

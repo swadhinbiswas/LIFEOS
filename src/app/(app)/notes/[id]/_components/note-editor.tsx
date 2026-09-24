@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ export function NoteEditor({
   tags: string[];
 }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Notes");
   const [title, setTitle] = useState(initialTitle);
   const [body, setBody] = useState(initialBody);
   const [pinned, setPinned] = useState(initialPinned);
@@ -64,7 +66,7 @@ export function NoteEditor({
   return (
     <div className="flex flex-col gap-2" data-slot="note-editor">
       <label className="sr-only" htmlFor="note-title">
-        note title
+        {t("titleLabel")}
       </label>
       <input
         id="note-title"
@@ -74,12 +76,12 @@ export function NoteEditor({
           setDirty(true);
           setStatus("idle");
         }}
-        placeholder="title"
+        placeholder={t("titlePlaceholder")}
         className="border border-border bg-background px-2 py-1 font-mono text-sm outline-none placeholder:text-muted-foreground"
       />
 
       <label className="sr-only" htmlFor="note-body">
-        note body markdown
+        {t("bodyLabel")}
       </label>
       <textarea
         id="note-body"
@@ -90,12 +92,12 @@ export function NoteEditor({
           setStatus("idle");
         }}
         rows={16}
-        placeholder={"# heading\n\nlink another note with [[its title]]"}
+        placeholder={t("bodyPlaceholder")}
         className="w-full border border-border bg-background px-2 py-1 font-mono text-xs outline-none placeholder:text-muted-foreground"
       />
 
       <label className="sr-only" htmlFor="note-tags">
-        note tags
+        {t("tagsLabel")}
       </label>
       <input
         id="note-tags"
@@ -105,13 +107,13 @@ export function NoteEditor({
           setDirty(true);
           setStatus("idle");
         }}
-        placeholder="tags, comma separated"
+        placeholder={t("tagsPlaceholder")}
         className="border border-border bg-background px-2 py-1 font-mono text-xs outline-none placeholder:text-muted-foreground"
       />
 
       <div className="flex flex-wrap items-center gap-2">
         <Button type="button" size="sm" disabled={busy || !dirty} onClick={() => void save()}>
-          save
+          {t("save")}
         </Button>
         <Button
           type="button"
@@ -123,7 +125,7 @@ export function NoteEditor({
             setDirty(true);
           }}
         >
-          {pinned ? "unpin" : "pin"}
+          {pinned ? t("unpin") : t("pin")}
         </Button>
         <Button
           type="button"
@@ -141,14 +143,14 @@ export function NoteEditor({
             router.push("/notes");
           }}
         >
-          delete
+          {t("delete")}
         </Button>
         <span
           data-slot="note-status"
           role="status"
           className="font-mono text-[10px] text-muted-foreground"
         >
-          {error ? "" : status === "saved" ? "saved" : dirty ? "unsaved changes" : "up to date"}
+          {error ? "" : status === "saved" ? t("saved") : dirty ? t("unsaved") : t("upToDate")}
         </span>
         {error ? (
           <span role="alert" className="text-destructive">
