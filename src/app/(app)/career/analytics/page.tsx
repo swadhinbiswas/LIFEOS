@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
 import { getCareerAnalytics } from "@/server/career/analytics";
+import { getRegionalSettings } from "@/server/settings";
 
 export const metadata = { title: "Career analytics" };
 
@@ -19,7 +20,8 @@ export default async function CareerAnalyticsPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
-  const analytics = await getCareerAnalytics(session.user.id);
+  const { timeZone, weekStart } = await getRegionalSettings(session.user.id);
+  const analytics = await getCareerAnalytics(session.user.id, new Date(), 21, timeZone, weekStart);
   const { funnel, bySource, perWeek, ghosted } = analytics;
   const busiestWeek = Math.max(1, ...perWeek.map((week) => week.count));
 

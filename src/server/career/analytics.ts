@@ -1,8 +1,15 @@
 import { and, eq, isNull } from "drizzle-orm";
 
+import {
+  DEFAULT_TIME_ZONE,
+  dayKeyInTimeZone,
+  startOfWeekInTimeZone,
+  type WeekStart,
+} from "@/lib/timezone";
 import { db } from "@/server/db";
 import { cards, job_applications } from "@/server/db/schema";
 import { getBoard } from "@/server/boards";
+import { shiftDay } from "@/server/habits/streak";
 
 import { ensureJobBoard, getFunnel, type Funnel } from "./index";
 
@@ -62,16 +69,12 @@ function parseHistory(raw: string): StageEntry[] {
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
 
-const startOfUtcWeek = (date: Date): Date => {
-  const day = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-  day.setUTCDate(day.getUTCDate() - ((day.getUTCDay() + 6) % 7)); // Monday
-  return day;
-};
-
 export async function getCareerAnalytics(
   userId: string,
   now: Date = new Date(),
   ghostThresholdDays = 21,
+  timeZone: string = DEFAULT_TIME_ZONE,
+  weekStart: WeekStart = "mon",
 ): Promise<CareerAnalytics> {
   const board = await ensureJobBoard(userId);
   const payload = await getBoard(userId, board.id);
@@ -102,16 +105,17 @@ export async function getCareerAnalytics(
     }))
     .sort((a, b) => b.total - a.total || a.source.localeCompare(b.source));
 
-  const currentWeek = startOfUtcWeek(now);
+  // Applications per week, bucketed by the user's day and week start (ADR-058/061).
+  const thisWeek = startOfWeekInTimeZone(now, timeZone, weekStart);
   const perWeek: WeekRow[] = [];
   for (let offset = WEEKS - 1; offset >= 0; offset -= 1) {
-    const start = new Date(currentWeek.getTime() - offset * 7 * DAY_MS);
-    const end = new Date(start.getTime() + 7 * DAY_MS);
+    const weekStartKey = shiftDay(thisWeek, -offset * 7);
+    const weekEndKey = shiftDay(weekStartKey, 7); // exclusive
     const count = applications.filter((application) => {
-      const created = new Date(application.created_at).getTime();
-      return created >= start.getTime() && created < end.getTime();
+      const created = dayKeyInTimeZone(new Date(application.created_at), timeZone);
+      return created >= weekStartKey && created < weekEndKey;
     }).length;
-    perWeek.push({ weekStart: start.toISOString().slice(0, 10), count });
+    perWeek.push({ weekStart: weekStartKey, count });
   }
 
   const ghosted = await getFollowUpsDue(userId, now, ghostThresholdDays);

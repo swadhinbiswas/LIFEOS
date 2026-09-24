@@ -1420,6 +1420,26 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-061 — Career analytics week buckets follow the user's week (supersedes the ADR-058 note)
+
+- **Status:** accepted (2026-09-24)
+- **Context:** ADR-058 kept career analytics' `perWeek` buckets Monday-anchored, reasoning that
+  converting them "changes the shape of a stored report". On review that was wrong: `perWeek` is
+  computed at read time from `created_at` and nothing is stored. Leaving this one figure
+  Monday-anchored while every other "this week" number honoured the user's week made the app
+  internally inconsistent for no benefit.
+- **Decision:**
+  - `getCareerAnalytics` takes the timezone and week start and buckets applications by the user's
+    **day key** and chosen **week start**; each row's `weekStart` is the user's week key.
+  - Callers (`/career/analytics`, the dashboard's career widgets) pass both from
+    `getRegionalSettings`, the same read the other week figures use.
+  - This supersedes the deferral note in ADR-058; the Monday default still applies when nothing is
+    configured, so existing buckets are unchanged for a UTC user.
+- **Consequences:** every "this week" figure in the app now means the same week. Cost: two
+  parameters and one settings read on the analytics surfaces.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

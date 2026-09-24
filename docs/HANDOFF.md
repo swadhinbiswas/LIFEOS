@@ -32,14 +32,14 @@ not decisions (those are in `docs/DECISIONS.md`).
 - configurable week start for every "this week" number (ADR-058)
 - cross-module tags on cards, distinct from board labels (ADR-059)
 - shell chrome translated: navigation labels + tagline (ADR-060)
+- career analytics week buckets follow the user's week (ADR-061)
 
 ## Outstanding gaps (deliberate, with next steps)
 
 1. **i18n is incremental** (ADR-053/060): `/about` and the shell chrome (nav + tagline) are
    translated (en/bn); page bodies, the status-line hints and the `?` cheat-sheet are still
-   English — the same mechanical pass, to be done surface by surface.
-2. **Career analytics per-week buckets stay Monday-anchored** (ADR-058); converting them changes
-   the shape of a stored report.
+   English — the same mechanical pass, to be done surface by surface. **This is the only
+   remaining backlog item; nothing else is outstanding.**
 
 ## Next: Phase 5 (awaiting the user's go-ahead)
 

@@ -62,7 +62,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     : null;
   const habits = visible.includes("overview.wins") ? await listHabits(session.user.id) : [];
   const career = visible.some((id) => id.startsWith("career."))
-    ? await getCareerAnalytics(session.user.id)
+    ? await getCareerAnalytics(session.user.id, new Date(), 21, timeZone, weekStart)
     : null;
   const reviews = visible.includes("productivity.reviews")
     ? await listReviews(session.user.id)
