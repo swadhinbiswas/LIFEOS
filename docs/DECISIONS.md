@@ -1565,6 +1565,27 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-067 — OpenAPI 3.1 generated from the route schemas, with a server-rendered reference
+
+- **Status:** accepted (2026-09-24)
+- **Context:** §9.1 wants OpenAPI 3.1 generated from the Zod schemas, served at
+  `/api/v1/openapi.json`, with interactive docs at `/docs/api` restyled to the theme. The spec
+  suggests a generator library or a bundled UI.
+- **Decision:**
+  - The REST request/response schemas live in **`src/server/api/v1/schemas.ts`** and are imported by
+    both the routes and the OpenAPI builder, so the document and the validation **cannot drift**.
+  - The document is built with **Zod's built-in `z.toJSONSchema`** (JSON Schema 2020-12, which
+    OpenAPI 3.1 uses) — **no OpenAPI-generator dependency**.
+  - **`/api/v1/openapi.json` is public**: a spec holds no user data.
+  - **`/docs/api` is server-rendered** (a panel per path with method, summary, parameters and the
+    schema names) rather than an embedded Scalar/Swagger bundle: it keeps the TUI theme, ships no
+    client JS or CDN dependency, and stays axe-clean — the same preference as ADR-046/052.
+  - Try-it-out is out of scope; the page links to the spec and to Integrations for a key.
+- **Consequences:** the reference cannot advertise an endpoint that does not exist, and a new
+  resource is added in one place. Cost: no built-in request console — clients use their own tooling.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

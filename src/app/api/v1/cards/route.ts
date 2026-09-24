@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { createTask, listCards } from "@/server/api/v1/cards";
 import { apiContext, scopeAllows } from "@/server/api/v1/context";
 import {
@@ -9,6 +7,7 @@ import {
   rateLimited,
   unauthorized,
 } from "@/server/api/v1/http";
+import { createCardBody } from "@/server/api/v1/schemas";
 import {
   encodeCursor,
   idempotent,
@@ -24,13 +23,7 @@ import {
  * or `write:tasks` respectively.
  */
 
-const createBody = z.object({
-  title: z.string().trim().min(1).max(500),
-  boardId: z.string().min(1).max(64).nullable().optional(),
-  columnId: z.string().min(1).max(64).nullable().optional(),
-  dueAt: z.coerce.date().nullable().optional(),
-  priority: z.enum(["p0", "p1", "p2", "p3"]).nullable().optional(),
-});
+const createBody = createCardBody;
 
 export async function GET(request: Request): Promise<Response> {
   const context = await apiContext(request);
@@ -72,7 +65,14 @@ export async function POST(request: Request): Promise<Response> {
   if (!parsed.success) return badRequest("invalid body", parsed.error.issues);
 
   const run = async (): Promise<Response> => {
-    const card = await createTask(context.userId, parsed.data);
+    const { title, boardId, columnId, dueAt, priority } = parsed.data;
+    const card = await createTask(context.userId, {
+      title,
+      boardId,
+      columnId,
+      dueAt: dueAt ? new Date(dueAt) : null,
+      priority,
+    });
     return jsonResponse({ data: card }, { status: 201 });
   };
 

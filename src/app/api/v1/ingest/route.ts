@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { serializeCard } from "@/server/api/v1/cards";
 import { apiContext, scopeAllows } from "@/server/api/v1/context";
 import {
@@ -9,6 +7,7 @@ import {
   rateLimited,
   unauthorized,
 } from "@/server/api/v1/http";
+import { ingestBody } from "@/server/api/v1/schemas";
 import { idempotent, withinRateLimit } from "@/server/api/v1/support";
 import { captureTask } from "@/server/capture";
 
@@ -17,11 +16,6 @@ import { captureTask } from "@/server/capture";
  * browser bookmarklets and automations. It calls the *same* `captureTask` the inbox box uses, so a
  * `#tag`/date/`!priority` string lands identically whichever way it arrives.
  */
-
-const ingestBody = z.object({
-  text: z.string().trim().min(1).max(1_000),
-  columnName: z.string().trim().min(1).max(120).optional(),
-});
 
 export async function POST(request: Request): Promise<Response> {
   const context = await apiContext(request);

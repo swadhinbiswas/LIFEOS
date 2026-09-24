@@ -60,6 +60,7 @@ const SHELL_ROUTES = [
   "/settings",
   "/settings/appearance",
   "/settings/integrations",
+  "/docs/api",
   "/about",
   "/tasks",
   "/dashboard",

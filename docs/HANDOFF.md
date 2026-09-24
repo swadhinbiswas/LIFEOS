@@ -7,8 +7,8 @@ not decisions (those are in `docs/DECISIONS.md`).
 
 - Phases 0–4 complete and reported. **Phase 5 in progress** (API, MCP, webhooks, docs).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **221 passed** ✓ · `pnpm e2e` **45 passed, twice** ✓.
-- ADR-044 … ADR-066 record the decisions. Nothing is pushed; all work is on local `master`.
+  `pnpm test` **221 passed** ✓ · `pnpm e2e` **46 passed, twice** ✓.
+- ADR-044 … ADR-067 record the decisions. Nothing is pushed; all work is on local `master`.
 
 ## Phase 5 so far
 
@@ -26,7 +26,9 @@ not decisions (those are in `docs/DECISIONS.md`).
 - Outgoing webhooks (`webhooks_out` + `webhook_deliveries`, migration 0009): HMAC-signed deliveries
   emitted best-effort from the board/notes/habits/career services, a replayable delivery log, and a
   panel in `/settings/integrations` (ADR-066). Scheduled retries are deferred until a queue exists.
-- Next in phase: OpenAPI 3.1 + `/docs/api`, the cross-tenant isolation suite for both new surfaces.
+- OpenAPI 3.1 generated from the route Zod schemas at `/api/v1/openapi.json`, with a themed
+  server-rendered reference at `/docs/api` (ADR-067).
+- Next in phase: the cross-tenant isolation suite for the REST and MCP surfaces (`#31`).
 
 ## The Phase-4 chunks
 

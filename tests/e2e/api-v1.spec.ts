@@ -35,3 +35,22 @@ test("rest: a UI-created key pushes a task that appears on the board", async ({
   await page.goto("/tasks");
   await expect(serverCard(page, "Inbox", "pushed by api")).toBeVisible();
 });
+
+/** OpenAPI + the themed reference (spec §9.1, ADR-067). */
+test("openapi: the spec is served and the docs page lists the operations", async ({
+  page,
+  request,
+}) => {
+  const spec = await request.get("/api/v1/openapi.json");
+  expect(spec.status()).toBe(200);
+  const body = (await spec.json()) as { openapi: string; paths: Record<string, unknown> };
+  expect(body.openapi).toBe("3.1.0");
+  expect(Object.keys(body.paths)).toContain("/api/v1/cards");
+
+  const email = uniqueEmail("apidocs");
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/docs/api");
+  await expect(page.getByRole("heading", { name: "API reference", level: 1 })).toBeVisible();
+  await expect(page.locator('[data-slot="api-operation"]')).not.toHaveCount(0);
+});

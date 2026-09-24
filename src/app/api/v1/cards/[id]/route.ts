@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 import { cardEtag, deleteCardViaApi, getCard, updateCardViaApi } from "@/server/api/v1/cards";
 import { apiContext, scopeAllows } from "@/server/api/v1/context";
 import {
@@ -11,6 +9,7 @@ import {
   rateLimited,
   unauthorized,
 } from "@/server/api/v1/http";
+import { updateCardBody } from "@/server/api/v1/schemas";
 import { withinRateLimit } from "@/server/api/v1/support";
 
 /**
@@ -18,14 +17,7 @@ import { withinRateLimit } from "@/server/api/v1/support";
  * card's version ETag) and soft delete. The same board service the UI writes through.
  */
 
-const updateBody = z.object({
-  title: z.string().trim().min(1).max(500).optional(),
-  description: z.string().max(20_000).nullable().optional(),
-  priority: z.enum(["p0", "p1", "p2", "p3"]).nullable().optional(),
-  dueAt: z.coerce.date().nullable().optional(),
-  startAt: z.coerce.date().nullable().optional(),
-  estimateMin: z.number().int().min(0).max(100_000).nullable().optional(),
-});
+const updateBody = updateCardBody;
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -73,7 +65,12 @@ export async function PATCH(request: Request, { params }: Params): Promise<Respo
   if (!parsed.success) return badRequest("invalid body", parsed.error.issues);
   if (Object.keys(parsed.data).length === 0) return badRequest("nothing to update");
 
-  const updated = await updateCardViaApi(auth.userId, id, parsed.data);
+  const { dueAt, startAt, ...rest } = parsed.data;
+  const updated = await updateCardViaApi(auth.userId, id, {
+    ...rest,
+    ...(dueAt !== undefined ? { dueAt: dueAt ? new Date(dueAt) : null } : {}),
+    ...(startAt !== undefined ? { startAt: startAt ? new Date(startAt) : null } : {}),
+  });
   if (!updated) return notFound();
   return jsonResponse({ data: updated }, { headers: { ETag: cardEtag(updated) } });
 }
