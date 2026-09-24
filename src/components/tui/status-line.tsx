@@ -28,8 +28,12 @@ export interface StatusLineProps extends React.ComponentProps<"footer"> {
   /** Current view path, e.g. `/boards/roadmap`. */
   path?: string;
   sync?: SyncState;
+  /** Translated sync words (ADR-072); English defaults keep the unit tests' expectations. */
+  syncLabels?: Partial<Record<SyncState, string>>;
   /** Focus timer rendered verbatim (tabular figures), e.g. "24:31". */
   timer?: string;
+  /** Translated label before the timer; defaults to "focus". */
+  timerLabel?: string;
   /**
    * 4–6 context-sensitive key hints in one accent color, right side (RESEARCH §c #2).
    * The row truncates with `…`, it never wraps (RESEARCH §c #4).
@@ -46,7 +50,9 @@ export function StatusLine({
   mode,
   path,
   sync,
+  syncLabels,
   timer,
+  timerLabel,
   hints,
   className,
   ...props
@@ -73,7 +79,7 @@ export function StatusLine({
         {syncMeta ? (
           <span className={cn("inline-flex shrink-0 items-center gap-1", syncMeta.tone)}>
             <span aria-hidden="true">{syncMeta.glyph}</span>
-            {syncMeta.label}
+            {syncLabels?.[sync as SyncState] ?? syncMeta.label}
           </span>
         ) : null}
       </span>
@@ -81,7 +87,7 @@ export function StatusLine({
       <span className="ml-auto flex min-w-0 items-center gap-3">
         {timer ? (
           <span className="shrink-0 tabular-nums">
-            <span className="text-muted-foreground">focus </span>
+            <span className="text-muted-foreground">{timerLabel ?? "focus"} </span>
             {timer}
           </span>
         ) : null}

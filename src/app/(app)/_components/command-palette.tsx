@@ -43,6 +43,7 @@ export function CommandPalette({
   const router = useRouter();
   const queryClient = useQueryClient();
   const tNav = useTranslations("Nav");
+  const t = useTranslations("Palette");
   const setOverride = useThemeStore((state) => state.set);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -94,8 +95,8 @@ export function CommandPalette({
     <CommandDialog
       open={open}
       onOpenChange={(next) => (next ? onOpenChange(true) : close())}
-      title="Command palette"
-      description="Search cards and boards, or run an action"
+      title={t("title")}
+      description={t("description")}
     >
       <Command shouldFilter={false}>
         {/* A plain input rather than cmdk's: its Input omits onChange, and with
@@ -103,30 +104,26 @@ export function CommandPalette({
             because key events bubble to the Command root. */}
         <div className="p-1 pb-0">
           <label className="sr-only" htmlFor="palette-search">
-            search cards and boards, or type a task
+            {t("searchLabel")}
           </label>
           <input
             id="palette-search"
             autoFocus
             value={query}
             onChange={(event) => setQuery(event.currentTarget.value)}
-            placeholder="search cards and boards, or type a task…"
+            placeholder={t("searchPlaceholder")}
             className="h-8 w-full border border-border bg-background px-2 font-mono text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>
         <CommandList>
           <CommandEmpty>
-            {create.isPending
-              ? "creating…"
-              : results.isFetching
-                ? "searching…"
-                : "no matching command"}
+            {create.isPending ? t("creating") : results.isFetching ? t("searching") : t("noMatch")}
           </CommandEmpty>
 
           {hasQuery ? (
             <>
               {cards.length > 0 ? (
-                <CommandGroup heading="Cards">
+                <CommandGroup heading={t("cards")}>
                   {cards.map((hit) => (
                     <CommandItem
                       key={hit.id}
@@ -147,7 +144,7 @@ export function CommandPalette({
               ) : null}
 
               {boards.length > 0 ? (
-                <CommandGroup heading="Boards">
+                <CommandGroup heading={t("boards")}>
                   {boards.map((hit) => (
                     <CommandItem
                       key={hit.id}
@@ -160,19 +157,19 @@ export function CommandPalette({
                 </CommandGroup>
               ) : null}
 
-              <CommandGroup heading="Create">
+              <CommandGroup heading={t("create")}>
                 <CommandItem
                   value={`create ${query}`}
                   onSelect={() => create.mutate(query.trim())}
                   disabled={create.isPending}
                 >
-                  create task: {query.trim()}
+                  {t("createTask", { query: query.trim() })}
                 </CommandItem>
               </CommandGroup>
             </>
           ) : (
             <>
-              <CommandGroup heading="Navigate">
+              <CommandGroup heading={t("navigate")}>
                 {NAV_ITEMS.map((item) => {
                   const label = tNav(item.key);
                   return (
@@ -187,7 +184,7 @@ export function CommandPalette({
                 })}
               </CommandGroup>
 
-              <CommandGroup heading="Theme">
+              <CommandGroup heading={t("theme")}>
                 {THEME_PRESET_IDS.map((id) => (
                   <CommandItem
                     key={id}
@@ -203,35 +200,47 @@ export function CommandPalette({
                 ))}
               </CommandGroup>
 
-              <CommandGroup heading="Colour mode">
+              <CommandGroup heading={t("colourMode")}>
                 {COLOR_MODES.map((mode) => (
                   <CommandItem
                     key={mode.id}
                     value={`colour mode ${mode.label}`}
                     onSelect={run(() => setOverride("colorMode", mode.id))}
                   >
-                    {mode.label}
+                    {t(
+                      mode.id === "light"
+                        ? "colorLight"
+                        : mode.id === "dark"
+                          ? "colorDark"
+                          : "colorSystem",
+                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>
 
-              <CommandGroup heading="Sidebar">
+              <CommandGroup heading={t("sidebar")}>
                 {SIDEBAR_MODES.map((mode) => (
                   <CommandItem
                     key={mode.id}
                     value={`sidebar ${mode.label}`}
                     onSelect={run(() => setOverride("sidebarMode", mode.id))}
                   >
-                    {mode.label}
+                    {t(
+                      mode.id === "expanded"
+                        ? "modeExpanded"
+                        : mode.id === "icon"
+                          ? "modeIcon"
+                          : "modeFull",
+                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>
 
               <CommandSeparator />
 
-              <CommandGroup heading="Account">
+              <CommandGroup heading={t("account")}>
                 <CommandItem value="sign out" onSelect={run(onSignOut)}>
-                  Sign out
+                  {t("signOut")}
                 </CommandItem>
               </CommandGroup>
             </>

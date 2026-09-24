@@ -1,6 +1,42 @@
 {
   "Shell": {
-    "tagline": "A free, open, AI-connected personal operating system"
+    "tagline": "A free, open, AI-connected personal operating system",
+    "primaryNav": "Primary",
+    "stopFocus": "stop focus",
+    "notifications": "notifications",
+    "notificationsUnread": "notifications, {count} unread",
+    "sidebar": "sidebar",
+    "signOut": "sign out",
+    "signingOut": "signing out…",
+    "synced": "synced",
+    "saving": "saving",
+    "offline": "offline",
+    "focusLabel": "focus"
+  },
+  "Palette": {
+    "title": "Command palette",
+    "description": "Search cards and boards, or run an action",
+    "searchLabel": "search cards and boards, or type a task",
+    "searchPlaceholder": "search cards and boards, or type a task…",
+    "creating": "creating…",
+    "searching": "searching…",
+    "noMatch": "no matching command",
+    "cards": "Cards",
+    "boards": "Boards",
+    "create": "Create",
+    "createTask": "create task: {query}",
+    "navigate": "Navigate",
+    "theme": "Theme",
+    "colourMode": "Colour mode",
+    "sidebar": "Sidebar",
+    "account": "Account",
+    "signOut": "Sign out",
+    "colorLight": "Light",
+    "colorDark": "Dark",
+    "colorSystem": "System",
+    "modeExpanded": "Expanded",
+    "modeIcon": "Icon",
+    "modeFull": "Full"
   },
   "Nav": {
     "dashboard": "Dashboard",

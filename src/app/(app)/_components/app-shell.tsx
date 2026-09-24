@@ -163,7 +163,7 @@ export function AppShell({
           <p className="app-sidebar-brand px-3 py-3 font-mono text-sm font-semibold tracking-tight">
             {APP_NAME}
           </p>
-          <nav aria-label="Primary" className="flex flex-1 flex-col gap-1 p-2">
+          <nav aria-label={tShell("primaryNav")} className="flex flex-1 flex-col gap-1 p-2">
             {NAV_ITEMS.map(({ href, key, icon: Icon }) => {
               const label = tNav(key);
               const active = pathname === href;
@@ -205,18 +205,22 @@ export function AppShell({
               onClick={() => void stopFocus()}
               data-slot="ambient-focus-stop"
             >
-              stop focus
+              {tShell("stopFocus")}
             </Button>
           ) : null}
           <OfflineCapture />
           <Link
             href="/notifications"
             data-slot="notification-bell"
-            aria-label={unread > 0 ? `notifications, ${unread} unread` : "notifications"}
+            aria-label={
+              unread > 0
+                ? tShell("notificationsUnread", { count: unread })
+                : tShell("notifications")
+            }
             className="inline-flex items-center gap-1 rounded-[var(--radius)] px-2 py-1 font-mono text-xs hover:bg-accent hover:text-accent-foreground"
           >
             <Bell aria-hidden="true" className="size-4" />
-            <span className="nav-label">notifications</span>
+            <span className="nav-label">{tShell("notifications")}</span>
             {unread > 0 ? (
               <span
                 data-slot="notification-count"
@@ -228,10 +232,10 @@ export function AppShell({
             ) : null}
           </Link>
           <Button type="button" variant="outline" size="sm" onClick={sidebarButton}>
-            sidebar
+            {tShell("sidebar")}
           </Button>
           <Button type="button" variant="ghost" size="sm" onClick={signOut} disabled={signingOut}>
-            {signingOut ? "signing out…" : "sign out"}
+            {signingOut ? tShell("signingOut") : tShell("signOut")}
           </Button>
         </header>
 
@@ -244,6 +248,12 @@ export function AppShell({
         <StatusLine
           path={pathname}
           sync="synced"
+          syncLabels={{
+            synced: tShell("synced"),
+            saving: tShell("saving"),
+            offline: tShell("offline"),
+          }}
+          timerLabel={tShell("focusLabel")}
           timer={focusTimer}
           hints={SHELL_HINTS.map((hint) => ({
             ...hint,

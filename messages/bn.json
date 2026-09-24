@@ -1,6 +1,42 @@
 {
   "Shell": {
-    "tagline": "একটি ফ্রি, ওপেন, AI-সংযুক্ত ব্যক্তিগত অপারেটিং সিস্টেম"
+    "tagline": "একটি ফ্রি, ওপেন, AI-সংযুক্ত ব্যক্তিগত অপারেটিং সিস্টেম",
+    "primaryNav": "প্রধান",
+    "stopFocus": "ফোকাস থামাও",
+    "notifications": "বিজ্ঞপ্তি",
+    "notificationsUnread": "বিজ্ঞপ্তি, {count}টি অপঠিত",
+    "sidebar": "সাইডবার",
+    "signOut": "সাইন আউট",
+    "signingOut": "সাইন আউট হচ্ছে…",
+    "synced": "সিঙ্ক হয়েছে",
+    "saving": "সেভ হচ্ছে",
+    "offline": "অফলাইন",
+    "focusLabel": "ফোকাস"
+  },
+  "Palette": {
+    "title": "কমান্ড প্যালেট",
+    "description": "কার্ড ও বোর্ড খুঁজুন, বা একটি কাজ চালান",
+    "searchLabel": "কার্ড ও বোর্ড খুঁজুন, বা একটি কাজ টাইপ করুন",
+    "searchPlaceholder": "কার্ড ও বোর্ড খুঁজুন, বা একটি কাজ টাইপ করুন…",
+    "creating": "তৈরি হচ্ছে…",
+    "searching": "খোঁজা হচ্ছে…",
+    "noMatch": "মেলে এমন কমান্ড নেই",
+    "cards": "কার্ড",
+    "boards": "বোর্ড",
+    "create": "তৈরি",
+    "createTask": "কাজ তৈরি: {query}",
+    "navigate": "যান",
+    "theme": "থিম",
+    "colourMode": "কালার মোড",
+    "sidebar": "সাইডবার",
+    "account": "অ্যাকাউন্ট",
+    "signOut": "সাইন আউট",
+    "colorLight": "হালকা",
+    "colorDark": "গাঢ়",
+    "colorSystem": "সিস্টেম",
+    "modeExpanded": "প্রসারিত",
+    "modeIcon": "আইকন",
+    "modeFull": "পূর্ণ"
   },
   "Nav": {
     "dashboard": "ড্যাশবোর্ড",
