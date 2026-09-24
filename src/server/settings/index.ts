@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 
 import { parseThemeOverrides, themeOverridesSchema, type ThemeOverrides } from "@/config/themes";
 import { newId } from "@/lib/id";
+import { aiPrefsSchema, parseAiPrefs, type AiPrefs } from "@/server/ai/prefs";
 import {
   dayKeyInTimeZone,
   resolveTimeZone,
@@ -100,5 +101,31 @@ export async function setWeekStart(userId: string, weekStart: string): Promise<v
     .onConflictDoUpdate({
       target: user_settings.user_id,
       set: { week_start: value, updated_at: new Date() },
+    });
+}
+
+/**
+ * AI preferences (spec §8, ADR-073). The settings service stays the only writer of `user_settings`;
+ * the AI module owns the schema and reads through this function. Parsing is liberal so a corrupt
+ * JSON column degrades to defaults rather than breaking every copilot call.
+ */
+export async function getAiPrefs(userId: string): Promise<AiPrefs> {
+  const rows = await db
+    .select({ aiPrefs: user_settings.ai_prefs })
+    .from(user_settings)
+    .where(eq(user_settings.user_id, userId))
+    .limit(1);
+  return parseAiPrefs(rows[0]?.aiPrefs);
+}
+
+export async function saveAiPrefs(userId: string, prefs: AiPrefs): Promise<void> {
+  const value = aiPrefsSchema.parse(prefs);
+  const serialized = JSON.stringify(value);
+  await db
+    .insert(user_settings)
+    .values({ id: newId(), user_id: userId, ai_prefs: serialized })
+    .onConflictDoUpdate({
+      target: user_settings.user_id,
+      set: { ai_prefs: serialized, updated_at: new Date() },
     });
 }

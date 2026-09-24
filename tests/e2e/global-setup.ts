@@ -19,6 +19,11 @@ export function e2eEnv(): Record<string, string> {
   // ADR-039: raise the auth rate-limit ceiling — the suite signs in several times within one
   // window from a single localhost IP, which Better Auth's per-IP defaults treat as abuse.
   env.AUTH_RATE_LIMIT_MAX = "100";
+  // AI copilot (ADR-074/075/076): a fixed at-rest key, a fixed approval-signing secret, and the
+  // deterministic scripted model, so the acceptance run needs no paid provider key.
+  env.AI_ENCRYPTION_KEY = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff";
+  env.TOOL_APPROVAL_SECRET = "e2e-tool-approval-secret-0000000000";
+  env.AI_SCRIPTED = "true";
   return env;
 }
 

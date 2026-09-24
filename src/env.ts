@@ -52,6 +52,28 @@ const envSchema = z
     AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().optional(),
     // ADR-069: guards the webhook retry cron route. Absent = the route is hidden (404).
     CRON_SECRET: z.string().min(16).optional(),
+    // --- AI copilot (ADR-073…078) ---
+    // ADR-074: 32-byte key (base64) for AES-256-GCM at-rest secrets. Absent = a dev/test key
+    // derived from BETTER_AUTH_SECRET; in production, absent disables saving provider keys.
+    AI_ENCRYPTION_KEY: z.string().min(1).optional(),
+    // ADR-076: HMAC-signs tool approvals so a client-forged approval is rejected. Absent =
+    // approvals are still required, but not cryptographically bound (dev only).
+    TOOL_APPROVAL_SECRET: z.string().min(16).optional(),
+    // ADR-075: deterministic scripted model for dev/demo/e2e when no provider key is configured.
+    AI_SCRIPTED: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((v) => v === "true"),
+    // Operator (platform) provider keys — any one enables that provider for every user.
+    OPENAI_API_KEY: z.string().min(1).optional(),
+    ANTHROPIC_API_KEY: z.string().min(1).optional(),
+    GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
+    OPENROUTER_API_KEY: z.string().min(1).optional(),
+    // Ollama or any OpenAI-compatible endpoint (ADR-075).
+    AI_COMPATIBLE_BASE_URL: z.url().optional(),
+    AI_COMPATIBLE_API_KEY: z.string().min(1).optional(),
+    AI_DEFAULT_PROVIDER: z.string().min(1).optional(),
+    AI_DEFAULT_MODEL: z.string().min(1).optional(),
   })
   .superRefine((env, ctx) => {
     for (const [a, b] of pairs) {
@@ -97,3 +119,16 @@ export const isCloudDb =
   env.DATABASE_URL.startsWith("libsql://") || env.DATABASE_URL.startsWith("https://");
 /** ADR-013 — billing stays hidden until go-live */
 export const billingEnabled = env.BILLING_ENABLED;
+/** ADR-075 — the scripted model is available when explicitly enabled (dev/demo/e2e). */
+export const aiScripted = env.AI_SCRIPTED;
+/** ADR-074 — at-rest encryption is usable (real key, or the documented dev/test fallback). */
+export const hasAiEncryption =
+  Boolean(env.AI_ENCRYPTION_KEY) || process.env.NODE_ENV !== "production";
+/** ADR-075 — at least one platform provider key is configured. */
+export const hasPlatformAi = Boolean(
+  env.OPENAI_API_KEY ||
+  env.ANTHROPIC_API_KEY ||
+  env.GOOGLE_GENERATIVE_AI_API_KEY ||
+  env.OPENROUTER_API_KEY ||
+  env.AI_COMPATIBLE_BASE_URL,
+);
