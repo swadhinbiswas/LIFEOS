@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ export function ProfileForm({
   joined: string;
 }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Settings");
   const [value, setValue] = useState(name);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
@@ -34,7 +36,7 @@ export function ProfileForm({
     setStatus("");
     const trimmed = value.trim();
     if (!trimmed || trimmed === name) {
-      setStatus("nothing to save");
+      setStatus(t("nothingToSave"));
       return;
     }
     setSaving(true);
@@ -44,14 +46,14 @@ export function ProfileForm({
       setError(authErrorMessage(updateError));
       return;
     }
-    setStatus("saved");
+    setStatus(t("saved"));
     router.refresh();
   }
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-3 text-xs">
       <div className="flex flex-col gap-1">
-        <Label htmlFor="profile-name">name</Label>
+        <Label htmlFor="profile-name">{t("name")}</Label>
         <Input
           id="profile-name"
           name="name"
@@ -63,9 +65,9 @@ export function ProfileForm({
       </div>
 
       <dl className="flex flex-col gap-1">
-        <dt className="font-mono text-muted-foreground uppercase">email</dt>
+        <dt className="font-mono text-muted-foreground uppercase">{t("email")}</dt>
         <dd className="font-mono">{email}</dd>
-        <dt className="mt-1 font-mono text-muted-foreground uppercase">joined</dt>
+        <dt className="mt-1 font-mono text-muted-foreground uppercase">{t("joined")}</dt>
         <dd className="font-mono tabular-nums">{joined}</dd>
       </dl>
 
@@ -81,7 +83,7 @@ export function ProfileForm({
       ) : null}
 
       <Button type="submit" disabled={saving} className="self-start">
-        {saving ? "saving…" : "save changes"}
+        {saving ? t("saving") : t("saveChanges")}
       </Button>
     </form>
   );

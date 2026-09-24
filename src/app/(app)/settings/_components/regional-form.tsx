@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -23,11 +24,6 @@ const COMMON = [
   "America/Sao_Paulo",
 ];
 
-const WEEK_STARTS = [
-  { value: "mon", label: "Monday" },
-  { value: "sun", label: "Sunday" },
-] as const;
-
 /**
  * Regional preference (spec §6.9, ADR-057/058): the timezone every day is bucketed in and the day
  * the week starts on. Both save together; a refresh re-reads them everywhere.
@@ -40,6 +36,7 @@ export function RegionalForm({
   weekStart: "mon" | "sun";
 }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Settings");
   const [timeZone, setTimeZone] = useState(initialZone);
   const [weekStart, setWeekStart] = useState<"mon" | "sun">(initialWeekStart);
   const [busy, setBusy] = useState(false);
@@ -56,19 +53,19 @@ export function RegionalForm({
     ]);
     setBusy(false);
     const ok = tz.ok && ws.ok;
-    setStatus(ok ? "saved" : (tz.message ?? ws.message ?? "could not save"));
+    setStatus(ok ? t("saved") : (tz.message ?? ws.message ?? t("couldNotSave")));
     if (ok) router.refresh();
   };
 
   return (
     <div className="flex flex-wrap items-end gap-2 text-xs" data-slot="regional-form">
       <label className="flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase">
-        timezone
+        {t("timezone")}
         <select
           value={timeZone}
           onChange={(event) => setTimeZone(event.target.value)}
           className="h-8 border border-border bg-background px-2 font-mono text-xs"
-          aria-label="timezone"
+          aria-label={t("timezone")}
         >
           {options.map((zone) => (
             <option key={zone} value={zone}>
@@ -78,18 +75,15 @@ export function RegionalForm({
         </select>
       </label>
       <label className="flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase">
-        week starts
+        {t("weekStarts")}
         <select
           value={weekStart}
           onChange={(event) => setWeekStart(event.target.value as "mon" | "sun")}
           className="h-8 border border-border bg-background px-2 font-mono text-xs"
-          aria-label="week starts"
+          aria-label={t("weekStarts")}
         >
-          {WEEK_STARTS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
+          <option value="mon">{t("monday")}</option>
+          <option value="sun">{t("sunday")}</option>
         </select>
       </label>
       <Button
@@ -99,7 +93,7 @@ export function RegionalForm({
         disabled={busy || !dirty}
         onClick={() => void save()}
       >
-        save regional
+        {t("saveRegional")}
       </Button>
       {status ? (
         <span

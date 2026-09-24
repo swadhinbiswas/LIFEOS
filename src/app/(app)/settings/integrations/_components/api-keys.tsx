@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ const SCOPES = [
  */
 export function ApiKeys({ keys }: { keys: KeySummary[] }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Integrations");
   const [name, setName] = useState("");
   const [scopes, setScopes] = useState<string[]>(["read:*"]);
   const [created, setCreated] = useState<string | null>(null);
@@ -69,17 +71,17 @@ export function ApiKeys({ keys }: { keys: KeySummary[] }) {
     <div className="flex flex-col gap-3" data-slot="api-keys">
       <div className="flex flex-col gap-2">
         <label className="sr-only" htmlFor="api-key-name">
-          key name
+          {t("keyName")}
         </label>
         <input
           id="api-key-name"
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="key name (e.g. laptop cli)"
+          placeholder={t("keyNamePlaceholder")}
           className="h-8 border border-border bg-background px-2 font-mono text-xs"
         />
         <fieldset className="flex flex-wrap items-center gap-3 font-mono text-[10px]">
-          <legend className="sr-only">scopes</legend>
+          <legend className="sr-only">{t("scopes")}</legend>
           {SCOPES.map((scope) => (
             <label key={scope} className="flex items-center gap-1">
               <input
@@ -99,7 +101,7 @@ export function ApiKeys({ keys }: { keys: KeySummary[] }) {
             disabled={busy || name.trim() === "" || scopes.length === 0}
             onClick={() => void create()}
           >
-            create key
+            {t("createKey")}
           </Button>
           {error ? (
             <span role="alert" className="font-mono text-[10px] text-destructive">
@@ -115,13 +117,13 @@ export function ApiKeys({ keys }: { keys: KeySummary[] }) {
           role="status"
           className="flex flex-col gap-1 border border-warning px-2 py-1 font-mono text-[10px]"
         >
-          <span>copy it now — it is shown once and stored hashed:</span>
+          <span>{t("copyKey")}</span>
           <code className="text-warning break-all">{created}</code>
         </div>
       ) : null}
 
       {keys.length === 0 ? (
-        <p className="font-mono text-xs text-muted-foreground">no keys yet</p>
+        <p className="font-mono text-xs text-muted-foreground">{t("noKeys")}</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {keys.map((key) => (
@@ -135,7 +137,7 @@ export function ApiKeys({ keys }: { keys: KeySummary[] }) {
               <span className="text-muted-foreground">lifeos_live_{key.prefix}…</span>
               <span className="text-muted-foreground">{key.scopes.join(", ")}</span>
               <span className="text-muted-foreground">
-                {key.revoked ? "revoked" : key.lastUsedAt ? "used" : "never used"}
+                {key.revoked ? t("revoked") : key.lastUsedAt ? t("used") : t("neverUsed")}
               </span>
               {!key.revoked ? (
                 <Button
@@ -143,10 +145,10 @@ export function ApiKeys({ keys }: { keys: KeySummary[] }) {
                   variant="ghost"
                   size="sm"
                   disabled={busy}
-                  aria-label={`revoke ${key.name}`}
+                  aria-label={t("revokeAria", { name: key.name })}
                   onClick={() => void revoke(key.id)}
                 >
-                  revoke
+                  {t("revoke")}
                 </Button>
               ) : null}
             </li>

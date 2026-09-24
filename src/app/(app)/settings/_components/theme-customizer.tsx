@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { Panel } from "@/components/tui/panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,11 +33,6 @@ type StringAxis =
   | "scale"
   | "sidebarVariant"
   | "sidebarMode";
-
-const LIGATURE_OPTIONS = [
-  { id: "off", label: "Off" },
-  { id: "on", label: "On" },
-] as const;
 
 function Segmented<K extends StringAxis>({
   axis,
@@ -85,15 +82,16 @@ function Segmented<K extends StringAxis>({
 }
 
 function PresetControl() {
+  const t = useTranslations("Pages.Appearance");
   const preset = useThemeStore((state) => state.overrides.preset);
   const setOverride = useThemeStore((state) => state.set);
 
   return (
     <fieldset className="flex flex-col gap-1">
       <legend className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
-        preset
+        {t("preset")}
       </legend>
-      <div role="radiogroup" aria-label="preset" className="flex flex-wrap gap-1">
+      <div role="radiogroup" aria-label={t("preset")} className="flex flex-wrap gap-1">
         {THEME_PRESET_IDS.map((id) => {
           const checked = preset === id;
           return (
@@ -124,13 +122,14 @@ function PresetControl() {
 }
 
 function AccentControl() {
+  const t = useTranslations("Pages.Appearance");
   const accent = useThemeStore((state) => state.overrides.accent);
   const preset = useThemeStore((state) => state.overrides.preset);
   const setOverride = useThemeStore((state) => state.set);
 
   return (
     <div className="flex flex-col gap-1">
-      <Label htmlFor="accent">accent</Label>
+      <Label htmlFor="accent">{t("accent")}</Label>
       <div className="flex flex-wrap items-center gap-2">
         <Input
           id="accent"
@@ -140,7 +139,7 @@ function AccentControl() {
           className="h-8 w-14 p-1"
         />
         <span className="font-mono text-xs text-muted-foreground">
-          {accent ?? "preset default"}
+          {accent ?? t("presetDefault")}
         </span>
         <Button
           type="button"
@@ -149,7 +148,7 @@ function AccentControl() {
           onClick={() => setOverride("accent", null)}
           disabled={accent === null}
         >
-          clear
+          {t("clear")}
         </Button>
       </div>
     </div>
@@ -162,38 +161,90 @@ function AccentControl() {
  * to the cookie and (when signed in) `user_settings.theme_overrides` (ADR-024).
  */
 export function ThemeCustomizer() {
+  const t = useTranslations("Pages.Appearance");
   const replace = useThemeStore((state) => state.replace);
+
+  const colorModes = COLOR_MODES.map((option) => ({
+    ...option,
+    label: t(
+      option.id === "light" ? "colorLight" : option.id === "dark" ? "colorDark" : "colorSystem",
+    ),
+  }));
+  const ligatureOptions = [
+    { id: "off" as const, label: t("ligOff") },
+    { id: "on" as const, label: t("ligOn") },
+  ];
+  const scaleOptions = SCALES.map((option) => ({
+    ...option,
+    label: t(option.id === "sm" ? "scaleSm" : option.id === "md" ? "scaleMd" : "scaleLg"),
+  }));
+  const radiusOptions = RADII.map((option) => ({
+    ...option,
+    label: t(
+      option.id === "none"
+        ? "radiusNone"
+        : option.id === "sm"
+          ? "radiusSm"
+          : option.id === "md"
+            ? "radiusMd"
+            : "radiusLg",
+    ),
+  }));
+  const layoutOptions = LAYOUTS.map((option) => ({
+    ...option,
+    label: t(option.id === "compact" ? "layoutCompact" : "layoutFull"),
+  }));
+  const sidebarVariantOptions = SIDEBAR_VARIANTS.map((option) => ({
+    ...option,
+    label: t(
+      option.id === "flush"
+        ? "sidebarFlush"
+        : option.id === "inset"
+          ? "sidebarInset"
+          : "sidebarFloating",
+    ),
+  }));
+  const sidebarModeOptions = SIDEBAR_MODES.map((option) => ({
+    ...option,
+    label: t(
+      option.id === "expanded" ? "modeExpanded" : option.id === "icon" ? "modeIcon" : "modeFull",
+    ),
+  }));
 
   return (
     <div className="grid gap-4">
-      <Panel title="Palette">
+      <Panel title={t("palette")}>
         <PresetControl />
-        <Segmented axis="colorMode" legend="color mode" options={COLOR_MODES} />
+        <Segmented axis="colorMode" legend={t("colorMode")} options={colorModes} />
       </Panel>
 
-      <Panel title="Typography">
-        <Segmented axis="font" legend="font" options={FONTS} />
-        <Segmented axis="ligatures" legend="ligatures" options={LIGATURE_OPTIONS} />
+      <Panel title={t("typography")}>
+        <Segmented axis="font" legend={t("font")} options={FONTS} />
+        <Segmented axis="ligatures" legend={t("ligatures")} options={ligatureOptions} />
       </Panel>
 
-      <Panel title="Geometry">
-        <Segmented axis="scale" legend="scale" options={SCALES} />
-        <Segmented axis="radius" legend="radius" options={RADII} />
-        <Segmented axis="layout" legend="content layout" options={LAYOUTS} />
+      <Panel title={t("geometry")}>
+        <Segmented axis="scale" legend={t("scale")} options={scaleOptions} />
+        <Segmented axis="radius" legend={t("radius")} options={radiusOptions} />
+        <Segmented axis="layout" legend={t("contentLayout")} options={layoutOptions} />
       </Panel>
 
-      <Panel title="Sidebar">
-        <Segmented axis="sidebarVariant" legend="sidebar variant" options={SIDEBAR_VARIANTS} />
-        <Segmented axis="sidebarMode" legend="sidebar mode" options={SIDEBAR_MODES} />
+      <Panel title={t("sidebarPanel")}>
+        <Segmented
+          axis="sidebarVariant"
+          legend={t("sidebarVariant")}
+          options={sidebarVariantOptions}
+        />
+        <Segmented axis="sidebarMode" legend={t("sidebarMode")} options={sidebarModeOptions} />
       </Panel>
 
-      <Panel title="Accent">
+      <Panel title={t("accentPanel")}>
         <AccentControl />
       </Panel>
 
       <div className="flex justify-end">
         <Button type="button" variant="outline" size="sm" onClick={() => replace(DEFAULT_THEME)}>
-          reset to defaults
+          {t("reset")}
         </Button>
       </div>
     </div>

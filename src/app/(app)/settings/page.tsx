@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { auth } from "@/server/auth";
@@ -19,21 +20,21 @@ export default async function SettingsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Settings");
   const joined = new Date(session.user.createdAt).toISOString().slice(0, 10);
   const { timeZone, weekStart } = await getRegionalSettings(session.user.id);
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Profile</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("title")}
+      </h1>
       <div className="grid max-w-3xl gap-4">
-        <Panel title="Account">
+        <Panel title={t("account")}>
           <ProfileForm name={session.user.name} email={session.user.email} joined={joined} />
         </Panel>
-        <Panel title="Regional">
-          <p className="font-mono text-[10px] text-muted-foreground">
-            your day — habits, the calendar, what counts as “due today” — follows this zone, and
-            every “this week” number starts on the day you choose.
-          </p>
+        <Panel title={t("regional")}>
+          <p className="font-mono text-[10px] text-muted-foreground">{t("regionalHint")}</p>
           <RegionalForm timeZone={timeZone} weekStart={weekStart} />
         </Panel>
       </div>

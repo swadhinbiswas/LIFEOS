@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,7 @@ export function Webhooks({
   deliveries: DeliverySummary[];
 }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Integrations");
   const [url, setUrl] = useState("");
   const [events, setEvents] = useState<string[]>(["card.created"]);
   const [secret, setSecret] = useState<string | null>(null);
@@ -94,17 +96,17 @@ export function Webhooks({
     <div className="flex flex-col gap-3" data-slot="webhooks">
       <div className="flex flex-col gap-2">
         <label className="sr-only" htmlFor="webhook-url">
-          webhook url
+          {t("webhookUrl")}
         </label>
         <input
           id="webhook-url"
           value={url}
           onChange={(event) => setUrl(event.target.value)}
-          placeholder="https://example.com/hooks/lifeos"
+          placeholder={t("webhookUrlPlaceholder")}
           className="h-8 border border-border bg-background px-2 font-mono text-xs"
         />
         <fieldset className="flex flex-wrap items-center gap-3 font-mono text-[10px]">
-          <legend className="sr-only">events</legend>
+          <legend className="sr-only">{t("events")}</legend>
           {EVENTS.map((event) => (
             <label key={event} className="flex items-center gap-1">
               <input
@@ -124,7 +126,7 @@ export function Webhooks({
             disabled={busy || url.trim() === "" || events.length === 0}
             onClick={() => void add()}
           >
-            add webhook
+            {t("addWebhook")}
           </Button>
           {error ? (
             <span role="alert" className="font-mono text-[10px] text-destructive">
@@ -140,13 +142,13 @@ export function Webhooks({
           role="status"
           className="flex flex-col gap-1 border border-warning px-2 py-1 font-mono text-[10px]"
         >
-          <span>signing secret — copy it now, it is shown once:</span>
+          <span>{t("copySecret")}</span>
           <code className="text-warning break-all">{secret}</code>
         </div>
       ) : null}
 
       {webhooks.length === 0 ? (
-        <p className="font-mono text-xs text-muted-foreground">no webhooks yet</p>
+        <p className="font-mono text-xs text-muted-foreground">{t("noWebhooks")}</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {webhooks.map((hook) => (
@@ -162,10 +164,10 @@ export function Webhooks({
                 variant="ghost"
                 size="sm"
                 disabled={busy}
-                aria-label={`delete ${hook.url}`}
+                aria-label={t("deleteAria", { url })}
                 onClick={() => void remove(hook.id)}
               >
-                delete
+                {t("delete")}
               </Button>
             </li>
           ))}
@@ -173,9 +175,9 @@ export function Webhooks({
       )}
 
       <div className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] text-muted-foreground">recent deliveries</span>
+        <span className="font-mono text-[10px] text-muted-foreground">{t("recentDeliveries")}</span>
         {deliveries.length === 0 ? (
-          <p className="font-mono text-xs text-muted-foreground">nothing delivered yet</p>
+          <p className="font-mono text-xs text-muted-foreground">{t("nothingDelivered")}</p>
         ) : (
           <ul className="flex flex-col gap-1">
             {deliveries.map((delivery) => (
@@ -187,20 +189,23 @@ export function Webhooks({
                 <span className="text-primary">{delivery.event}</span>
                 <span className="text-muted-foreground">
                   {delivery.delivered
-                    ? `delivered (${delivery.status}, ${delivery.attempts} attempt${delivery.attempts === 1 ? "" : "s"})`
+                    ? t("delivered", { status: delivery.status, attempts: delivery.attempts })
                     : delivery.nextAttemptAt
-                      ? `failed (${delivery.status || "no response"}) · retry ${delivery.attempts + 1}`
-                      : `abandoned after ${delivery.attempts} attempts`}
+                      ? t("retryN", {
+                          status: delivery.status || t("noResponse"),
+                          n: delivery.attempts + 1,
+                        })
+                      : t("abandoned", { attempts: delivery.attempts })}
                 </span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   disabled={busy}
-                  aria-label={`retry ${delivery.event}`}
+                  aria-label={t("retryAria", { event: delivery.event })}
                   onClick={() => void replay(delivery.id)}
                 >
-                  retry now
+                  {t("retryNow")}
                 </Button>
               </li>
             ))}

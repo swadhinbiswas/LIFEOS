@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -24,6 +25,7 @@ export default async function IntegrationsPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Integrations");
   const keys = (await listApiKeys(session.user.id)).map(toKeySummary);
   const active = keys.filter((key) => !key.revoked).length;
   const webhooks = (await listWebhooks(session.user.id)).map(toWebhookSummary);
@@ -34,23 +36,17 @@ export default async function IntegrationsPage() {
   return (
     <>
       <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        Integrations
+        {t("title")}
       </h1>
 
       <div className="grid max-w-3xl gap-4">
-        <Panel title="API keys" hint={`${active} active`}>
-          <p className="font-mono text-[10px] text-muted-foreground">
-            personal keys for the REST API and the MCP server — shown once, stored as a SHA-256
-            hash, scoped and revocable.
-          </p>
+        <Panel title={t("apiKeys")} hint={t("active", { count: active })}>
+          <p className="font-mono text-[10px] text-muted-foreground">{t("apiKeysHint")}</p>
           <ApiKeys keys={keys} />
         </Panel>
 
-        <Panel title="Webhooks" hint={`${webhooks.length}`}>
-          <p className="font-mono text-[10px] text-muted-foreground">
-            outgoing events signed with HMAC-SHA256 in the x-lifeos-signature header — deliveries
-            are logged and can be replayed.
-          </p>
+        <Panel title={t("webhooks")} hint={`${webhooks.length}`}>
+          <p className="font-mono text-[10px] text-muted-foreground">{t("webhooksHint")}</p>
           <Webhooks webhooks={webhooks} deliveries={deliveries} />
         </Panel>
       </div>
