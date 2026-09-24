@@ -277,4 +277,59 @@ describe("board service (spec 6.1 / adrs 009, 011, 042)", () => {
     expect(after.every((key) => key.length < REBALANCE_THRESHOLD)).toBe(true);
     expect([...after].sort()).toEqual(after); // order preserved
   });
+
+  it("materialises the next occurrence when a recurring card completes (spec 6.2)", async () => {
+    const board = await createBoard(USER, { name: "Recurring", template: "blank" });
+    const todo = await columnNamed(board.id, "To do");
+    const done = await columnNamed(board.id, "Done");
+    const due = new Date("2026-10-01T09:00:00.000Z");
+
+    const card = await createCard(USER, {
+      boardId: board.id,
+      columnId: todo.id,
+      title: "water plants",
+      dueAt: due,
+      recurrence: "FREQ=DAILY;INTERVAL=1",
+    });
+    await moveCard(USER, {
+      cardId: card.id,
+      version: card.version,
+      toColumnId: done.id,
+      prevCardId: null,
+      nextCardId: null,
+    });
+
+    const payload = await getBoard(USER, board.id);
+    const inTodo = payload.cards.filter(
+      (row) => row.title === "water plants" && row.column_id === todo.id,
+    );
+    expect(inTodo).toHaveLength(1); // the next occurrence, back in the first open column
+    expect(inTodo[0]?.due_at?.toISOString()).toBe("2026-10-02T09:00:00.000Z");
+    expect(inTodo[0]?.recurrence).toBe("FREQ=DAILY;INTERVAL=1");
+    expect(inTodo[0]?.completed_at).toBeNull();
+
+    const completed = payload.cards.filter(
+      (row) => row.title === "water plants" && row.column_id === done.id,
+    );
+    expect(completed).toHaveLength(1); // the completed one stays as history
+    expect(completed[0]?.completed_at).not.toBeNull();
+
+    // A one-shot card must not spawn anything.
+    const oneShot = await createCard(USER, {
+      boardId: board.id,
+      columnId: todo.id,
+      title: "one shot",
+    });
+    await moveCard(USER, {
+      cardId: oneShot.id,
+      version: oneShot.version,
+      toColumnId: done.id,
+      prevCardId: null,
+      nextCardId: null,
+    });
+    const afterOneShot = await getBoard(USER, board.id);
+    expect(
+      afterOneShot.cards.filter((row) => row.title === "one shot" && row.column_id === todo.id),
+    ).toHaveLength(0);
+  });
 });

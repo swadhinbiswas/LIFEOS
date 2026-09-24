@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, ne } from "drizzle-orm";
 import { generateKeyBetween } from "fractional-indexing";
 
 import {
@@ -21,6 +21,7 @@ import type {
   UpdateCardInput,
   UpdateColumnInput,
 } from "./schemas";
+import { nextOccurrence, shiftStart } from "./recurrence";
 
 /**
  * The board service: the only writer of boards/columns/cards (ADR-042, spec §7.2). Server
@@ -403,6 +404,78 @@ export async function deleteColumn(userId: string, columnId: string): Promise<vo
 // Cards
 // ---------------------------------------------------------------------------
 
+/**
+ * Create the next occurrence of a recurring card in the board's first open column, so the
+ * completed one stays as history (spec §6.2, ADR-015). A silent no-op when the rule has no
+ * next date or the board has no open column — completing a task must never fail because of
+ * recurrence.
+ */
+async function spawnNextOccurrence(userId: string, card: Card): Promise<void> {
+  if (!card.recurrence || !card.due_at) return;
+  const due = new Date(card.due_at);
+  const next = nextOccurrence(card.recurrence, due);
+  if (!next) return;
+
+  const [target] = await db
+    .select()
+    .from(board_columns)
+    .where(
+      and(
+        eq(board_columns.board_id, card.board_id),
+        eq(board_columns.user_id, userId),
+        eq(board_columns.is_done, false),
+      ),
+    )
+    .orderBy(asc(board_columns.position))
+    .limit(1);
+  if (!target) return;
+
+  const [last] = await db
+    .select({ position: cards.position })
+    .from(cards)
+    .where(and(eq(cards.column_id, target.id), eq(cards.user_id, userId), isNull(cards.deleted_at)))
+    .orderBy(desc(cards.position))
+    .limit(1);
+
+  await db.insert(cards).values({
+    id: newId(),
+    board_id: card.board_id,
+    column_id: target.id,
+    user_id: userId,
+    position: generateKeyBetween(last?.position ?? null, null),
+    title: card.title,
+    description: card.description,
+    priority: card.priority,
+    due_at: next,
+    start_at: shiftStart(card.start_at, due, next),
+    estimate_min: card.estimate_min,
+    recurrence: card.recurrence,
+    kind: card.kind,
+    meta: card.meta,
+    version: 1,
+    is_demo: card.is_demo,
+  });
+}
+
+/**
+ * SQLite reports a taken fractional key as a constraint error, not as zero affected rows.
+ * Drizzle wraps the driver error, so the `cause` chain is inspected too.
+ */
+function isUniqueViolation(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { message?: string; code?: string; cause?: unknown };
+  if (typeof candidate.code === "string" && candidate.code.includes("SQLITE_CONSTRAINT")) {
+    return true;
+  }
+  if (
+    typeof candidate.message === "string" &&
+    /unique constraint failed|sqlite_constraint/i.test(candidate.message)
+  ) {
+    return true;
+  }
+  return candidate.cause !== undefined ? isUniqueViolation(candidate.cause) : false;
+}
+
 async function requireCard(userId: string, cardId: string): Promise<Card> {
   const [card] = await db
     .select()
@@ -542,53 +615,90 @@ export async function moveCard(userId: string, input: MoveCardInput): Promise<Ca
   // Dropping into a `done` column completes the card; leaving one re-opens it (spec §6.1).
   const completedAt = column.is_done ? (card.completed_at ?? new Date()) : null;
 
+  let appendFallback = false;
+
   /**
-   * ADR-009: one-row UPDATE between two keys, retrying on a UNIQUE collision. Neighbour keys
-   * are re-read each attempt — a concurrent insert changes the gap, so the retry produces a
-   * different key rather than the same one again.
+   * ADR-009: one-row UPDATE between two keys, retrying when the key is already taken. SQLite
+   * raises a UNIQUE error (it does not return zero rows), so both outcomes are treated as
+   * "pick another key", and neighbour keys are re-read each attempt because a concurrent
+   * insert changes the gap. A taken key makes the next attempt append after the column's last
+   * card, which is always free.
    */
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const prevKey = input.prevCardId
-      ? await cardPositionInColumn(userId, input.prevCardId, column.id)
-      : null;
-    const nextKey = input.nextCardId
-      ? await cardPositionInColumn(userId, input.nextCardId, column.id)
-      : null;
+    let prevKey: string | null;
+    let nextKey: string | null;
 
-    let position: string;
-    if (prevKey && nextKey && prevKey >= nextKey) {
-      // Neighbours drifted out of order (or the same key twice) — append as a safe fallback.
-      position = generateKeyBetween(prevKey, null);
+    if (appendFallback) {
+      const [last] = await db
+        .select({ position: cards.position })
+        .from(cards)
+        .where(
+          and(
+            eq(cards.column_id, column.id),
+            eq(cards.user_id, userId),
+            isNull(cards.deleted_at),
+            ne(cards.id, card.id),
+          ),
+        )
+        .orderBy(desc(cards.position))
+        .limit(1);
+      prevKey = last?.position ?? null;
+      nextKey = null;
     } else {
-      position = generateKeyBetween(prevKey, nextKey);
+      prevKey = input.prevCardId
+        ? await cardPositionInColumn(userId, input.prevCardId, column.id)
+        : null;
+      nextKey = input.nextCardId
+        ? await cardPositionInColumn(userId, input.nextCardId, column.id)
+        : null;
     }
 
-    const updated = await db
-      .update(cards)
-      .set({
-        column_id: column.id,
-        position,
-        completed_at: completedAt,
-        version: card.version + 1,
-      })
-      .where(
-        and(
-          eq(cards.id, card.id),
-          eq(cards.user_id, userId),
-          eq(cards.version, card.version),
-          isNull(cards.deleted_at),
-        ),
-      )
-      .returning();
+    const position =
+      prevKey && nextKey && prevKey >= nextKey
+        ? // Neighbours drifted out of order — append as a safe fallback.
+          generateKeyBetween(prevKey, null)
+        : generateKeyBetween(prevKey, nextKey);
 
-    const row = updated[0];
-    if (row) return row;
+    try {
+      const updated = await db
+        .update(cards)
+        .set({
+          column_id: column.id,
+          position,
+          completed_at: completedAt,
+          version: card.version + 1,
+        })
+        .where(
+          and(
+            eq(cards.id, card.id),
+            eq(cards.user_id, userId),
+            eq(cards.version, card.version),
+            isNull(cards.deleted_at),
+          ),
+        )
+        .returning();
 
-    const fresh = await requireCard(userId, card.id);
-    if (fresh.version !== card.version) {
-      throw new BoardError("conflict", "card changed since you loaded it");
+      const row = updated[0];
+      if (row) {
+        // Completing a recurring card materialises its next occurrence (spec §6.2, ADR-015).
+        // Recurrence must never fail the completion, so a spawn error is logged, not thrown.
+        if (column.is_done && card.column_id !== column.id) {
+          await spawnNextOccurrence(userId, card).catch((error: unknown) => {
+            console.error("[boards] could not schedule the next occurrence", error);
+          });
+        }
+        return row;
+      }
+
+      const fresh = await requireCard(userId, card.id);
+      if (fresh.version !== card.version) {
+        throw new BoardError("conflict", "card changed since you loaded it");
+      }
+    } catch (error) {
+      if (!isUniqueViolation(error)) throw error;
+      appendFallback = true;
     }
-    // Otherwise the key was taken: rebalance and try once more with a clean column.
+
     await rebalanceColumn(userId, column.id);
   }
 

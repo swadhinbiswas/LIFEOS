@@ -932,6 +932,30 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-043 — Recurring cards materialise forward on completion
+
+- **Status:** accepted (2026-09-24)
+- **Context:** spec §6.2 requires recurring tasks (RRULE via `rrule`), and ADR-015 already fixed
+  rrule as the parser and UTC as storage. What it did not fix is what "a recurring task" means
+  when the card is completed: replace the card, keep the card and mark it done, or spawn the
+  next one.
+- **Decision:** when a card with `recurrence` **transitions into a done column**, the service
+  creates the next occurrence in the board's **first non-done column** (Inbox for the system
+  Tasks board), copying title, description, priority, estimate, kind and meta, and keeping the
+  completed card as history. The next date is computed from the rule **anchored at the card's
+  own due date**, so a "daily at 09:00" task keeps its time of day instead of inheriting the
+  moment the parser built the rule; a completion that lands after the next occurrence **skips
+  forward** to the next future one, so finishing late never spawns an already-overdue card. A
+  `start_at` keeps its lead time to the new due date. Spawn errors are logged, never thrown —
+  completing a task must not fail because of recurrence.
+- **Consequences:** recurring work never silently disappears and the history of what was done
+  is preserved; nothing spawns when the rule is exhausted (`COUNT`) or unparseable. The move
+  path also gained the retry that ADR-009 assumed: SQLite raises a UNIQUE error for a taken key
+  rather than returning zero rows, and a taken key now appends after the column's last card
+  instead of regenerating the same key.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

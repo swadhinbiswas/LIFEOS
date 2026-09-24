@@ -58,6 +58,13 @@ export function CardSheet({
   const patch = (values: Partial<UpdateCardVars>) =>
     onUpdate({ cardId: card.id, version: card.version, ...values });
 
+  /** Snooze shifts the due date; with no due date it counts from now. */
+  const snooze = (days: number) => {
+    const base = card.due_at ? new Date(card.due_at) : new Date();
+    const next = new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
+    patch({ dueAt: next.toISOString() });
+  };
+
   // ADR-015: store the instant as UTC; the date input is day-granular.
   const datePatch = (value: string) =>
     value === "" ? null : new Date(`${value}T00:00:00.000Z`).toISOString();
@@ -182,6 +189,16 @@ export function CardSheet({
                 }
               }}
             />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs text-muted-foreground">snooze</span>
+            <Button type="button" variant="outline" size="sm" onClick={() => snooze(1)}>
+              1 day
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => snooze(7)}>
+              1 week
+            </Button>
           </div>
 
           <div className="flex items-center gap-2 border-t border-border pt-3">

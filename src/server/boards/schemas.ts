@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isValidRecurrence } from "./recurrence";
+
 /**
  * Shared Zod contract for the board engine (spec §7.2): every adapter — Server Actions, REST
  * `/api/v1`, MCP and AI tools — validates with these schemas before calling the service, so
@@ -14,13 +16,13 @@ const title = z.string().trim().min(1).max(500);
 const description = z.string().max(20_000);
 const estimate = z.number().int().min(0).max(100_000);
 
-/** A coarse RRULE sanity check; `rrule` parses it fully in the recurring-task service. */
+/** Full RRULE parse at the boundary — `rrule` rejects anything malformed. */
 const recurrence = z
   .string()
   .trim()
   .min(1)
   .max(500)
-  .refine((value) => value.toUpperCase().startsWith("FREQ="), 'RRULE must start with "FREQ="');
+  .refine(isValidRecurrence, "must be a valid RRULE, e.g. FREQ=WEEKLY;INTERVAL=1");
 
 export const createBoardInput = z.object({
   name: z.string().trim().min(1).max(120),
