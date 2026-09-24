@@ -1109,6 +1109,34 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-049 — Tags on notes, goal links from the card sheet; the two tag systems stay separate
+
+- **Status:** accepted (2026-09-24)
+- **Context:** spec §6.9 says "tags and linking everywhere"; `tags`/`taggings`, `card_links` and
+  `goal_links` all exist with no UI. Cards already carry **board labels** (the capture grammar's
+  `#tag` goes to `attachLabels`), so there are two tagging ideas in the schema, and a card with
+  both would show two lists that can disagree.
+- **Decision:**
+  - **Keep the two systems distinct.** Board **labels** stay card-scoped and render as board
+    chips; the generic **tags/taggings** are the cross-module system and ship on **notes** now
+    (the cut-line minimum). Extending generic tags to cards is deferred rather than duplicating a
+    tag list on the card sheet.
+  - **`src/server/tags` is the only writer.** Names are normalised (trim, lower-case, strip a
+    leading `#`), upserted on name, and one call replaces an entity's taggings and prunes orphan
+    tag rows — so the tag list never shows a tag nothing uses.
+  - **Notes get the UI:** a tag field saved with the note, `?tag=` filtering on the library, and
+    tag chips on the list.
+  - **Cards get goal links** through the existing `linkToGoal`: the sheet lists the card's links
+    and links/unlinks them, and a lightweight `listGoalOptions` feeds the picker without loading
+    full goal progress.
+  - `card_links` (card↔card) stays unwired: no acceptance depends on it and it is a larger
+    surface than this phase needs.
+- **Consequences:** one tag list per entity, one writer, and goal progress keeps reading the
+  links the sheet writes. Cost: a small service plus two editor additions; a future card-tag
+  feature must first decide how it relates to board labels.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

@@ -5,27 +5,33 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { deleteNoteAction, updateNoteAction } from "@/server/notes/actions";
+import { setNoteTagsAction } from "@/server/tags/actions";
 
 /**
  * Markdown-first editing (spec §6.5): the body is stored verbatim and saved explicitly. The save
  * button's label never changes, so its accessible name is stable — dirty state is reported in a
  * separate status line instead (a label that flips is a flaky test target and a worse affordance).
+ *
+ * Tags (ADR-049) save with the note through the tags service, so one save persists the whole note.
  */
 export function NoteEditor({
   noteId,
   title: initialTitle,
   body: initialBody,
   pinned: initialPinned,
+  tags: initialTags,
 }: {
   noteId: string;
   title: string;
   body: string;
   pinned: boolean;
+  tags: string[];
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(initialTitle);
   const [body, setBody] = useState(initialBody);
   const [pinned, setPinned] = useState(initialPinned);
+  const [tagText, setTagText] = useState(initialTags.join(", "));
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<"idle" | "saved">("idle");
@@ -34,10 +40,20 @@ export function NoteEditor({
   const save = async () => {
     setBusy(true);
     setError("");
+    const names = tagText
+      .split(/[,\n]/)
+      .map((tag) => tag.trim())
+      .filter((tag) => tag !== "");
     const result = await updateNoteAction({ noteId, title, body, pinned });
-    setBusy(false);
     if (!result.ok) {
+      setBusy(false);
       setError(result.message);
+      return;
+    }
+    const tagged = await setNoteTagsAction({ noteId, tags: names });
+    setBusy(false);
+    if (!tagged.ok) {
+      setError(tagged.message);
       return;
     }
     setDirty(false);
@@ -76,6 +92,21 @@ export function NoteEditor({
         rows={16}
         placeholder={"# heading\n\nlink another note with [[its title]]"}
         className="w-full border border-border bg-background px-2 py-1 font-mono text-xs outline-none placeholder:text-muted-foreground"
+      />
+
+      <label className="sr-only" htmlFor="note-tags">
+        note tags
+      </label>
+      <input
+        id="note-tags"
+        value={tagText}
+        onChange={(event) => {
+          setTagText(event.target.value);
+          setDirty(true);
+          setStatus("idle");
+        }}
+        placeholder="tags, comma separated"
+        className="border border-border bg-background px-2 py-1 font-mono text-xs outline-none placeholder:text-muted-foreground"
       />
 
       <div className="flex flex-wrap items-center gap-2">

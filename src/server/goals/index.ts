@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
@@ -198,4 +198,51 @@ export async function linkToGoal(
       entity_id: input.entityId,
     })
     .onConflictDoNothing();
+}
+
+export interface GoalOption {
+  id: string;
+  title: string;
+}
+
+/** A picker needs names, not progress: the full goal view is far too heavy for a card sheet. */
+export async function listGoalOptions(userId: string): Promise<GoalOption[]> {
+  return db
+    .select({ id: goals.id, title: goals.title })
+    .from(goals)
+    .where(and(eq(goals.user_id, userId), ne(goals.status, "dropped")))
+    .orderBy(goals.title);
+}
+
+/** The goals one card is linked to — what the card sheet shows alongside the link control. */
+export async function listCardLinks(userId: string, cardId: string): Promise<GoalOption[]> {
+  return db
+    .select({ id: goals.id, title: goals.title })
+    .from(goal_links)
+    .innerJoin(goals, eq(goals.id, goal_links.goal_id))
+    .where(
+      and(
+        eq(goal_links.user_id, userId),
+        eq(goal_links.entity_type, "card"),
+        eq(goal_links.entity_id, cardId),
+      ),
+    )
+    .orderBy(goals.title);
+}
+
+/** Remove one link; the goal and the card are both untouched. */
+export async function unlinkFromGoal(
+  userId: string,
+  input: { goalId: string; entityType: "card" | "habit"; entityId: string },
+): Promise<void> {
+  await db
+    .delete(goal_links)
+    .where(
+      and(
+        eq(goal_links.user_id, userId),
+        eq(goal_links.goal_id, input.goalId),
+        eq(goal_links.entity_type, input.entityType),
+        eq(goal_links.entity_id, input.entityId),
+      ),
+    );
 }

@@ -4,25 +4,40 @@ import { redirect } from "next/navigation";
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
 import { listNotes, searchNotes } from "@/server/notes";
+import { listIdsByTag, listTags, listTagsForMany } from "@/server/tags";
 
 import { NewNote } from "./_components/new-note";
 
 export const metadata = { title: "Notes" };
 
-type PageProps = { searchParams: Promise<{ q?: string }> };
+type PageProps = { searchParams: Promise<{ q?: string; tag?: string }> };
 
 /**
- * `/notes` (spec §6.5): the library, full-text search and today's journal. With a query it goes
- * through the FTS5 index (migration 0005); with an empty box it is a recency list.
+ * `/notes` (spec §6.5, §6.9): the library, full-text search, today's journal and a tag filter.
+ * Search goes through the FTS5 index (migration 0005); tags come from the shared tags service
+ * (ADR-049), and filtering is a tag-id set so the two mechanisms compose.
  */
 export default async function NotesPage({ searchParams }: PageProps) {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
-  const { q } = await searchParams;
+  const { q, tag } = await searchParams;
   const query = (q ?? "").trim();
-  const hits =
-    query === "" ? await listNotes(session.user.id) : await searchNotes(session.user.id, query);
+  const activeTag = (tag ?? "").trim();
+
+  const [allTags, initialHits] = await Promise.all([
+    listTags(session.user.id),
+    query === "" ? listNotes(session.user.id) : searchNotes(session.user.id, query),
+  ]);
+
+  const taggedIds =
+    activeTag === "" ? null : new Set(await listIdsByTag(session.user.id, "note", activeTag));
+  const hits = taggedIds ? initialHits.filter((note) => taggedIds.has(note.id)) : initialHits;
+  const tagsByNote = await listTagsForMany(
+    session.user.id,
+    "note",
+    hits.map((note) => note.id),
+  );
 
   return (
     <>
@@ -43,13 +58,14 @@ export default async function NotesPage({ searchParams }: PageProps) {
                 placeholder="search notes…"
                 className="w-64 border border-border bg-background px-2 py-1 font-mono text-xs outline-none placeholder:text-muted-foreground"
               />
+              {activeTag !== "" ? <input type="hidden" name="tag" value={activeTag} /> : null}
               <button
                 type="submit"
                 className="rounded-[var(--radius)] border border-border bg-background px-2 py-1 font-mono text-xs hover:bg-accent hover:text-accent-foreground"
               >
                 search
               </button>
-              {query !== "" ? (
+              {query !== "" || activeTag !== "" ? (
                 <Link
                   href="/notes"
                   className="font-mono text-[10px] text-muted-foreground hover:underline"
@@ -58,15 +74,44 @@ export default async function NotesPage({ searchParams }: PageProps) {
                 </Link>
               ) : null}
             </form>
+
+            {allTags.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2" data-slot="tag-filter">
+                <span className="font-mono text-[10px] text-muted-foreground">tags</span>
+                {allTags.map((entry) => (
+                  <Link
+                    key={entry.name}
+                    href={
+                      activeTag === entry.name
+                        ? "/notes"
+                        : `/notes?tag=${encodeURIComponent(entry.name)}`
+                    }
+                    aria-current={activeTag === entry.name ? "true" : undefined}
+                    className={
+                      activeTag === entry.name
+                        ? "font-mono text-[10px] text-foreground underline"
+                        : "font-mono text-[10px] text-muted-foreground hover:underline"
+                    }
+                  >
+                    {entry.name} ({entry.count})
+                  </Link>
+                ))}
+              </div>
+            ) : null}
           </div>
         </Panel>
 
-        <Panel title={query === "" ? "Recent" : "Matches"} hint={`${hits.length}`}>
+        <Panel
+          title={activeTag === "" ? (query === "" ? "Recent" : "Matches") : `Tagged #${activeTag}`}
+          hint={`${hits.length}`}
+        >
           {hits.length === 0 ? (
             <p className="font-mono text-xs text-muted-foreground">
-              {query === ""
-                ? "nothing yet — start a note or today's journal"
-                : "no notes match that"}
+              {activeTag !== ""
+                ? "no notes carry that tag"
+                : query === ""
+                  ? "nothing yet — start a note or today's journal"
+                  : "no notes match that"}
             </p>
           ) : (
             <ul className="flex flex-col gap-1">
@@ -88,6 +133,15 @@ export default async function NotesPage({ searchParams }: PageProps) {
                   {note.pinned ? (
                     <span className="font-mono text-[10px] text-warning">pinned</span>
                   ) : null}
+                  {(tagsByNote[note.id] ?? []).map((name) => (
+                    <span
+                      key={name}
+                      data-slot="note-tag"
+                      className="font-mono text-[10px] text-info"
+                    >
+                      #{name}
+                    </span>
+                  ))}
                   <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-muted-foreground">
                     {note.excerpt}
                   </span>

@@ -8,8 +8,12 @@ import {
   createGoal,
   createKeyResult,
   linkToGoal,
+  listCardLinks,
+  listGoalOptions,
   setKeyResultValue,
+  unlinkFromGoal,
   updateGoal,
+  type GoalOption,
 } from "@/server/goals";
 
 const goalInput = z.object({
@@ -40,6 +44,8 @@ const linkInput = z.object({
   entityType: z.enum(["card", "habit"]),
   entityId: z.string().min(1),
 });
+
+const idInput = z.object({ cardId: z.string().min(1).max(64) });
 
 async function run<T>(fn: (userId: string) => Promise<T>): Promise<ActionResult<T>> {
   const session = await getServerSession();
@@ -86,6 +92,21 @@ export async function setKeyResultValueAction(input: unknown): Promise<ActionRes
 export async function linkToGoalAction(input: unknown): Promise<ActionResult<null>> {
   return run(async (userId) => {
     await linkToGoal(userId, linkInput.parse(input));
+    return null;
+  });
+}
+
+export async function listGoalOptionsAction(): Promise<ActionResult<GoalOption[]>> {
+  return run((userId) => listGoalOptions(userId));
+}
+
+export async function listCardGoalLinksAction(input: unknown): Promise<ActionResult<GoalOption[]>> {
+  return run((userId) => listCardLinks(userId, idInput.parse(input).cardId));
+}
+
+export async function unlinkFromGoalAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    await unlinkFromGoal(userId, linkInput.parse(input));
     return null;
   });
 }

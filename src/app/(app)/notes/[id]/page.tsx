@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
 import { getNote } from "@/server/notes";
+import { getTags } from "@/server/tags";
 
 import { NoteEditor } from "./_components/note-editor";
 
@@ -19,6 +20,7 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
   if (!detail) notFound();
 
   const { note, backlinks } = detail;
+  const tags = await getTags(session.user.id, "note", note.id);
 
   return (
     <>
@@ -28,7 +30,13 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
 
       <div className="grid max-w-3xl gap-4">
         <Panel title="Write">
-          <NoteEditor noteId={note.id} title={note.title} body={note.body} pinned={note.pinned} />
+          <NoteEditor
+            noteId={note.id}
+            title={note.title}
+            body={note.body}
+            pinned={note.pinned}
+            tags={tags}
+          />
         </Panel>
 
         <Panel title="Backlinks" hint={`${backlinks.length}`}>
