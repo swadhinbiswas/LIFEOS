@@ -1399,6 +1399,27 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-060 — Translating the shell chrome first (nav + tagline)
+
+- **Status:** accepted (2026-09-24)
+- **Context:** ADR-053 shipped the i18n pipeline and one translated page (`/about`) and left the rest
+  of the shell in English, "translation is incremental". §6.9 wants the app i18n-ready.
+- **Decision:**
+  - Translate the **persistent chrome** next: navigation labels and the app tagline (the strings a
+    user sees on every screen), because they are the highest-visibility, lowest-risk slice — a
+    closed set with no logic attached.
+  - `NavItem` carries a **message key instead of an English label**; the shell and the command
+    palette resolve it with `useTranslations("Nav")`, so there is one source of truth and no
+    per-component copy. Both catalogs must carry every Nav key or next-intl surfaces the missing
+    one.
+  - Page bodies, the status-line hints and the `?` cheat-sheet stay English for now; translating
+    them is the same mechanical pass and is tracked as remaining work rather than half-done here.
+- **Consequences:** switching to `bn` now changes the chrome a user navigates by, not only the
+  about page, which is the visible proof the scaffold works in the shell. Cost: a small Nav key
+  contract that a new nav item must satisfy.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

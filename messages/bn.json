@@ -1,4 +1,30 @@
 {
+  "Shell": {
+    "tagline": "একটি ফ্রি, ওপেন, AI-সংযুক্ত ব্যক্তিগত অপারেটিং সিস্টেম"
+  },
+  "Nav": {
+    "dashboard": "ড্যাশবোর্ড",
+    "calendar": "ক্যালেন্ডার",
+    "reviews": "রিভিউ",
+    "tasks": "কাজ",
+    "habits": "অভ্যাস",
+    "goals": "লক্ষ্য",
+    "notes": "নোট",
+    "focus": "ফোকাস",
+    "finance": "অর্থ",
+    "health": "স্বাস্থ্য",
+    "learning": "শেখা",
+    "inbox": "ইনবক্স",
+    "boards": "বোর্ড",
+    "trash": "ট্র্যাশ",
+    "jobs": "চাকরি",
+    "analytics": "বিশ্লেষণ",
+    "portfolio": "পোর্টফোলিও",
+    "prep": "প্রস্তুতি",
+    "profile": "প্রোফাইল",
+    "appearance": "চেহারা",
+    "about": "পরিচিতি"
+  },
   "About": {
     "title": "পরিচিতি",
     "panelTitle": "LifeOS কী",

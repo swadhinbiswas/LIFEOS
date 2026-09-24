@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { StatusLine } from "@/components/tui/status-line";
 import { Button } from "@/components/ui/button";
-import { APP_NAME, APP_TAGLINE } from "@/config/app";
+import { APP_NAME } from "@/config/app";
 import { NAV_ITEMS } from "@/config/nav";
 import { SHELL_HINTS } from "@/config/shortcuts";
 import { stopFocusAction } from "@/server/focus/actions";
@@ -43,6 +44,8 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const tNav = useTranslations("Nav");
+  const tShell = useTranslations("Shell");
   const sidebarMode = useThemeStore((state) => state.overrides.sidebarMode);
   const setOverride = useThemeStore((state) => state.set);
   const [overlayDismissed, setOverlayDismissed] = useState(false);
@@ -160,7 +163,8 @@ export function AppShell({
             {APP_NAME}
           </p>
           <nav aria-label="Primary" className="flex flex-1 flex-col gap-1 p-2">
-            {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+            {NAV_ITEMS.map(({ href, key, icon: Icon }) => {
+              const label = tNav(key);
               const active = pathname === href;
               return (
                 <Link
@@ -189,7 +193,7 @@ export function AppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-border px-3 py-2">
           <p className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">
-            {APP_TAGLINE}
+            {tShell("tagline")}
           </p>
           {focus ? (
             <Button

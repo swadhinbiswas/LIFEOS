@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import {
@@ -41,6 +42,7 @@ export function CommandPalette({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const tNav = useTranslations("Nav");
   const setOverride = useThemeStore((state) => state.set);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -171,15 +173,18 @@ export function CommandPalette({
           ) : (
             <>
               <CommandGroup heading="Navigate">
-                {NAV_ITEMS.map((item) => (
-                  <CommandItem
-                    key={item.href}
-                    value={`go ${item.label}`}
-                    onSelect={run(() => router.push(item.href))}
-                  >
-                    {item.label}
-                  </CommandItem>
-                ))}
+                {NAV_ITEMS.map((item) => {
+                  const label = tNav(item.key);
+                  return (
+                    <CommandItem
+                      key={item.href}
+                      value={`go ${label}`}
+                      onSelect={run(() => router.push(item.href))}
+                    >
+                      {label}
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
 
               <CommandGroup heading="Theme">

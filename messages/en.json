@@ -1,4 +1,30 @@
 {
+  "Shell": {
+    "tagline": "A free, open, AI-connected personal operating system"
+  },
+  "Nav": {
+    "dashboard": "Dashboard",
+    "calendar": "Calendar",
+    "reviews": "Reviews",
+    "tasks": "Tasks",
+    "habits": "Habits",
+    "goals": "Goals",
+    "notes": "Notes",
+    "focus": "Focus",
+    "finance": "Finance",
+    "health": "Health",
+    "learning": "Learning",
+    "inbox": "Inbox",
+    "boards": "Boards",
+    "trash": "Trash",
+    "jobs": "Jobs",
+    "analytics": "Analytics",
+    "portfolio": "Portfolio",
+    "prep": "Prep",
+    "profile": "Profile",
+    "appearance": "Appearance",
+    "about": "About"
+  },
   "About": {
     "title": "About",
     "panelTitle": "What LifeOS is",
