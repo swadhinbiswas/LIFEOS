@@ -70,6 +70,29 @@ async function syncLinks(userId: string, note: NoteRow): Promise<void> {
   }
 }
 
+/**
+ * When a note is created or renamed, other notes may already reference that title. Rebuilding
+ * those outgoing edges is what makes `[[links]]` order-independent: writing the reference before
+ * the note exists is normal, and the backlink must appear either way.
+ */
+async function resolveIncoming(userId: string, title: string): Promise<void> {
+  const wanted = title.trim();
+  if (wanted === "") return;
+  const sources = await db
+    .select()
+    .from(notes)
+    .where(
+      and(
+        eq(notes.user_id, userId),
+        isNull(notes.deleted_at),
+        sql`${notes.body} like ${`%[[${wanted}]]%`}`,
+      ),
+    );
+  for (const source of sources) {
+    await syncLinks(userId, source);
+  }
+}
+
 export async function listNotes(
   userId: string,
   options: { kind?: string; limit?: number } = {},
@@ -138,6 +161,7 @@ export async function createNote(
   if (!row) throw new Error("note insert returned no row");
   await indexNote(row);
   await syncLinks(userId, row);
+  await resolveIncoming(userId, row.title);
   return row;
 }
 
@@ -159,6 +183,7 @@ export async function updateNote(
   if (!row) throw new Error("note not found");
   await indexNote(row);
   await syncLinks(userId, row);
+  if (input.title !== undefined) await resolveIncoming(userId, row.title);
   return row;
 }
 

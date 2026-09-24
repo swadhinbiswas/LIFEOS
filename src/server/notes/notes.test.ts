@@ -69,6 +69,19 @@ describe("notes, wiki links and FTS search (spec 6.5)", () => {
     expect(detail?.backlinks).toEqual([]);
   });
 
+  it("resolves a reference written before the referenced note existed", async () => {
+    // The reference is written first, while no such note exists.
+    const referrer = await createNote(USER, {
+      title: "Referrer",
+      body: "I will link [[Later note]] and [[Not written yet]]",
+    });
+
+    // Creating the referenced note resolves the pending edge, order-independently.
+    const target = await createNote(USER, { title: "Later note", body: "written afterwards" });
+    const detail = await getNote(USER, target.id);
+    expect(detail?.backlinks.map((note) => note.id)).toEqual([referrer.id]);
+  });
+
   it("opens today's note once and keeps notes private", async () => {
     const first = await dailyNote(USER, "2026-09-24");
     const second = await dailyNote(USER, "2026-09-24");
