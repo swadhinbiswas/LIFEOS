@@ -8,3 +8,4 @@ export * from "./identity";
 export * from "./user-settings";
 export * from "./boards";
 export * from "./career";
+export * from "./life";

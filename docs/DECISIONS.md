@@ -985,6 +985,37 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-045 — Life modules: one schema-first pass, day-keyed habit logs, money still in minor units
+
+- **Status:** accepted (2026-09-24)
+- **Context:** spec §6.4–6.9 covers habits/goals, notes, finance-lite, health-lite, learning,
+  focus/time, the four dashboards, global search, notifications, PWA and i18n — the largest
+  phase in the spec. ERD §2.4 already names the tables. Several features (dashboard widgets,
+  PWA offline queue, i18n) need configuration and UI decisions that belong to their own chunks.
+- **Decision:**
+  - **Schema first, in one pass** (`src/server/db/schema/life.ts`): habits + habit_logs, goals +
+    key_results + goal_links, notes + note_links + tags + taggings, finance-lite (accounts_fin,
+    transactions, budgets, subscriptions_tracked), health_logs, learning (courses, books),
+    focus_sessions + time_entries, reviews, notifications. Shipping the tables together keeps
+    later migrations out of the dashboards' critical path (same reasoning as ADR-044).
+  - **Habit logs are keyed by the user's calendar day** (`YYYY-MM-DD` text, UNIQUE(habit_id,date)),
+    not by an instant: "did I drink 8 glasses today" is a day fact, and day boundaries must not
+    move when a user changes their timezone. Streaks, grace days and heatmaps are derived from
+    that table — no streak column, so "never miss twice" can be tuned without a migration.
+  - **Money stays integer minor units + ISO currency** everywhere (ADR-044 precedent), including
+    budgets and tracked subscriptions; multi-currency conversion is a cached-rate concern for the
+    finance chunk, never a float in a column.
+  - **`reviews` reuses the existing `notes`** (`note_id`), so a weekly review is a note that the
+    wizard fills — searchable and backlinkable with zero new machinery.
+  - **FTS5 is explicitly deferred** to the notes chunk: a virtual table (and its triggers) is
+    hand-written SQL, not Drizzle DDL, and it must ship with the search UI that uses it.
+  - Dashboards, PWA, i18n and notifications follow their own chunks; nothing is stubbed now.
+- **Consequences:** Phase 4 has one schema boundary, and every later chunk is services + UI over
+  tables that already exist. Day-keyed habit logs make streaks correct across timezones at the
+  cost of one small conversion at the boundary (`week_start` from `user_settings`).
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
