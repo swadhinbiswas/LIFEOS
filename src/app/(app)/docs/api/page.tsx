@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { openApiDocument } from "@/server/api/openapi";
@@ -22,27 +23,28 @@ const METHODS = new Set(["get", "post", "patch", "delete", "put"]);
  * document served at `/api/v1/openapi.json` — no client-side docs bundle, themed like the rest of
  * the app, and every operation is real because the document is derived from the route schemas.
  */
-export default function ApiDocsPage() {
+export default async function ApiDocsPage() {
+  const t = await getTranslations("Pages.Api");
   const doc = openApiDocument() as unknown as Spec;
 
   return (
     <>
       <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        API reference
+        {t("title")}
       </h1>
 
       <div className="grid max-w-3xl gap-4">
-        <Panel title="OpenAPI" hint={doc.openapi}>
+        <Panel title={t("openapi")} hint={doc.openapi}>
           <p className="font-mono text-[10px] text-muted-foreground">
-            machine-readable spec at{" "}
+            {t("specAt")}{" "}
             <Link href="/api/v1/openapi.json" className="text-primary underline">
               /api/v1/openapi.json
             </Link>
-            . Authenticate with a Bearer key from{" "}
+            . {t("authenticate")}{" "}
             <Link href="/settings/integrations" className="text-primary underline">
-              Integrations
+              {t("integrations")}
             </Link>
-            ; session cookies also work in the browser.
+            {t("sessionNote")}
           </p>
         </Panel>
 
@@ -66,7 +68,7 @@ export default function ApiDocsPage() {
                         {operation.parameters.map((parameter) => (
                           <li key={parameter.name}>
                             {parameter.in}: {parameter.name}
-                            {parameter.required ? " (required)" : ""}
+                            {parameter.required ? t("required") : ""}
                           </li>
                         ))}
                       </ul>
@@ -77,7 +79,7 @@ export default function ApiDocsPage() {
           </Panel>
         ))}
 
-        <Panel title="Schemas" hint={`${Object.keys(doc.components.schemas).length}`}>
+        <Panel title={t("schemas")} hint={`${Object.keys(doc.components.schemas).length}`}>
           <ul className="flex flex-wrap gap-2 font-mono text-xs">
             {Object.keys(doc.components.schemas).map((name) => (
               <li key={name} className="border border-border px-2 py-0.5">

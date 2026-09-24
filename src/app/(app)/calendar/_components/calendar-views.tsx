@@ -1,13 +1,16 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import type { CalendarEvent } from "@/server/calendar";
-import { monthOf, WEEKDAYS } from "@/server/calendar/grid";
+import { monthOf } from "@/server/calendar/grid";
 
 /**
- * The three calendar views (spec §6.9 / #24, ADR-052). All server-rendered: a month table, a week
- * table and an agenda list. Every event is a link back to the surface that owns it, and "today" is
- * a word as well as a position, so nothing depends on colour alone (§4.4).
+ * The three calendar views (spec §6.9 / #24, ADR-052), translated per ADR-072. All server-rendered:
+ * a month table, a week table and an agenda list. Every event is a link back to the surface that
+ * owns it, and "today" is a word as well as a position, so nothing depends on colour alone (§4.4).
  */
+
+const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
 function groupByDay(events: CalendarEvent[]): Map<string, CalendarEvent[]> {
   const byDay = new Map<string, CalendarEvent[]>();
@@ -35,7 +38,7 @@ function EventLink({ event }: { event: CalendarEvent }) {
   );
 }
 
-export function MonthView({
+export async function MonthView({
   anchor,
   today,
   days,
@@ -46,6 +49,7 @@ export function MonthView({
   days: string[];
   events: CalendarEvent[];
 }) {
+  const t = await getTranslations("Pages.Calendar");
   const byDay = groupByDay(events);
   const month = monthOf(anchor);
   const weeks: string[][] = [];
@@ -53,16 +57,16 @@ export function MonthView({
 
   return (
     <table className="w-full table-fixed border-collapse font-mono text-xs">
-      <caption className="sr-only">Month view</caption>
+      <caption className="sr-only">{t("monthView")}</caption>
       <thead>
         <tr>
-          {WEEKDAYS.map((day) => (
+          {WEEKDAY_KEYS.map((key) => (
             <th
-              key={day}
+              key={key}
               scope="col"
               className="border border-border px-1 py-0.5 text-left text-[10px] text-muted-foreground uppercase"
             >
-              {day}
+              {t(`weekdays.${key}`)}
             </th>
           ))}
         </tr>
@@ -80,7 +84,7 @@ export function MonthView({
                   className={`h-20 border border-border p-1 align-top ${inMonth ? "" : "text-muted-foreground"}`}
                 >
                   <span className="text-[10px] tabular-nums">{Number(key.slice(8))}</span>
-                  {key === today ? <span className="ml-1 text-warning">today</span> : null}
+                  {key === today ? <span className="ml-1 text-warning">{t("today")}</span> : null}
                   <ul className="mt-1 flex flex-col gap-0.5">
                     {(byDay.get(key) ?? []).map((event) => (
                       <li key={event.id}>
@@ -98,7 +102,7 @@ export function MonthView({
   );
 }
 
-export function WeekView({
+export async function WeekView({
   days,
   today,
   events,
@@ -107,10 +111,11 @@ export function WeekView({
   today: string;
   events: CalendarEvent[];
 }) {
+  const t = await getTranslations("Pages.Calendar");
   const byDay = groupByDay(events);
   return (
     <table className="w-full table-fixed border-collapse font-mono text-xs">
-      <caption className="sr-only">Week view</caption>
+      <caption className="sr-only">{t("weekView")}</caption>
       <thead>
         <tr>
           {days.map((key) => (
@@ -120,7 +125,7 @@ export function WeekView({
               className="border border-border px-1 py-0.5 text-left text-[10px] text-muted-foreground"
             >
               {key.slice(5)}
-              {key === today ? <span className="text-warning"> today</span> : null}
+              {key === today ? <span className="text-warning"> {t("today")}</span> : null}
             </th>
           ))}
         </tr>
@@ -144,7 +149,7 @@ export function WeekView({
   );
 }
 
-export function AgendaView({
+export async function AgendaView({
   from,
   to,
   today,
@@ -155,13 +160,14 @@ export function AgendaView({
   today: string;
   events: CalendarEvent[];
 }) {
+  const t = await getTranslations("Pages.Calendar");
   const byDay = groupByDay(events);
   const days = [...byDay.keys()].sort();
 
   if (days.length === 0) {
     return (
       <p data-slot="agenda-empty" className="font-mono text-xs text-muted-foreground">
-        nothing scheduled between {from} and {to}
+        {t("agendaEmpty", { from, to })}
       </p>
     );
   }
@@ -172,7 +178,7 @@ export function AgendaView({
         <li key={key} data-day={key}>
           <h3 className="font-mono text-xs text-muted-foreground">
             {key}
-            {key === today ? " · today" : ""}
+            {key === today ? ` · ${t("today")}` : ""}
           </h3>
           <ul className="mt-1 flex flex-col gap-0.5 font-mono text-xs">
             {(byDay.get(key) ?? []).map((event) => (

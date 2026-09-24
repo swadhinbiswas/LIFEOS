@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ const field =
 /** Guided steps, in the spec's order (clear inbox → boards → goals → wins/lessons → plan next). */
 export function ReviewWizard() {
   const router = useRouter();
+  const t = useTranslations("Pages.Reviews");
   const [period, setPeriod] = useState<"weekly" | "monthly">("weekly");
   const [clearedInbox, setClearedInbox] = useState(false);
   const [reviewedBoards, setReviewedBoards] = useState(false);
@@ -48,7 +50,7 @@ export function ReviewWizard() {
           checked={clearedInbox}
           onChange={(e) => setClearedInbox(e.target.checked)}
         />
-        clear the inbox
+        {t("clearInbox")}
       </label>
       <label className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground uppercase">
         <input
@@ -56,7 +58,7 @@ export function ReviewWizard() {
           checked={reviewedBoards}
           onChange={(e) => setReviewedBoards(e.target.checked)}
         />
-        review the boards
+        {t("reviewBoards")}
       </label>
       <label className="flex items-center gap-2 font-mono text-[10px] text-muted-foreground uppercase">
         <input
@@ -64,58 +66,58 @@ export function ReviewWizard() {
           checked={reviewedGoals}
           onChange={(e) => setReviewedGoals(e.target.checked)}
         />
-        review the goals
+        {t("reviewGoals")}
       </label>
 
       <label className="flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase">
-        wins
+        {t("wins")}
         <textarea
           rows={3}
           value={wins}
           onChange={(e) => setWins(e.target.value)}
-          placeholder="what moved forward"
+          placeholder={t("winsPlaceholder")}
           className={field}
-          aria-label="review wins"
+          aria-label={t("ariaWins")}
         />
       </label>
       <label className="flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase">
-        lessons
+        {t("lessons")}
         <textarea
           rows={3}
           value={lessons}
           onChange={(e) => setLessons(e.target.value)}
-          placeholder="what got in the way"
+          placeholder={t("lessonsPlaceholder")}
           className={field}
-          aria-label="review lessons"
+          aria-label={t("ariaLessons")}
         />
       </label>
       <label className="flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase">
-        next
+        {t("next")}
         <textarea
           rows={3}
           value={next}
           onChange={(e) => setNext(e.target.value)}
-          placeholder="what matters next week"
+          placeholder={t("nextPlaceholder")}
           className={field}
-          aria-label="review next"
+          aria-label={t("ariaNext")}
         />
       </label>
 
       <div className="flex flex-wrap items-center gap-2">
         <label className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground uppercase">
-          cadence
+          {t("cadence")}
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value as "weekly" | "monthly")}
             className="border border-border bg-background px-1 py-0.5 font-mono text-[10px]"
-            aria-label="review cadence"
+            aria-label={t("ariaCadence")}
           >
-            <option value="weekly">weekly</option>
-            <option value="monthly">monthly</option>
+            <option value="weekly">{t("weekly")}</option>
+            <option value="monthly">{t("monthly")}</option>
           </select>
         </label>
         <Button type="submit" size="sm" disabled={busy}>
-          {busy ? "saving…" : "complete review"}
+          {busy ? t("saving") : t("complete")}
         </Button>
         {error ? (
           <span role="alert" className="text-destructive">
@@ -123,9 +125,7 @@ export function ReviewWizard() {
           </span>
         ) : null}
       </div>
-      <p className="font-mono text-[10px] text-muted-foreground">
-        the review is saved as a note, so it is searchable and you can edit it afterwards.
-      </p>
+      <p className="font-mono text-[10px] text-muted-foreground">{t("hint")}</p>
     </form>
   );
 }

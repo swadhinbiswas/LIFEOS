@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { dayKeyInTimeZone } from "@/lib/timezone";
@@ -39,6 +40,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
   if (!session) redirect("/sign-in");
 
   const { view, d } = await searchParams;
+  const t = await getTranslations("Pages.Calendar");
   const activeView: CalendarView = (CALENDAR_VIEWS as readonly string[]).includes(view ?? "")
     ? (view as CalendarView)
     : "month";
@@ -53,18 +55,20 @@ export default async function CalendarPage({ searchParams }: PageProps) {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Calendar</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("title")}
+      </h1>
 
       <div className="grid gap-4">
         <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
           <Link href={href(activeView, stepAnchor(activeView, anchor, -1))} className={control}>
-            ← prev
+            {t("prev")}
           </Link>
           <Link href={href(activeView, today)} className={control}>
-            today
+            {t("today")}
           </Link>
           <Link href={href(activeView, stepAnchor(activeView, anchor, 1))} className={control}>
-            next →
+            {t("next")}
           </Link>
           <span data-slot="calendar-label" className="text-muted-foreground">
             {label}
@@ -77,13 +81,16 @@ export default async function CalendarPage({ searchParams }: PageProps) {
                 aria-current={candidate === activeView ? "true" : undefined}
                 className={candidate === activeView ? activeControl : control}
               >
-                {candidate}
+                {t(candidate)}
               </Link>
             ))}
           </span>
         </div>
 
-        <Panel title={`${activeView} view`} hint={`${events.length} items`}>
+        <Panel
+          title={t("viewPanel", { view: t(activeView) })}
+          hint={t("items", { count: events.length })}
+        >
           {activeView === "month" ? (
             <MonthView anchor={anchor} today={today} days={monthGrid(anchor)} events={events} />
           ) : activeView === "week" ? (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ const label = "flex flex-col gap-1 font-mono text-[10px] text-muted-foreground u
 
 function useSubmit() {
   const router = useRouter();
+  const t = useTranslations("Pages.Goals");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const submit = async (
@@ -28,7 +30,7 @@ function useSubmit() {
     const result = await call();
     setBusy(false);
     if (!result.ok) {
-      setError(result.message ?? "could not save");
+      setError(result.message ?? t("couldNotSave"));
       return;
     }
     reset?.();
@@ -38,6 +40,7 @@ function useSubmit() {
 }
 
 export function AddGoalForm() {
+  const t = useTranslations("Pages.Goals");
   const [title, setTitle] = useState("");
   const [period, setPeriod] = useState("2026-Q4");
   const { busy, error, submit } = useSubmit();
@@ -56,27 +59,27 @@ export function AddGoalForm() {
       }}
     >
       <label className={`${label} min-w-64 flex-1`}>
-        objective
+        {t("objective")}
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="ship the career module properly"
+          placeholder={t("objectivePlaceholder")}
           className={field}
-          aria-label="objective"
+          aria-label={t("ariaObjective")}
         />
       </label>
       <label className={label}>
-        cycle
+        {t("cycle")}
         <input
           value={period}
           onChange={(event) => setPeriod(event.target.value)}
           placeholder="2026-Q4"
           className={`${field} w-28`}
-          aria-label="goal cycle"
+          aria-label={t("ariaCycle")}
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || title.trim() === ""}>
-        {busy ? "adding…" : "add objective"}
+        {busy ? t("adding") : t("addObjective")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">
@@ -88,6 +91,7 @@ export function AddGoalForm() {
 }
 
 export function AddKeyResultForm({ goalId }: { goalId: string }) {
+  const t = useTranslations("Pages.Goals");
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<"number" | "percent" | "linked">("number");
   const [target, setTarget] = useState("");
@@ -117,43 +121,43 @@ export function AddKeyResultForm({ goalId }: { goalId: string }) {
       }}
     >
       <label className={`${label} min-w-56 flex-1`}>
-        key result
+        {t("keyResult")}
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="publish 4 case studies"
+          placeholder={t("keyResultPlaceholder")}
           className={field}
-          aria-label="key result"
+          aria-label={t("ariaKeyResult")}
         />
       </label>
       <label className={label}>
-        measure
+        {t("measure")}
         <select
           value={kind}
           onChange={(event) => setKind(event.target.value as "number" | "percent" | "linked")}
           className={field}
-          aria-label="key result measure"
+          aria-label={t("ariaMeasure")}
         >
-          <option value="number">number</option>
-          <option value="percent">percent</option>
-          <option value="linked">linked work</option>
+          <option value="number">{t("number")}</option>
+          <option value="percent">{t("percent")}</option>
+          <option value="linked">{t("linkedWork")}</option>
         </select>
       </label>
       {kind !== "linked" ? (
         <label className={label}>
-          target
+          {t("target")}
           <input
             inputMode="numeric"
             value={target}
             onChange={(event) => setTarget(event.target.value)}
             placeholder={kind === "percent" ? "100" : "4"}
             className={`${field} w-20`}
-            aria-label="key result target"
+            aria-label={t("ariaTarget")}
           />
         </label>
       ) : null}
       <Button type="submit" size="sm" variant="outline" disabled={busy || title.trim() === ""}>
-        {busy ? "adding…" : "add result"}
+        {busy ? t("adding") : t("addResult")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">
@@ -173,6 +177,7 @@ export function KeyResultControls({
   current: number;
   kind: string;
 }) {
+  const t = useTranslations("Pages.Goals");
   const { busy, submit } = useSubmit();
   if (kind === "linked") return null;
 
@@ -187,7 +192,7 @@ export function KeyResultControls({
         variant="outline"
         disabled={busy}
         onClick={() => set(current - 1)}
-        aria-label="decrease"
+        aria-label={t("decrease")}
       >
         −
       </Button>
@@ -198,7 +203,7 @@ export function KeyResultControls({
         variant="outline"
         disabled={busy}
         onClick={() => set(current + 1)}
-        aria-label="increase"
+        aria-label={t("increase")}
       >
         +
       </Button>
@@ -207,6 +212,7 @@ export function KeyResultControls({
 }
 
 export function GoalStatusButton({ goalId, status }: { goalId: string; status: string }) {
+  const t = useTranslations("Pages.Goals");
   const { busy, submit } = useSubmit();
   const next = status === "active" ? "done" : "active";
 
@@ -218,7 +224,7 @@ export function GoalStatusButton({ goalId, status }: { goalId: string; status: s
       disabled={busy}
       onClick={() => void submit(() => updateGoalAction({ goalId, status: next }))}
     >
-      {status === "active" ? "mark achieved" : "reopen"}
+      {status === "active" ? t("markAchieved") : t("reopen")}
     </Button>
   );
 }

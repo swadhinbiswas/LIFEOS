@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export function HabitToggle({
   step?: number;
 }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Habits");
   const [busy, setBusy] = useState(false);
 
   const log = async (next: number) => {
@@ -43,7 +45,7 @@ export function HabitToggle({
         aria-pressed={value > 0}
         onClick={() => void log(value > 0 ? 0 : 1)}
       >
-        {value > 0 ? "done today" : "mark done"}
+        {value > 0 ? t("doneToday") : t("markDone")}
       </Button>
     );
   }
@@ -56,7 +58,7 @@ export function HabitToggle({
         variant="outline"
         disabled={busy}
         onClick={() => void log(Math.max(0, value - step))}
-        aria-label="one less"
+        aria-label={t("oneLess")}
       >
         −
       </Button>
@@ -67,7 +69,7 @@ export function HabitToggle({
         variant="outline"
         disabled={busy}
         onClick={() => void log(value + step)}
-        aria-label="one more"
+        aria-label={t("oneMore")}
       >
         +
       </Button>
@@ -77,6 +79,7 @@ export function HabitToggle({
 
 export function AddHabitForm() {
   const router = useRouter();
+  const t = useTranslations("Pages.Habits");
   const [name, setName] = useState("");
   const [kind, setKind] = useState<"binary" | "numeric">("binary");
   const [target, setTarget] = useState("");
@@ -112,50 +115,50 @@ export function AddHabitForm() {
       }}
     >
       <label className="flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase">
-        habit
+        {t("habit")}
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="read 20 pages"
+          placeholder={t("habitPlaceholder")}
           className={field}
-          aria-label="habit name"
+          aria-label={t("ariaName")}
         />
       </label>
       <label className="flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase">
-        type
+        {t("type")}
         <select
           value={kind}
           onChange={(event) => setKind(event.target.value as "binary" | "numeric")}
           className={field}
-          aria-label="habit type"
+          aria-label={t("ariaType")}
         >
-          <option value="binary">yes / no</option>
-          <option value="numeric">number</option>
+          <option value="binary">{t("yesNo")}</option>
+          <option value="numeric">{t("number")}</option>
         </select>
       </label>
       <label className="flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase">
-        daily target
+        {t("dailyTarget")}
         <input
           inputMode="numeric"
           value={target}
           onChange={(event) => setTarget(event.target.value)}
           placeholder="8"
           className={`${field} w-20`}
-          aria-label="habit target"
+          aria-label={t("ariaTarget")}
         />
       </label>
       <label className="flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase">
-        unit
+        {t("unit")}
         <input
           value={unit}
           onChange={(event) => setUnit(event.target.value)}
-          placeholder="glasses"
+          placeholder={t("unitPlaceholder")}
           className={`${field} w-24`}
-          aria-label="habit unit"
+          aria-label={t("ariaUnit")}
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || name.trim() === ""}>
-        {busy ? "adding…" : "add habit"}
+        {busy ? t("adding") : t("addHabit")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">

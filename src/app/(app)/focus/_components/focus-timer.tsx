@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export function FocusTimer({
   plannedMin: number | null;
 }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Focus");
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [error, setError] = useState("");
@@ -69,19 +71,21 @@ export function FocusTimer({
       <p className="font-mono text-3xl tabular-nums" aria-live="off">
         {format(elapsed)}
         {plannedMin ? (
-          <span className="ml-2 font-mono text-xs text-muted-foreground">of {plannedMin}:00</span>
+          <span className="ml-2 font-mono text-xs text-muted-foreground">
+            {t("of", { value: plannedMin })}
+          </span>
         ) : null}
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
         {sessionId ? (
           <Button type="button" size="sm" disabled={busy} onClick={() => void stop()}>
-            stop session
+            {t("stop")}
           </Button>
         ) : (
           <>
             <Button type="button" size="sm" disabled={busy} onClick={() => void start(25)}>
-              start 25:00
+              {t("start25")}
             </Button>
             <Button
               type="button"
@@ -90,7 +94,7 @@ export function FocusTimer({
               disabled={busy}
               onClick={() => void start(50)}
             >
-              start 50:00
+              {t("start50")}
             </Button>
             <Button
               type="button"
@@ -99,7 +103,7 @@ export function FocusTimer({
               disabled={busy}
               onClick={() => void start(null)}
             >
-              start open
+              {t("startOpen")}
             </Button>
           </>
         )}
@@ -108,7 +112,7 @@ export function FocusTimer({
           data-slot="focus-status"
           role="status"
         >
-          {sessionId ? "session running" : "no session running"}
+          {sessionId ? t("sessionRunning") : t("noSession")}
         </span>
         {error ? (
           <span role="alert" className="text-destructive">

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -17,22 +18,26 @@ export default async function HabitsPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Habits");
   const rows = await listHabits(session.user.id);
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Habits</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("title")}
+      </h1>
 
       <div className="grid max-w-4xl gap-4">
-        <Panel title="New habit">
+        <Panel title={t("newHabit")}>
           <AddHabitForm />
         </Panel>
 
-        <Panel title="Today" hint={`${rows.filter((row) => row.value > 0).length}/${rows.length}`}>
+        <Panel
+          title={t("today")}
+          hint={`${rows.filter((row) => row.value > 0).length}/${rows.length}`}
+        >
           {rows.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              no habits yet — add one above and check in daily
-            </p>
+            <p className="font-mono text-xs text-muted-foreground">{t("empty")}</p>
           ) : (
             <ul className="flex flex-col gap-2">
               {rows.map((row) => {
@@ -56,12 +61,12 @@ export default async function HabitsPage() {
                     />
                     {row.habit.kind === "numeric" && row.habit.target ? (
                       <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
-                        {row.progress ?? 0}% of {row.habit.target}
+                        {t("ofTarget", { progress: row.progress ?? 0, target: row.habit.target })}
                         {row.habit.unit ? ` ${row.habit.unit}` : ""}
                       </span>
                     ) : null}
                     <span className="font-mono text-[10px] text-muted-foreground">
-                      {row.streak > 0 ? `${row.streak} day streak` : "fresh start today"}
+                      {row.streak > 0 ? t("streak", { count: row.streak }) : t("freshStart")}
                     </span>
                     {/* Colour is never the only signal: the text alternative carries the facts. */}
                     <span
@@ -79,7 +84,7 @@ export default async function HabitsPage() {
                       ))}
                     </span>
                     <span className="sr-only">
-                      done {doneDays} of the last {row.days.length} days
+                      {t("doneOf", { done: doneDays, total: row.days.length })}
                     </span>
                   </li>
                 );

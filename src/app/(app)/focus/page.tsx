@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -18,6 +19,7 @@ export default async function FocusPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Focus");
   const { timeZone, weekStart } = await getRegionalSettings(session.user.id);
   const [running, totals, sessions] = await Promise.all([
     getRunningSession(session.user.id),
@@ -27,12 +29,14 @@ export default async function FocusPage() {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Focus</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("title")}
+      </h1>
 
       <div className="grid max-w-3xl gap-4">
         <Panel
-          title="Timer"
-          hint={`${totals.todayMin} min today · ${totals.weekMin} min this week`}
+          title={t("timer")}
+          hint={t("timerHint", { today: totals.todayMin, week: totals.weekMin })}
         >
           <FocusTimer
             sessionId={running?.id ?? null}
@@ -41,11 +45,9 @@ export default async function FocusPage() {
           />
         </Panel>
 
-        <Panel title="Recent sessions" hint={`${sessions.length}`}>
+        <Panel title={t("recent")} hint={`${sessions.length}`}>
           {sessions.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              no sessions yet — starting one logs it here automatically
-            </p>
+            <p className="font-mono text-xs text-muted-foreground">{t("empty")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {sessions.map((row) => {
@@ -68,14 +70,16 @@ export default async function FocusPage() {
                       {new Date(row.started_at).toISOString().slice(0, 16).replace("T", " ")}
                     </time>
                     <span className="text-muted-foreground tabular-nums">
-                      {minutes === null ? "running" : `${minutes} min`}
+                      {minutes === null ? t("running") : t("min", { count: minutes })}
                     </span>
                     {row.planned_min ? (
-                      <span className="text-muted-foreground">planned {row.planned_min}</span>
+                      <span className="text-muted-foreground">
+                        {t("planned", { count: row.planned_min })}
+                      </span>
                     ) : null}
                     {row.ended_at ? (
                       <span className={row.completed ? "text-success" : "text-warning"}>
-                        {row.completed ? "completed" : "cut short"}
+                        {row.completed ? t("completed") : t("cutShort")}
                       </span>
                     ) : null}
                   </li>

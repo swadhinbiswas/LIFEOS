@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -23,32 +24,32 @@ export default async function GoalsPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Goals");
   const goals = await listGoals(session.user.id);
   const stale = goals.filter((goal) => goal.needsCheckIn).length;
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Goals</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("title")}
+      </h1>
 
       <div className="grid max-w-4xl gap-4">
         {stale > 0 ? (
-          <Panel title="Check-in" hint={`${stale}`}>
+          <Panel title={t("checkIn")} hint={`${stale}`}>
             <p role="status" className="font-mono text-xs text-warning">
-              {stale} objective{stale === 1 ? "" : "s"} have not moved in a week — a five-minute
-              check-in keeps the numbers honest.
+              {t("checkInBody", { count: stale })}
             </p>
           </Panel>
         ) : null}
 
-        <Panel title="New objective">
+        <Panel title={t("newObjective")}>
           <AddGoalForm />
         </Panel>
 
         {goals.length === 0 ? (
-          <Panel title="Objectives">
-            <p className="font-mono text-xs text-muted-foreground">
-              no objectives yet — add one above and give it measurable key results
-            </p>
+          <Panel title={t("objectives")}>
+            <p className="font-mono text-xs text-muted-foreground">{t("noObjectives")}</p>
           </Panel>
         ) : (
           goals.map((goal) => (
@@ -67,7 +68,7 @@ export default async function GoalsPage() {
                   </span>
                   {goal.links.total > 0 ? (
                     <span className="font-mono text-[10px] text-muted-foreground">
-                      linked {goal.links.done}/{goal.links.total}
+                      {t("linked", { done: goal.links.done, total: goal.links.total })}
                     </span>
                   ) : null}
                   <span className="ml-auto">
@@ -76,9 +77,7 @@ export default async function GoalsPage() {
                 </div>
 
                 {goal.keyResults.length === 0 ? (
-                  <p className="font-mono text-xs text-muted-foreground">
-                    no key results yet — what would make this objective true?
-                  </p>
+                  <p className="font-mono text-xs text-muted-foreground">{t("noKeyResults")}</p>
                 ) : (
                   <ul className="flex flex-col gap-1">
                     {goal.keyResults.map((entry) => (

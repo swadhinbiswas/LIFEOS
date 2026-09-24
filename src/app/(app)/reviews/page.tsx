@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -17,22 +18,23 @@ export default async function ReviewsPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Reviews");
   const reviews = await listReviews(session.user.id);
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Reviews</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("title")}
+      </h1>
 
       <div className="grid max-w-3xl gap-4">
-        <Panel title="Start a review">
+        <Panel title={t("start")}>
           <ReviewWizard />
         </Panel>
 
-        <Panel title="Past reviews" hint={`${reviews.length}`}>
+        <Panel title={t("past")} hint={`${reviews.length}`}>
           {reviews.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              no reviews yet — one a week keeps the numbers honest
-            </p>
+            <p className="font-mono text-xs text-muted-foreground">{t("empty")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {reviews.map((review) => (
@@ -50,7 +52,7 @@ export default async function ReviewsPage() {
                       href={`/notes/${review.note_id}`}
                       className="text-muted-foreground hover:underline"
                     >
-                      open note →
+                      {t("openNote")}
                     </Link>
                   ) : null}
                 </li>
