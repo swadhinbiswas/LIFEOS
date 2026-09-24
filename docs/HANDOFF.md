@@ -7,17 +7,20 @@ not decisions (those are in `docs/DECISIONS.md`).
 
 - Phases 0–4 complete and reported. **Phase 5 in progress** (API, MCP, webhooks, docs).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **210 passed** ✓ · `pnpm e2e` **44 passed, twice** ✓.
-- ADR-044 … ADR-062 record the decisions. Nothing is pushed; all work is on local `master`.
+  `pnpm test` **215 passed** ✓ · `pnpm e2e` **45 passed, twice** ✓.
+- ADR-044 … ADR-063 record the decisions. Nothing is pushed; all work is on local `master`.
 
 ## Phase 5 so far
 
 - `api_keys` table (migration 0008) + `src/server/api-keys`: `lifeos_live_<prefix>_<secret>` tokens,
   SHA-256 hash + prefix, scopes, expiry, last-used, soft revoke (ADR-062).
 - `/settings/integrations` management UI: create (token shown once), list, revoke.
-- Next in phase: REST `/api/v1` (cursor pagination, sparse fields, ETag/If-Match, Idempotency-Key,
-  the `{ error: { code, message, details, request_id } }` shape), MCP `/api/mcp`, `/api/v1/ingest`,
-  outgoing webhooks, OpenAPI 3.1 + `/docs/api`.
+- REST `/api/v1/cards` (+ `/[id]`): GET list with opaque cursor pagination and sparse `?fields=`,
+  POST create with Idempotency-Key, GET/PATCH (If-Match ETag) /DELETE, Bearer-key or session auth,
+  per-actor rate limit, the shared `{ error: { code, message, details, request_id } }` shape
+  (ADR-063).
+- Next in phase: MCP `/api/mcp`, `/api/v1/ingest`, outgoing webhooks, OpenAPI 3.1 + `/docs/api`,
+  the cross-tenant isolation suite for both new surfaces.
 
 ## The Phase-4 chunks
 
