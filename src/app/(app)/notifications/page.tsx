@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -18,21 +19,21 @@ export default async function NotificationsPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Notifications");
   const timeZone = await getTimeZone(session.user.id);
   const { items, unread } = await listNotifications(session.user.id, new Date(), timeZone);
 
   return (
     <>
       <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        Notifications
+        {t("title")}
       </h1>
 
       <div className="grid max-w-3xl gap-4">
-        <Panel title="Inbox" hint={`${unread} unread`}>
+        <Panel title={t("inbox")} hint={t("unreadCount", { count: unread })}>
           {items.length === 0 ? (
             <p data-slot="notifications-empty" className="font-mono text-xs text-muted-foreground">
-              nothing yet — overdue tasks, habits you missed yesterday and quiet job applications
-              land here
+              {t("empty")}
             </p>
           ) : (
             <NotificationsList items={items} unread={unread} />

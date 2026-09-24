@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export function NotificationsList({
   unread: number;
 }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Notifications");
   const [busy, setBusy] = useState(false);
 
   const readOne = async (id: string) => {
@@ -41,7 +43,9 @@ export function NotificationsList({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <span className="font-mono text-[10px] text-muted-foreground">{unread} unread</span>
+        <span className="font-mono text-[10px] text-muted-foreground">
+          {t("unreadCount", { count: unread })}
+        </span>
         <Button
           type="button"
           variant="outline"
@@ -51,7 +55,7 @@ export function NotificationsList({
           onClick={() => void readAll()}
           data-slot="mark-all-read"
         >
-          mark all read
+          {t("markAllRead")}
         </Button>
       </div>
 
@@ -85,17 +89,17 @@ export function NotificationsList({
             {item.body ? <span className="truncate text-muted-foreground">{item.body}</span> : null}
 
             {item.readAt ? (
-              <span className="text-muted-foreground">read</span>
+              <span className="text-muted-foreground">{t("read")}</span>
             ) : (
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                aria-label={`mark ${item.title} read`}
+                aria-label={t("markReadAria", { title: item.title })}
                 onClick={() => void readOne(item.id)}
                 data-slot="mark-read"
               >
-                mark read
+                {t("markRead")}
               </Button>
             )}
           </li>

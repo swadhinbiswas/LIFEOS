@@ -1,4 +1,7 @@
 {
+  "Common": {
+    "close": "বন্ধ করুন"
+  },
   "Shell": {
     "tagline": "একটি ফ্রি, ওপেন, AI-সংযুক্ত ব্যক্তিগত অপারেটিং সিস্টেম",
     "primaryNav": "প্রধান",
@@ -78,6 +81,8 @@
     "toggleTheme": "থিম বদল",
     "sidebar": "সাইডবার ঘোরাও",
     "help": "সহায়তা",
+    "helpTitle": "কীবোর্ড",
+    "helpDescription": "এই বিল্ডে সক্রিয় বাইন্ডিং।",
     "close": "বন্ধ",
     "moveFocus": "ফোকাস সরাও",
     "changeColumn": "কলাম বদল",
@@ -252,7 +257,15 @@
       "lessProgress": "কম অগ্রগতি",
       "moreProgress": "বেশি অগ্রগতি",
       "bookStatus": "বইয়ের অবস্থা",
-      "couldNotSave": "সেভ করা যায়নি"
+      "couldNotSave": "সেভ করা যায়নি",
+      "ariaCourseTitle": "কোর্সের শিরোনাম",
+      "ariaCourseProvider": "কোর্সের প্রদানকারী",
+      "ariaBookTitle": "বইয়ের শিরোনাম",
+      "ariaBookAuthor": "বইয়ের লেখক",
+      "coursePlaceholder": "ডিস্ট্রিবিউটেড সিস্টেম",
+      "providerPlaceholder": "MIT OCW",
+      "bookTitlePlaceholder": "ডিজাইনিং ডেটা-ইনটেনসিভ অ্যাপ্লিকেশন",
+      "authorPlaceholder": "মার্টিন ক্লেপম্যান"
     },
     "Calendar": {
       "title": "ক্যালেন্ডার",
@@ -485,7 +498,10 @@
       "renewed": "নবায়ন হয়েছে",
       "delete": "মুছো",
       "deleteAria": "{name} মুছো",
-      "couldNotSave": "সেভ করা যায়নি"
+      "couldNotSave": "সেভ করা যায়নি",
+      "accountPlaceholder": "চলতি অ্যাকাউন্ট",
+      "categoryPlaceholder": "মুদি",
+      "subscriptionPlaceholder": "ক্লাউড স্টোরেজ"
     },
     "Settings": {
       "title": "প্রোফাইল",
@@ -845,6 +861,16 @@
       "enterToAdd": "যোগ করতে",
       "date": "তারিখ,",
       "saving": "সেভ হচ্ছে…"
+    },
+    "Notifications": {
+      "title": "বিজ্ঞপ্তি",
+      "inbox": "ইনবক্স",
+      "unreadCount": "{count} অপঠিত",
+      "empty": "এখনো কিছু নেই — সময় পার কাজ, গতকাল মিস করা অভ্যাস আর নীরব চাকরির আবেদন এখানে আসে",
+      "markAllRead": "সব পঠিত চিহ্নিত করো",
+      "read": "পঠিত",
+      "markReadAria": "{title} পঠিত চিহ্নিত করো",
+      "markRead": "পঠিত চিহ্নিত করো"
     }
   },
   "About": {

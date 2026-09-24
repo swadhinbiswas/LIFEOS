@@ -78,7 +78,7 @@ export function AddAccountForm() {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="current account"
+          placeholder={t("accountPlaceholder")}
           className={field}
           aria-label={t("accountName")}
         />
@@ -202,7 +202,7 @@ export function AddTransactionForm({
         <input
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          placeholder="groceries"
+          placeholder={t("categoryPlaceholder")}
           className={field}
           aria-label={t("transactionCategory")}
         />
@@ -252,7 +252,7 @@ export function AddBudgetForm() {
         <input
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          placeholder="groceries"
+          placeholder={t("categoryPlaceholder")}
           className={field}
           aria-label={t("budgetCategory")}
         />
@@ -328,7 +328,7 @@ export function AddSubscriptionForm() {
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="cloud storage"
+          placeholder={t("subscriptionPlaceholder")}
           className={field}
           aria-label={t("subscriptionName")}
         />

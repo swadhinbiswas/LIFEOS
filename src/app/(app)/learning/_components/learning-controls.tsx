@@ -70,9 +70,9 @@ export function AddCourseForm() {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="distributed systems"
+          placeholder={t("coursePlaceholder")}
           className={field}
-          aria-label="course title"
+          aria-label={t("ariaCourseTitle")}
         />
       </label>
       <label className={label}>
@@ -80,9 +80,9 @@ export function AddCourseForm() {
         <input
           value={provider}
           onChange={(e) => setProvider(e.target.value)}
-          placeholder="MIT OCW"
+          placeholder={t("providerPlaceholder")}
           className={field}
-          aria-label="course provider"
+          aria-label={t("ariaCourseProvider")}
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || title.trim() === ""}>
@@ -164,9 +164,9 @@ export function AddBookForm() {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Designing Data-Intensive Applications"
+          placeholder={t("bookTitlePlaceholder")}
           className={field}
-          aria-label="book title"
+          aria-label={t("ariaBookTitle")}
         />
       </label>
       <label className={label}>
@@ -174,9 +174,9 @@ export function AddBookForm() {
         <input
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
-          placeholder="Martin Kleppmann"
+          placeholder={t("authorPlaceholder")}
           className={field}
-          aria-label="book author"
+          aria-label={t("ariaBookAuthor")}
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || title.trim() === ""}>

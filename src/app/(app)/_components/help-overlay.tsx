@@ -28,8 +28,8 @@ export function HelpOverlay({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Keyboard</DialogTitle>
-          <DialogDescription>Active bindings in this build.</DialogDescription>
+          <DialogTitle>{t("helpTitle")}</DialogTitle>
+          <DialogDescription>{t("helpDescription")}</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 text-xs">
           {KEY_BINDINGS.map((group) => (

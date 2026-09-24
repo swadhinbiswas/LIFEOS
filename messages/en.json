@@ -1,4 +1,7 @@
 {
+  "Common": {
+    "close": "Close"
+  },
   "Shell": {
     "tagline": "A free, open, AI-connected personal operating system",
     "primaryNav": "Primary",
@@ -78,6 +81,8 @@
     "toggleTheme": "toggle theme",
     "sidebar": "cycle sidebar",
     "help": "help",
+    "helpTitle": "Keyboard",
+    "helpDescription": "Active bindings in this build.",
     "close": "close",
     "moveFocus": "move focus",
     "changeColumn": "change column",
@@ -252,7 +257,15 @@
       "lessProgress": "less progress",
       "moreProgress": "more progress",
       "bookStatus": "book status",
-      "couldNotSave": "could not save"
+      "couldNotSave": "could not save",
+      "ariaCourseTitle": "course title",
+      "ariaCourseProvider": "course provider",
+      "ariaBookTitle": "book title",
+      "ariaBookAuthor": "book author",
+      "coursePlaceholder": "distributed systems",
+      "providerPlaceholder": "MIT OCW",
+      "bookTitlePlaceholder": "Designing Data-Intensive Applications",
+      "authorPlaceholder": "Martin Kleppmann"
     },
     "Calendar": {
       "title": "Calendar",
@@ -485,7 +498,10 @@
       "renewed": "renewed",
       "delete": "delete",
       "deleteAria": "delete {name}",
-      "couldNotSave": "could not save"
+      "couldNotSave": "could not save",
+      "accountPlaceholder": "current account",
+      "categoryPlaceholder": "groceries",
+      "subscriptionPlaceholder": "cloud storage"
     },
     "Settings": {
       "title": "Profile",
@@ -845,6 +861,16 @@
       "enterToAdd": "to add",
       "date": "date,",
       "saving": "saving…"
+    },
+    "Notifications": {
+      "title": "Notifications",
+      "inbox": "Inbox",
+      "unreadCount": "{count} unread",
+      "empty": "nothing yet — overdue tasks, habits you missed yesterday and quiet job applications land here",
+      "markAllRead": "mark all read",
+      "read": "read",
+      "markReadAria": "mark {title} read",
+      "markRead": "mark read"
     }
   },
   "About": {
