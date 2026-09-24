@@ -105,6 +105,8 @@ export const cardIdInput = z.object({ cardId: z.string().min(1) });
 
 export const savedViewScopeSchema = z.enum(["tasks", "jobs", "board"]);
 
+export const boardIdInput = z.object({ boardId: z.string().min(1) });
+
 export const savedViewInput = z.object({
   scope: savedViewScopeSchema,
   name: z.string().trim().min(1).max(80),

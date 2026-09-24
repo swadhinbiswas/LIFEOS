@@ -100,6 +100,12 @@ test("card sheet: deep link, edits persist, delete is undoable", async ({ page }
   await page.waitForLoadState("networkidle");
   await page.goto("/tasks");
   await expect(serverCard(page, "Inbox", renamed)).toBeVisible();
+
+  // The Trash panel is the durable route back, and export links are real downloads.
+  await page.getByRole("button", { name: /trash \(/u }).click();
+  await expect(page.locator('[data-slot="panel"]', { hasText: "Trash" })).toBeVisible();
+  const csvHref = await page.getByRole("link", { name: "csv" }).getAttribute("href");
+  expect(csvHref).toContain("/export?format=csv");
 });
 
 /**
@@ -168,4 +174,37 @@ test("table view: sorting, quick filters and grouping", async ({ page }) => {
   await expect(page).toHaveURL(/view=table/u);
   await expect(page).toHaveURL(/group=priority/u);
   await expect(table.locator("section h2")).toHaveCount(2);
+});
+
+/** The Trash is the durable route back for anything deleted outside the undo window. */
+test("trash: a deleted card restores from the trash panel", async ({ page }) => {
+  test.setTimeout(90_000);
+  const email = uniqueEmail("trash");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/tasks");
+
+  const title = "throw me away";
+  const adder = page.getByLabel("add a card to Inbox");
+  await adder.click();
+  await adder.fill(title);
+  await adder.press("Enter");
+
+  const card = serverCard(page, "Inbox", title);
+  await expect(card).toBeVisible();
+  const cardId = await card.getAttribute("data-card-id");
+
+  await page.goto(`/tasks?card=${cardId}`);
+  await page.getByRole("button", { name: "delete" }).click();
+  await expect(serverCard(page, "Inbox", title)).toHaveCount(0);
+  await page.waitForLoadState("networkidle");
+
+  await page.getByRole("button", { name: /trash \(/u }).click();
+  const trashed = page.locator('[data-slot="trash-card"]', { hasText: title });
+  await expect(trashed).toBeVisible();
+  await trashed.getByRole("button", { name: `restore ${title}` }).click();
+
+  await expect(page.locator('[data-slot="trash-card"]', { hasText: title })).toHaveCount(0);
+  await expect(serverCard(page, "Inbox", title)).toBeVisible();
 });

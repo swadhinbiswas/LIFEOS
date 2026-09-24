@@ -101,6 +101,8 @@ export function useBoard(boardId: string, initialData: BoardPayload) {
   };
   const settle = () => {
     void queryClient.invalidateQueries({ queryKey: key });
+    // Trash is a view over the same rows: any board write can add to or remove from it.
+    void queryClient.invalidateQueries({ queryKey: ["trash"] });
   };
   const fail = (error: unknown) => {
     const { title, description } = describe(error);

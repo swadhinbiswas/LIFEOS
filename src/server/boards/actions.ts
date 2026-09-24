@@ -19,6 +19,7 @@ import {
 } from "@/server/boards";
 import {
   cardIdInput,
+  boardIdInput,
   createBoardInput,
   createCardInput,
   moveCardInput,
@@ -34,6 +35,8 @@ import {
   type SavedView,
 } from "@/server/boards/views";
 import { carryOverOverdue } from "@/server/boards/brief";
+import { listTrash, purgeCard, purgeTrash } from "@/server/boards/trash";
+import type { Card } from "@/server/boards";
 import { getServerSession } from "@/server/auth/session";
 import type { Board } from "@/server/boards";
 
@@ -133,6 +136,21 @@ export async function restoreCardAction(input: unknown): Promise<ActionResult<nu
 
 export async function carryOverAction(): Promise<ActionResult<{ moved: number }>> {
   return run(async (userId) => ({ moved: await carryOverOverdue(userId) }));
+}
+
+export async function listTrashAction(input: unknown): Promise<ActionResult<Card[]>> {
+  return run((userId) => listTrash(userId, boardIdInput.parse(input).boardId));
+}
+
+export async function purgeTrashAction(): Promise<ActionResult<{ removed: number }>> {
+  return run(async (userId) => ({ removed: await purgeTrash(userId) }));
+}
+
+export async function purgeCardAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    await purgeCard(userId, cardIdInput.parse(input).cardId);
+    return null;
+  });
 }
 
 export async function listSavedViewsAction(input: unknown): Promise<ActionResult<SavedView[]>> {

@@ -24,6 +24,7 @@ import type { BoardPayload, Card } from "@/server/boards";
 
 import { BoardColumn } from "./board-column";
 import { BoardToolbar, type GroupBy } from "./board-toolbar";
+import { BoardUtils } from "./board-utils";
 import { CardSheet } from "./card-sheet";
 import { type MoveDirection } from "./card-tile";
 import { SavedViews } from "./saved-views";
@@ -240,6 +241,8 @@ export function BoardView({
         current={currentQuery}
         onApply={applyView}
       />
+
+      <BoardUtils boardId={boardId} />
 
       {view === "table" ? (
         <TableView
