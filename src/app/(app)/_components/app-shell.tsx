@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { APP_NAME, APP_TAGLINE } from "@/config/app";
 import { NAV_ITEMS } from "@/config/nav";
 import { SHELL_HINTS } from "@/config/shortcuts";
+import { stopFocusAction } from "@/server/focus/actions";
 import { authClient } from "@/lib/auth-client";
 import { useThemeStore } from "@/lib/theme-store";
 import { cn } from "@/lib/utils";
@@ -25,7 +26,16 @@ const SIDEBAR_MODES: readonly string[] = ["expanded", "icon", "full"];
  * header, scrollable main column and the spec §4.1 status line. Client-side because it owns
  * the keyboard bindings, the sidebar overlay and sign-out.
  */
-export function AppShell({ user, children }: { user: { name: string }; children: ReactNode }) {
+export function AppShell({
+  user,
+  focus,
+  children,
+}: {
+  user: { name: string };
+  /** A running focus session, so the timer is ambient across pages (spec §6.7). */
+  focus: { id: string; startedAt: string } | null;
+  children: ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const sidebarMode = useThemeStore((state) => state.overrides.sidebarMode);
@@ -34,6 +44,30 @@ export function AppShell({ user, children }: { user: { name: string }; children:
   const [signingOut, setSigningOut] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  const [stoppingFocus, setStoppingFocus] = useState(false);
+
+  // The ambient timer ticks locally from the session row's start, so it survives navigation.
+  useEffect(() => {
+    if (!focus) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [focus]);
+
+  const focusTimer = focus
+    ? (() => {
+        const seconds = Math.max(0, Math.floor((now - new Date(focus.startedAt).getTime()) / 1000));
+        return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+      })()
+    : undefined;
+
+  const stopFocus = async () => {
+    if (!focus) return;
+    setStoppingFocus(true);
+    await stopFocusAction({ sessionId: focus.id });
+    setStoppingFocus(false);
+    router.refresh();
+  };
 
   // Derived, not synced: entering `full` reveals the bar; Esc/`[` dismiss it (ADR-028).
   const overlayOpen = sidebarMode === "full" && !overlayDismissed;
@@ -147,6 +181,18 @@ export function AppShell({ user, children }: { user: { name: string }; children:
           <p className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">
             {APP_TAGLINE}
           </p>
+          {focus ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={stoppingFocus}
+              onClick={() => void stopFocus()}
+              data-slot="ambient-focus-stop"
+            >
+              stop focus
+            </Button>
+          ) : null}
           <Button type="button" variant="outline" size="sm" onClick={sidebarButton}>
             sidebar
           </Button>
@@ -161,7 +207,7 @@ export function AppShell({ user, children }: { user: { name: string }; children:
           </div>
         </main>
 
-        <StatusLine path={pathname} sync="synced" hints={SHELL_HINTS} />
+        <StatusLine path={pathname} sync="synced" timer={focusTimer} hints={SHELL_HINTS} />
       </div>
 
       {/* Mounted only while open: shadcn's CommandDialog renders its sr-only header outside
