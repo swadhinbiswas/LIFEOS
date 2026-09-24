@@ -12,6 +12,8 @@ export interface StatusHint {
   /** One entry per key cap; `["Ctrl", "K"]` renders `Ctrl + K`. */
   keys: string[];
   label: string;
+  /** Message key under `Shortcuts`; the shell passes the translated label (ADR-060). */
+  key?: string;
 }
 
 /** Glyph + word + named tone per state (RESEARCH §c #5: color never the only signal). */

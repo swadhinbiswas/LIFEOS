@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ type Status = "verifying" | "ok" | "error";
  * on "verifying" forever. The guard already bounds this to one request per mount.
  */
 export function VerifyEmailNotice({ token }: { token: string | null }) {
+  const t = useTranslations("Auth");
   const [status, setStatus] = useState<Status>("verifying");
   const [message, setMessage] = useState("");
   const started = useRef(false);
@@ -51,10 +53,10 @@ export function VerifyEmailNotice({ token }: { token: string | null }) {
     return (
       <div className="flex flex-col gap-3 text-xs">
         <p role="alert" className="text-destructive">
-          this link is missing its token — sign in to have a fresh one sent
+          {t("missingToken")}
         </p>
         <Button type="button" variant="outline" asChild>
-          <Link href="/sign-in">back to sign in</Link>
+          <Link href="/sign-in">{t("backToSignIn")}</Link>
         </Button>
       </div>
     );
@@ -63,7 +65,7 @@ export function VerifyEmailNotice({ token }: { token: string | null }) {
   if (status === "verifying") {
     return (
       <p role="status" className="text-xs text-muted-foreground">
-        verifying your email…
+        {t("verifying")}
       </p>
     );
   }
@@ -71,9 +73,9 @@ export function VerifyEmailNotice({ token }: { token: string | null }) {
   if (status === "ok") {
     return (
       <div role="status" className="flex flex-col gap-3 text-xs">
-        <p className="text-success">✓ email verified — your account is ready</p>
+        <p className="text-success">{t("emailVerified")}</p>
         <Button type="button" className="w-full" asChild>
-          <Link href="/sign-in">sign in</Link>
+          <Link href="/sign-in">{t("signIn")}</Link>
         </Button>
       </div>
     );
@@ -84,11 +86,9 @@ export function VerifyEmailNotice({ token }: { token: string | null }) {
       <p role="alert" className="text-destructive">
         {message}
       </p>
-      <p className="text-muted-foreground">
-        signing in re-sends the verification mail when the account is still pending.
-      </p>
+      <p className="text-muted-foreground">{t("verifyFailedHint")}</p>
       <Button type="button" variant="outline" asChild>
-        <Link href="/sign-in">back to sign in</Link>
+        <Link href="/sign-in">{t("backToSignIn")}</Link>
       </Button>
     </div>
   );

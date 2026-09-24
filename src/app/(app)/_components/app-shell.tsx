@@ -46,6 +46,7 @@ export function AppShell({
   const router = useRouter();
   const tNav = useTranslations("Nav");
   const tShell = useTranslations("Shell");
+  const tShortcut = useTranslations("Shortcuts");
   const sidebarMode = useThemeStore((state) => state.overrides.sidebarMode);
   const setOverride = useThemeStore((state) => state.set);
   const [overlayDismissed, setOverlayDismissed] = useState(false);
@@ -240,7 +241,15 @@ export function AppShell({
           </div>
         </main>
 
-        <StatusLine path={pathname} sync="synced" timer={focusTimer} hints={SHELL_HINTS} />
+        <StatusLine
+          path={pathname}
+          sync="synced"
+          timer={focusTimer}
+          hints={SHELL_HINTS.map((hint) => ({
+            ...hint,
+            label: hint.key ? tShortcut(hint.key) : hint.label,
+          }))}
+        />
       </div>
 
       {/* Mounted only while open: shadcn's CommandDialog renders its sr-only header outside

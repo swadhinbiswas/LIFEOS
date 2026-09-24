@@ -1,17 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { authErrorMessage, safeNext } from "@/lib/auth-form";
 
 export type SocialProvider = "github" | "google";
-
-const LABEL: Record<SocialProvider, string> = {
-  github: "Continue with GitHub",
-  google: "Continue with Google",
-};
 
 /**
  * OAuth buttons, rendered only for providers whose env pair is complete (ADR-023 — the
@@ -25,10 +21,14 @@ export function SocialButtons({
   providers: SocialProvider[];
   next?: string | null;
 }) {
+  const t = useTranslations("Auth");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<SocialProvider | null>(null);
 
   if (providers.length === 0) return null;
+
+  const label = (provider: SocialProvider) =>
+    provider === "github" ? t("continueWithGithub") : t("continueWithGoogle");
 
   const start = async (provider: SocialProvider): Promise<void> => {
     setError(null);
@@ -56,7 +56,7 @@ export function SocialButtons({
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2 text-xs text-muted-foreground" aria-hidden="true">
         <span className="h-px flex-1 bg-border" />
-        or
+        {t("or")}
         <span className="h-px flex-1 bg-border" />
       </div>
       <div className="flex flex-col gap-2">
@@ -68,7 +68,7 @@ export function SocialButtons({
             disabled={pending !== null}
             onClick={() => void start(provider)}
           >
-            {LABEL[provider]}
+            {label(provider)}
           </Button>
         ))}
       </div>

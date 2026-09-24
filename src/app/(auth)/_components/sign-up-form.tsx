@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -12,6 +13,7 @@ import { authClient } from "@/lib/auth-client";
 import { type SignUpValues, authErrorMessage, signUpSchema } from "@/lib/auth-form";
 
 export function SignUpForm() {
+  const t = useTranslations("Auth");
   const [formError, setFormError] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const {
@@ -41,13 +43,10 @@ export function SignUpForm() {
   if (sentTo !== null) {
     return (
       <div role="status" className="flex flex-col gap-3 text-xs">
-        <p className="text-success">✓ verification mail sent to {sentTo}</p>
-        <p className="text-muted-foreground">
-          open the link to activate your account. didn&apos;t get it? sign in again and we&apos;ll
-          re-send it.
-        </p>
+        <p className="text-success">{t("verificationSent", { email: sentTo })}</p>
+        <p className="text-muted-foreground">{t("verificationSentHint")}</p>
         <Button type="button" variant="outline" asChild>
-          <Link href="/sign-in">back to sign in</Link>
+          <Link href="/sign-in">{t("backToSignIn")}</Link>
         </Button>
       </div>
     );
@@ -56,12 +55,12 @@ export function SignUpForm() {
   return (
     <form onSubmit={(event) => void onSubmit(event)} noValidate className="flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="sign-up-name">name</Label>
+        <Label htmlFor="sign-up-name">{t("name")}</Label>
         <Input
           id="sign-up-name"
           type="text"
           autoComplete="name"
-          placeholder="your name"
+          placeholder={t("namePlaceholder")}
           aria-invalid={errors.name ? true : undefined}
           {...register("name")}
         />
@@ -73,12 +72,12 @@ export function SignUpForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="sign-up-email">email</Label>
+        <Label htmlFor="sign-up-email">{t("email")}</Label>
         <Input
           id="sign-up-email"
           type="email"
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder={t("emailPlaceholder")}
           aria-invalid={errors.email ? true : undefined}
           {...register("email")}
         />
@@ -90,12 +89,12 @@ export function SignUpForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="sign-up-password">password</Label>
+        <Label htmlFor="sign-up-password">{t("password")}</Label>
         <Input
           id="sign-up-password"
           type="password"
           autoComplete="new-password"
-          placeholder="at least 8 characters"
+          placeholder={t("passwordPlaceholder")}
           aria-invalid={errors.password ? true : undefined}
           {...register("password")}
         />
@@ -113,13 +112,13 @@ export function SignUpForm() {
       ) : null}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "creating…" : "create account"}
+        {isSubmitting ? t("creating") : t("createAccount")}
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">
-        already have an account?{" "}
+        {t("alreadyHaveAccount")}{" "}
         <Link href="/sign-in" className="underline-offset-2 hover:underline">
-          sign in
+          {t("signIn")}
         </Link>
       </p>
     </form>

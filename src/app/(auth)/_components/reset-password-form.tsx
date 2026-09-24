@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -12,6 +13,7 @@ import { authClient } from "@/lib/auth-client";
 import { authErrorMessage, resetPasswordSchema, type ResetPasswordValues } from "@/lib/auth-form";
 
 export function ResetPasswordForm({ token }: { token: string }) {
+  const t = useTranslations("Auth");
   const [formError, setFormError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const {
@@ -43,10 +45,10 @@ export function ResetPasswordForm({ token }: { token: string }) {
   if (done) {
     return (
       <div role="status" className="flex flex-col gap-3 text-xs">
-        <p className="text-success">✓ password updated</p>
-        <p className="text-muted-foreground">sign in with your new password.</p>
+        <p className="text-success">{t("passwordUpdated")}</p>
+        <p className="text-muted-foreground">{t("signInWithNewPassword")}</p>
         <Button type="button" asChild>
-          <Link href="/sign-in?notice=reset">continue</Link>
+          <Link href="/sign-in?notice=reset">{t("continue")}</Link>
         </Button>
       </div>
     );
@@ -55,12 +57,12 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <form onSubmit={(event) => void onSubmit(event)} noValidate className="flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="reset-password">new password</Label>
+        <Label htmlFor="reset-password">{t("newPassword")}</Label>
         <Input
           id="reset-password"
           type="password"
           autoComplete="new-password"
-          placeholder="at least 8 characters"
+          placeholder={t("passwordPlaceholder")}
           aria-invalid={errors.password ? true : undefined}
           {...register("password")}
         />
@@ -72,7 +74,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="reset-confirm">confirm password</Label>
+        <Label htmlFor="reset-confirm">{t("confirmPassword")}</Label>
         <Input
           id="reset-confirm"
           type="password"
@@ -94,7 +96,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       ) : null}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "updating…" : "set new password"}
+        {isSubmitting ? t("updating") : t("setNewPassword")}
       </Button>
     </form>
   );

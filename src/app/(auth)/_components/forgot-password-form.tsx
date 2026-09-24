@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -12,6 +13,7 @@ import { authClient } from "@/lib/auth-client";
 import { type ForgotPasswordValues, authErrorMessage, forgotPasswordSchema } from "@/lib/auth-form";
 
 export function ForgotPasswordForm() {
+  const t = useTranslations("Auth");
   const [formError, setFormError] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
   const {
@@ -45,12 +47,10 @@ export function ForgotPasswordForm() {
   if (sentTo !== null) {
     return (
       <div role="status" className="flex flex-col gap-3 text-xs">
-        <p className="text-success">if {sentTo} has an account, a reset link is on its way</p>
-        <p className="text-muted-foreground">
-          the link expires in an hour. check spam if it doesn&apos;t show up.
-        </p>
+        <p className="text-success">{t("resetSent", { email: sentTo })}</p>
+        <p className="text-muted-foreground">{t("resetSentHint")}</p>
         <Button type="button" variant="outline" asChild>
-          <Link href="/sign-in">back to sign in</Link>
+          <Link href="/sign-in">{t("backToSignIn")}</Link>
         </Button>
       </div>
     );
@@ -59,12 +59,12 @@ export function ForgotPasswordForm() {
   return (
     <form onSubmit={(event) => void onSubmit(event)} noValidate className="flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="forgot-email">email</Label>
+        <Label htmlFor="forgot-email">{t("email")}</Label>
         <Input
           id="forgot-email"
           type="email"
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder={t("emailPlaceholder")}
           aria-invalid={errors.email ? true : undefined}
           {...register("email")}
         />
@@ -82,13 +82,13 @@ export function ForgotPasswordForm() {
       ) : null}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "sending…" : "send reset link"}
+        {isSubmitting ? t("sending") : t("sendReset")}
       </Button>
 
       <p className="text-center text-xs text-muted-foreground">
-        remembered it?{" "}
+        {t("remembered")}{" "}
         <Link href="/sign-in" className="underline-offset-2 hover:underline">
-          back to sign in
+          {t("backToSignIn")}
         </Link>
       </p>
     </form>

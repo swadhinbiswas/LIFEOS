@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
@@ -12,6 +13,7 @@ import { authClient } from "@/lib/auth-client";
 import { type SignInValues, authErrorMessage, safeNext, signInSchema } from "@/lib/auth-form";
 
 export function SignInForm({ next, notice }: { next?: string | null; notice?: string | null }) {
+  const t = useTranslations("Auth");
   const [formError, setFormError] = useState<string | null>(null);
   const {
     register,
@@ -40,17 +42,17 @@ export function SignInForm({ next, notice }: { next?: string | null; notice?: st
     <form onSubmit={(event) => void onSubmit(event)} noValidate className="flex flex-col gap-3">
       {notice === "reset" ? (
         <p role="status" className="text-xs text-success">
-          ✓ password updated — sign in with the new one
+          {t("resetNotice")}
         </p>
       ) : null}
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="sign-in-email">email</Label>
+        <Label htmlFor="sign-in-email">{t("email")}</Label>
         <Input
           id="sign-in-email"
           type="email"
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder={t("emailPlaceholder")}
           aria-invalid={errors.email ? true : undefined}
           {...register("email")}
         />
@@ -62,7 +64,7 @@ export function SignInForm({ next, notice }: { next?: string | null; notice?: st
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="sign-in-password">password</Label>
+        <Label htmlFor="sign-in-password">{t("password")}</Label>
         <Input
           id="sign-in-password"
           type="password"
@@ -84,7 +86,7 @@ export function SignInForm({ next, notice }: { next?: string | null; notice?: st
       ) : null}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "signing in…" : "sign in"}
+        {isSubmitting ? t("signingIn") : t("signIn")}
       </Button>
 
       <div className="flex items-center justify-between text-xs">
@@ -92,10 +94,10 @@ export function SignInForm({ next, notice }: { next?: string | null; notice?: st
           href="/forgot-password"
           className="text-muted-foreground underline-offset-2 hover:underline"
         >
-          forgot password?
+          {t("forgotPasswordLink")}
         </Link>
         <Link href="/sign-up" className="text-muted-foreground underline-offset-2 hover:underline">
-          create account
+          {t("createAccount")}
         </Link>
       </div>
     </form>

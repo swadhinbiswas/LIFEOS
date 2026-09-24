@@ -1,3 +1,5 @@
+import { getTranslations } from "next-intl/server";
+
 import { Panel } from "@/components/tui/panel";
 import { hasGithub, hasGoogle } from "@/env";
 
@@ -12,6 +14,7 @@ const firstString = (value: string | string[] | undefined): string | null =>
   typeof value === "string" ? value : null;
 
 export default async function SignInPage({ searchParams }: PageProps) {
+  const t = await getTranslations("Auth");
   const params = await searchParams;
   const next = firstString(params.next);
   const notice = firstString(params.notice);
@@ -22,7 +25,7 @@ export default async function SignInPage({ searchParams }: PageProps) {
   ];
 
   return (
-    <Panel title="Sign in" titleAs="h1">
+    <Panel title={t("signInPanel")} titleAs="h1">
       <SignInForm next={next} notice={notice} />
       <SocialButtons providers={socials} next={next} />
     </Panel>

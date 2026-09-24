@@ -1688,6 +1688,28 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-072 — i18n scope: the chrome and the unauthenticated surfaces are localized
+
+- **Status:** accepted (2026-09-24)
+- **Context:** ADR-053/060 built the pipeline, the `/about` example page and the navigation chrome;
+  the remaining work is page copy. Translating every page body at once is a large, low-risk-of-value
+  grind and would mix product-copy decisions into a mechanical pass.
+- **Decision:**
+  - Finish the **persistent chrome**: the status-line hints and the `?` cheat-sheet are keyed under
+    a `Shortcuts` namespace and translated where they are rendered (the shell and the help overlay),
+    so `config/shortcuts.ts` keeps only English defaults plus keys.
+  - Translate the **unauthenticated surfaces**: the auth page panel titles and every form's labels,
+    buttons and status copy, under an `Auth` namespace (with ICU interpolation for the "sent to
+    {email}" messages).
+  - **Authenticated page bodies stay English** and are translated **surface by surface**, each page
+    taking its own namespace when it is touched. Nothing is half-translated inside a page: a page is
+    either done or still English.
+- **Consequences:** everything a signed-out visitor or a shell user reads is localized, and the
+  remaining translation is an incremental, reviewable pass rather than a big-bang rewrite. Cost: the
+  authenticated pages remain English until each is picked up.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
