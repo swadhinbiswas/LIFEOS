@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -18,15 +19,18 @@ export default async function PortfolioPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Career");
   const growth = await listGrowth(session.user.id);
   const hasSamples = growth.projects.some((project) => project.is_demo);
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Portfolio</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("portfolioTitle")}
+      </h1>
 
       <div className="grid max-w-4xl gap-4">
-        <Panel title="Sample data" hint="labelled, removable">
+        <Panel title={t("sampleData")} hint={t("labelledRemovable")}>
           <SampleActions
             source={growth.sample.source}
             fetchedAt={growth.sample.fetchedAt}
@@ -37,12 +41,10 @@ export default async function PortfolioPage() {
           />
         </Panel>
 
-        <Panel title="Projects" hint={`${growth.projects.length}`}>
+        <Panel title={t("projects")} hint={`${growth.projects.length}`}>
           <AddProjectForm />
           {growth.projects.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              no projects yet — import the sample portfolio to see how this fills up
-            </p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noProjects")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {growth.projects.map((project) => {
@@ -66,10 +68,12 @@ export default async function PortfolioPage() {
                     </span>
                     {tech.language ? <span>{tech.language}</span> : null}
                     {tech.stars > 0 ? <span className="tabular-nums">★{tech.stars}</span> : null}
-                    {project.featured ? <span className="text-warning">featured</span> : null}
+                    {project.featured ? (
+                      <span className="text-warning">{t("featured")}</span>
+                    ) : null}
                     {project.is_demo ? (
                       <span className="border border-border px-1 text-muted-foreground">
-                        sample
+                        {t("sample")}
                       </span>
                     ) : null}
                   </li>
@@ -79,10 +83,10 @@ export default async function PortfolioPage() {
           )}
         </Panel>
 
-        <Panel title="Skills" hint={`${growth.skills.length}`}>
+        <Panel title={t("skills")} hint={`${growth.skills.length}`}>
           <AddSkillForm />
           {growth.skills.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">no skills recorded yet</p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noSkills")}</p>
           ) : (
             <ul className="flex flex-wrap gap-2 font-mono text-xs">
               {growth.skills.map((skill) => (
@@ -95,19 +99,19 @@ export default async function PortfolioPage() {
                   {skill.level !== null ? (
                     <span className="text-warning">{"★".repeat(skill.level)}</span>
                   ) : null}
-                  {skill.is_demo ? <span className="text-muted-foreground">(sample)</span> : null}
+                  {skill.is_demo ? (
+                    <span className="text-muted-foreground">({t("sample")})</span>
+                  ) : null}
                 </li>
               ))}
             </ul>
           )}
         </Panel>
 
-        <Panel title="Brag doc" hint={`${growth.achievements.length}`}>
+        <Panel title={t("bragDoc")} hint={`${growth.achievements.length}`}>
           <AddAchievementForm />
           {growth.achievements.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              nothing yet — record wins here as they happen
-            </p>
+            <p className="font-mono text-xs text-muted-foreground">{t("nothingYetWins")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {growth.achievements.map((achievement) => (

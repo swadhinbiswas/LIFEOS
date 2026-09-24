@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -21,6 +22,7 @@ export default async function JobsPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Career");
   const board = await ensureJobBoard(session.user.id);
   const [payload, meta] = await Promise.all([
     getBoard(session.user.id, board.id),
@@ -36,9 +38,11 @@ export default async function JobsPage() {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Jobs</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("jobsTitle")}
+      </h1>
       <div className="grid gap-4">
-        <Panel title="Add a job">
+        <Panel title={t("addJob")}>
           <NewJobForm boardId={board.id} />
         </Panel>
         <BoardView boardId={board.id} initialData={payload} cardMeta={cardMeta} />

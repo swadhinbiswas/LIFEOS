@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ const label = "flex flex-col gap-1 font-mono text-[10px] text-muted-foreground u
 
 export function AddQuestionForm() {
   const router = useRouter();
+  const t = useTranslations("Pages.Career");
   const [question, setQuestion] = useState("");
   const [category, setCategory] = useState("");
   const [difficulty, setDifficulty] = useState("");
@@ -42,32 +44,32 @@ export function AddQuestionForm() {
       }}
     >
       <label className={`${label} min-w-64 flex-1`}>
-        question
+        {t("question")}
         <input
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
-          placeholder="tell me about a hard migration"
+          placeholder={t("questionPlaceholder")}
           className={field}
-          aria-label="question"
+          aria-label={t("question")}
         />
       </label>
       <label className={label}>
-        topic
+        {t("topic")}
         <input
           value={category}
           onChange={(event) => setCategory(event.target.value)}
-          placeholder="behavioural"
+          placeholder={t("topicPlaceholder")}
           className={field}
-          aria-label="question topic"
+          aria-label={t("topic")}
         />
       </label>
       <label className={label}>
-        difficulty
+        {t("difficulty")}
         <select
           value={difficulty}
           onChange={(event) => setDifficulty(event.target.value)}
           className={field}
-          aria-label="question difficulty"
+          aria-label={t("difficulty")}
         >
           <option value="">—</option>
           {["easy", "medium", "hard"].map((value) => (
@@ -78,7 +80,7 @@ export function AddQuestionForm() {
         </select>
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || question.trim() === ""}>
-        {busy ? "adding…" : "add question"}
+        {busy ? t("adding") : t("addQuestion")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">
@@ -91,6 +93,7 @@ export function AddQuestionForm() {
 
 export function AddStoryForm() {
   const router = useRouter();
+  const t = useTranslations("Pages.Career");
   const [title, setTitle] = useState("");
   const [result, setResult] = useState("");
   const [busy, setBusy] = useState(false);
@@ -120,27 +123,27 @@ export function AddStoryForm() {
       }}
     >
       <label className={label}>
-        headline
+        {t("headline")}
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="cut checkout latency"
+          placeholder={t("headlinePlaceholder")}
           className={field}
-          aria-label="story headline"
+          aria-label={t("headline")}
         />
       </label>
       <label className={`${label} min-w-64 flex-1`}>
-        result
+        {t("result")}
         <input
           value={result}
           onChange={(event) => setResult(event.target.value)}
-          placeholder="p95 down 40%, no incidents after rollout"
+          placeholder={t("resultPlaceholder")}
           className={field}
-          aria-label="story result"
+          aria-label={t("result")}
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || title.trim() === ""}>
-        {busy ? "adding…" : "add story"}
+        {busy ? t("adding") : t("addStory")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">

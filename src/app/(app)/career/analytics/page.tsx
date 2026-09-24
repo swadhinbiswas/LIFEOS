@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -20,6 +21,7 @@ export default async function CareerAnalyticsPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Career");
   const { timeZone, weekStart } = await getRegionalSettings(session.user.id);
   const analytics = await getCareerAnalytics(session.user.id, new Date(), 21, timeZone, weekStart);
   const { funnel, bySource, perWeek, ghosted } = analytics;
@@ -28,30 +30,31 @@ export default async function CareerAnalyticsPage() {
   return (
     <>
       <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        Career analytics
+        {t("analyticsTitle")}
       </h1>
 
       <div className="grid max-w-4xl gap-4">
         <Panel
-          title="Funnel"
-          hint={`${funnel.total} job${funnel.total === 1 ? "" : "s"} · response ${Math.round(funnel.responseRate * 100)}%`}
+          title={t("funnel")}
+          hint={t("funnelHint", {
+            total: funnel.total,
+            rate: Math.round(funnel.responseRate * 100),
+          })}
         >
           {funnel.total === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              no jobs tracked yet — add one from the pipeline
-            </p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noJobs")}</p>
           ) : (
             <table className="w-full border-collapse font-mono text-xs">
               <thead>
                 <tr>
                   <th scope="col" className={head}>
-                    stage
+                    {t("stage")}
                   </th>
                   <th scope="col" className={`${head} text-right`}>
-                    in stage
+                    {t("inStage")}
                   </th>
                   <th scope="col" className={`${head} text-right`}>
-                    mean days
+                    {t("meanDays")}
                   </th>
                 </tr>
               </thead>
@@ -70,24 +73,24 @@ export default async function CareerAnalyticsPage() {
           )}
         </Panel>
 
-        <Panel title="By source" hint={`${bySource.length}`}>
+        <Panel title={t("bySource")} hint={`${bySource.length}`}>
           {bySource.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">no sources recorded yet</p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noSources")}</p>
           ) : (
             <table className="w-full border-collapse font-mono text-xs">
               <thead>
                 <tr>
                   <th scope="col" className={head}>
-                    source
+                    {t("source")}
                   </th>
                   <th scope="col" className={`${head} text-right`}>
-                    jobs
+                    {t("jobs")}
                   </th>
                   <th scope="col" className={`${head} text-right`}>
-                    progressed
+                    {t("progressed")}
                   </th>
                   <th scope="col" className={`${head} text-right`}>
-                    rate
+                    {t("rate")}
                   </th>
                 </tr>
               </thead>
@@ -107,7 +110,7 @@ export default async function CareerAnalyticsPage() {
           )}
         </Panel>
 
-        <Panel title="Applications per week" hint={`last ${perWeek.length}`}>
+        <Panel title={t("perWeek")} hint={t("lastN", { n: perWeek.length })}>
           <ul className="flex flex-col gap-1 font-mono text-xs">
             {perWeek.map((week) => (
               <li key={week.weekStart} data-slot="week-row" className="flex items-center gap-2">
@@ -123,11 +126,9 @@ export default async function CareerAnalyticsPage() {
           </ul>
         </Panel>
 
-        <Panel title="Ghosted" hint={`no update in ${analytics.ghostThresholdDays}+ days`}>
+        <Panel title={t("ghosted")} hint={t("ghostedHint", { days: analytics.ghostThresholdDays })}>
           {ghosted.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              nothing is going stale — every job moved recently
-            </p>
+            <p className="font-mono text-xs text-muted-foreground">{t("nothingStale")}</p>
           ) : (
             <ul className="flex flex-col gap-1 font-mono text-xs">
               {ghosted.map((row) => (

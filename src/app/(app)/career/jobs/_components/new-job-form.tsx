@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -15,6 +16,7 @@ import { boardQueryKey } from "../../../_components/board/use-board";
  */
 export function NewJobForm({ boardId }: { boardId: string }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Career");
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [company, setCompany] = useState("");
@@ -36,7 +38,7 @@ export function NewJobForm({ boardId }: { boardId: string }) {
       router.push(`/career/jobs/${cardId}`);
     },
     onError: (mutationError: unknown) =>
-      setError(mutationError instanceof Error ? mutationError.message : "could not add that job"),
+      setError(mutationError instanceof Error ? mutationError.message : t("couldNotAddJob")),
   });
 
   return (
@@ -51,28 +53,28 @@ export function NewJobForm({ boardId }: { boardId: string }) {
       }}
     >
       <label className="sr-only" htmlFor="job-title">
-        job title
+        {t("jobTitle")}
       </label>
       <input
         id="job-title"
         data-new-item=""
         value={title}
         onChange={(event) => setTitle(event.target.value)}
-        placeholder="senior backend engineer"
+        placeholder={t("jobTitlePlaceholder")}
         className="w-56 border border-border bg-background px-2 py-1 font-mono text-xs outline-none placeholder:text-muted-foreground"
       />
       <label className="sr-only" htmlFor="job-company">
-        company
+        {t("company")}
       </label>
       <input
         id="job-company"
         value={company}
         onChange={(event) => setCompany(event.target.value)}
-        placeholder="company"
+        placeholder={t("companyPlaceholder")}
         className="w-40 border border-border bg-background px-2 py-1 font-mono text-xs outline-none placeholder:text-muted-foreground"
       />
       <Button type="submit" size="sm" disabled={create.isPending || title.trim() === ""}>
-        {create.isPending ? "adding…" : "add job"}
+        {create.isPending ? t("adding") : t("addJobButton")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">

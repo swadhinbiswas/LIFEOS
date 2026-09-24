@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ function useSubmit() {
 }
 
 export function AddProjectForm() {
+  const t = useTranslations("Pages.Career");
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [language, setLanguage] = useState("");
@@ -66,37 +68,37 @@ export function AddProjectForm() {
       }}
     >
       <label className={label}>
-        project
+        {t("project")}
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="name"
+          placeholder={t("placeholderName")}
           className={field}
-          aria-label="project name"
+          aria-label={t("projectName")}
         />
       </label>
       <label className={label}>
-        url
+        {t("url")}
         <input
           value={url}
           onChange={(event) => setUrl(event.target.value)}
           placeholder="https://github.com/…"
           className={field}
-          aria-label="project url"
+          aria-label={t("projectUrl")}
         />
       </label>
       <label className={label}>
-        language
+        {t("language")}
         <input
           value={language}
           onChange={(event) => setLanguage(event.target.value)}
           placeholder="Go"
           className={field}
-          aria-label="project language"
+          aria-label={t("projectLanguage")}
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || name.trim() === ""}>
-        {busy ? "adding…" : "add project"}
+        {busy ? t("adding") : t("addProject")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">
@@ -108,6 +110,7 @@ export function AddProjectForm() {
 }
 
 export function AddSkillForm() {
+  const t = useTranslations("Pages.Career");
   const [name, setName] = useState("");
   const [level, setLevel] = useState("");
   const { busy, error, submit } = useSubmit();
@@ -134,28 +137,28 @@ export function AddSkillForm() {
       }}
     >
       <label className={label}>
-        skill
+        {t("skill")}
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder="Kubernetes"
           className={field}
-          aria-label="skill name"
+          aria-label={t("skillName")}
         />
       </label>
       <label className={label}>
-        level 1–5
+        {t("level15")}
         <input
           inputMode="numeric"
           value={level}
           onChange={(event) => setLevel(event.target.value)}
           placeholder="4"
           className={field}
-          aria-label="skill level"
+          aria-label={t("skillLevel")}
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || name.trim() === ""}>
-        {busy ? "adding…" : "add skill"}
+        {busy ? t("adding") : t("addSkill")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">
@@ -167,6 +170,7 @@ export function AddSkillForm() {
 }
 
 export function AddAchievementForm() {
+  const t = useTranslations("Pages.Career");
   const [title, setTitle] = useState("");
   const [impact, setImpact] = useState("");
   const { busy, error, submit } = useSubmit();
@@ -192,27 +196,27 @@ export function AddAchievementForm() {
       }}
     >
       <label className={label}>
-        win
+        {t("win")}
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="shipped the billing migration"
+          placeholder={t("winPlaceholder")}
           className={field}
-          aria-label="achievement title"
+          aria-label={t("achievementTitle")}
         />
       </label>
       <label className={label}>
-        impact
+        {t("impact")}
         <input
           value={impact}
           onChange={(event) => setImpact(event.target.value)}
-          placeholder="cut p95 latency by 40%"
+          placeholder={t("impactPlaceholder")}
           className={field}
-          aria-label="achievement impact"
+          aria-label={t("achievementImpact")}
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || title.trim() === ""}>
-        {busy ? "adding…" : "add win"}
+        {busy ? t("adding") : t("addWin")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">

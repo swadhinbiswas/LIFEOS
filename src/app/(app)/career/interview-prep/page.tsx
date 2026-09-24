@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -16,21 +17,20 @@ export default async function InterviewPrepPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Career");
   const prep = await listPrep(session.user.id);
 
   return (
     <>
       <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        Interview prep
+        {t("prepTitle")}
       </h1>
 
       <div className="grid max-w-4xl gap-4">
-        <Panel title="Question bank" hint={`${prep.questions.length}`}>
+        <Panel title={t("questionBank")} hint={`${prep.questions.length}`}>
           <AddQuestionForm />
           {prep.questions.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              nothing yet — add the questions you keep meeting
-            </p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noQuestions")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {prep.questions.map((question) => (
@@ -52,12 +52,10 @@ export default async function InterviewPrepPage() {
           )}
         </Panel>
 
-        <Panel title="STAR stories" hint={`${prep.stories.length}`}>
+        <Panel title={t("starStories")} hint={`${prep.stories.length}`}>
           <AddStoryForm />
           {prep.stories.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              nothing yet — one story per repeating theme pays for itself
-            </p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noStories")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {prep.stories.map((story) => (

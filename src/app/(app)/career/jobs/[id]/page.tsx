@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -24,6 +25,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Career");
   const { id } = await params;
   const detail = await getJobDetail(session.user.id, id).catch(() => null);
   if (!detail) notFound();
@@ -40,33 +42,43 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
       </h1>
 
       <div className="grid max-w-4xl gap-4">
-        <Panel title="Application" hint={stage ?? undefined}>
+        <Panel title={t("application")} hint={stage ?? undefined}>
           <dl className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
             <div>
-              <dt className="font-mono text-[10px] text-muted-foreground uppercase">company</dt>
+              <dt className="font-mono text-[10px] text-muted-foreground uppercase">
+                {t("companyLabel")}
+              </dt>
               <dd className="font-mono">{company?.name ?? "—"}</dd>
             </div>
             <div>
-              <dt className="font-mono text-[10px] text-muted-foreground uppercase">source</dt>
+              <dt className="font-mono text-[10px] text-muted-foreground uppercase">
+                {t("sourceLabel")}
+              </dt>
               <dd className="font-mono">{application.source ?? "—"}</dd>
             </div>
             <div>
-              <dt className="font-mono text-[10px] text-muted-foreground uppercase">work mode</dt>
+              <dt className="font-mono text-[10px] text-muted-foreground uppercase">
+                {t("workMode")}
+              </dt>
               <dd className="font-mono">{application.work_mode ?? "—"}</dd>
             </div>
             <div>
-              <dt className="font-mono text-[10px] text-muted-foreground uppercase">visa</dt>
+              <dt className="font-mono text-[10px] text-muted-foreground uppercase">{t("visa")}</dt>
               <dd className="font-mono">{application.visa_status ?? "—"}</dd>
             </div>
             <div>
-              <dt className="font-mono text-[10px] text-muted-foreground uppercase">salary</dt>
+              <dt className="font-mono text-[10px] text-muted-foreground uppercase">
+                {t("salary")}
+              </dt>
               <dd className="font-mono tabular-nums">
                 {money(application.salary_min, application.currency)} –{" "}
                 {money(application.salary_max, application.currency)}
               </dd>
             </div>
             <div>
-              <dt className="font-mono text-[10px] text-muted-foreground uppercase">excitement</dt>
+              <dt className="font-mono text-[10px] text-muted-foreground uppercase">
+                {t("excitement")}
+              </dt>
               <dd className="font-mono">
                 {application.excitement === null ? "—" : "★".repeat(application.excitement)}
               </dd>
@@ -79,20 +91,20 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
               rel="noreferrer noopener"
               target="_blank"
             >
-              posting ↗
+              {t("posting")}
             </a>
           ) : null}
           <Link
             href="/career/jobs"
             className="font-mono text-xs text-muted-foreground hover:underline"
           >
-            ← back to the pipeline
+            {t("backToPipeline")}
           </Link>
         </Panel>
 
-        <Panel title="Interview log" hint={`${interviews.length}`}>
+        <Panel title={t("interviewLog")} hint={`${interviews.length}`}>
           {interviews.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">no rounds logged yet</p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noRounds")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {interviews.map((interview) => (
@@ -109,7 +121,7 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                   >
                     {interview.starts_at
                       ? new Date(interview.starts_at).toISOString().slice(0, 10)
-                      : "no date"}
+                      : t("noDate")}
                   </time>
                   <span className="min-w-0 flex-1 truncate text-muted-foreground">
                     {interview.feedback ?? ""}
@@ -121,18 +133,18 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
           <AddInterviewForm applicationId={application.id} />
         </Panel>
 
-        <Panel title="Offers" hint={`${offers.length}`}>
+        <Panel title={t("offers")} hint={`${offers.length}`}>
           {offers.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">no offers yet</p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noOffers")}</p>
           ) : (
             <table className="w-full border-collapse font-mono text-xs">
               <thead>
                 <tr>
                   <th scope="col" className="border-b border-border px-2 py-1 text-left">
-                    base
+                    {t("base")}
                   </th>
                   <th scope="col" className="border-b border-border px-2 py-1 text-left">
-                    bonus
+                    {t("bonus")}
                   </th>
                 </tr>
               </thead>

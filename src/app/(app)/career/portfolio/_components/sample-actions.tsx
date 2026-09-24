@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export function SampleActions({
   hasSamples: boolean;
 }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Career");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -44,8 +46,13 @@ export function SampleActions({
     }
     setMessage(
       action === "import"
-        ? `added ${"projectsAdded" in result.data ? result.data.projectsAdded : 0} projects and ${"skillsAdded" in result.data ? result.data.skillsAdded : 0} skills`
-        : `removed ${"removed" in result.data ? result.data.removed : 0} sample projects`,
+        ? t("addedSample", {
+            projects: "projectsAdded" in result.data ? result.data.projectsAdded : 0,
+            skills: "skillsAdded" in result.data ? result.data.skillsAdded : 0,
+          })
+        : t("removedSample", {
+            removed: "removed" in result.data ? result.data.removed : 0,
+          }),
     );
     router.refresh();
   };
@@ -53,8 +60,13 @@ export function SampleActions({
   return (
     <div className="flex flex-col gap-2 text-xs">
       <p className="font-mono text-[10px] text-muted-foreground">
-        {projectCount} projects · {skillCount} skills · source: {source} (fetched{" "}
-        {fetchedAt.slice(0, 10)}, {totalRepos} repos)
+        {t("sampleCounts", {
+          projects: projectCount,
+          skills: skillCount,
+          source,
+          fetched: fetchedAt.slice(0, 10),
+          repos: totalRepos,
+        })}
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <Button
@@ -64,7 +76,7 @@ export function SampleActions({
           disabled={busy}
           onClick={() => void run("import")}
         >
-          import sample portfolio
+          {t("importSample")}
         </Button>
         <Button
           type="button"
@@ -73,7 +85,7 @@ export function SampleActions({
           disabled={busy || !hasSamples}
           onClick={() => void run("clear")}
         >
-          remove sample rows
+          {t("removeSamples")}
         </Button>
         {message ? (
           <span role="status" className="font-mono text-[10px] text-muted-foreground">
