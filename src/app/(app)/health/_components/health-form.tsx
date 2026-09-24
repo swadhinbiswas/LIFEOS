@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ const label = "flex flex-col gap-1 font-mono text-[10px] text-muted-foreground u
 /** Values are logged in the unit the user chose; nothing is converted behind their back. */
 export function HealthForm({ defaultDate }: { defaultDate: string }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Health");
   const [kind, setKind] = useState("sleep");
   const [value, setValue] = useState("");
   const [unit, setUnit] = useState("h");
@@ -46,12 +48,12 @@ export function HealthForm({ defaultDate }: { defaultDate: string }) {
       }}
     >
       <label className={label}>
-        what
+        {t("what")}
         <select
           value={kind}
           onChange={(e) => setKind(e.target.value)}
           className={field}
-          aria-label="health kind"
+          aria-label={t("ariaKind")}
         >
           {["sleep", "workout", "water", "mood", "weight"].map((option) => (
             <option key={option} value={option}>
@@ -61,38 +63,38 @@ export function HealthForm({ defaultDate }: { defaultDate: string }) {
         </select>
       </label>
       <label className={label}>
-        amount
+        {t("amount")}
         <input
           inputMode="numeric"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="8"
           className={`${field} w-20`}
-          aria-label="health value"
+          aria-label={t("ariaValue")}
         />
       </label>
       <label className={label}>
-        unit
+        {t("unit")}
         <input
           value={unit}
           onChange={(e) => setUnit(e.target.value)}
           placeholder="h"
           className={`${field} w-20`}
-          aria-label="health unit"
+          aria-label={t("ariaUnit")}
         />
       </label>
       <label className={label}>
-        day
+        {t("day")}
         <input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
           className={field}
-          aria-label="health date"
+          aria-label={t("ariaDate")}
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || value.trim() === ""}>
-        log it
+        {t("logIt")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">

@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import type { BoardPayload } from "@/server/boards";
 
 import { useBoard } from "./use-board";
@@ -24,6 +26,7 @@ export function InboxList({
   initialData: BoardPayload;
 }) {
   const { payload, isFetching, moveCard } = useBoard(boardId, initialData);
+  const t = useTranslations("Pages.Inbox");
 
   const inbox = payload.columns.find((column) => column.name === "Inbox");
   const cards = (inbox ? payload.cards.filter((card) => card.column_id === inbox.id) : []).sort(
@@ -47,9 +50,7 @@ export function InboxList({
   return (
     <div className="flex flex-col gap-2" data-slot="inbox-list">
       {cards.length === 0 ? (
-        <p className="font-mono text-xs text-muted-foreground">
-          inbox is empty — capture something above
-        </p>
+        <p className="font-mono text-xs text-muted-foreground">{t("empty")}</p>
       ) : null}
 
       <ul className="flex flex-col gap-1">
@@ -82,9 +83,9 @@ export function InboxList({
                     type="button"
                     className={control}
                     onClick={() => triage(card, column.id)}
-                    aria-label={`move ${card.title} to ${name}`}
+                    aria-label={t("moveAria", { title: card.title, name })}
                   >
-                    → {name}
+                    {t("moveTo", { name })}
                   </button>
                 );
               })}
@@ -94,7 +95,8 @@ export function InboxList({
       </ul>
 
       <p className="font-mono text-[10px] text-muted-foreground" role="status">
-        {cards.length} in inbox{isFetching ? " · syncing…" : ""}
+        {t("count", { count: cards.length })}
+        {isFetching ? t("syncing") : ""}
       </p>
     </div>
   );

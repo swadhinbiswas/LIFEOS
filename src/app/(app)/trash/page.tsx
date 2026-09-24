@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -16,18 +17,20 @@ export default async function TrashPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Trash");
   const { items } = await listTrash(session.user.id);
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Trash</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("title")}
+      </h1>
 
       <div className="grid max-w-3xl gap-4">
-        <Panel title="Deleted" hint={`${items.length}`}>
+        <Panel title={t("deleted")} hint={`${items.length}`}>
           {items.length === 0 ? (
             <p data-slot="trash-empty" className="font-mono text-xs text-muted-foreground">
-              nothing in the trash — deleted cards and notes stay here for 30 days, then they are
-              gone
+              {t("empty")}
             </p>
           ) : (
             <TrashList items={items} />

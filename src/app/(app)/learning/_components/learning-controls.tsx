@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ const label = "flex flex-col gap-1 font-mono text-[10px] text-muted-foreground u
 
 function useSubmit() {
   const router = useRouter();
+  const t = useTranslations("Pages.Learning");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const submit = async (
@@ -28,7 +30,7 @@ function useSubmit() {
     const result = await call();
     setBusy(false);
     if (!result.ok) {
-      setError(result.message ?? "could not save");
+      setError(result.message ?? t("couldNotSave"));
       return;
     }
     reset?.();
@@ -38,6 +40,7 @@ function useSubmit() {
 }
 
 export function AddCourseForm() {
+  const t = useTranslations("Pages.Learning");
   const [title, setTitle] = useState("");
   const [provider, setProvider] = useState("");
   const { busy, error, submit } = useSubmit();
@@ -63,7 +66,7 @@ export function AddCourseForm() {
       }}
     >
       <label className={`${label} min-w-56 flex-1`}>
-        course
+        {t("course")}
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -73,7 +76,7 @@ export function AddCourseForm() {
         />
       </label>
       <label className={label}>
-        provider
+        {t("provider")}
         <input
           value={provider}
           onChange={(e) => setProvider(e.target.value)}
@@ -83,7 +86,7 @@ export function AddCourseForm() {
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || title.trim() === ""}>
-        add course
+        {t("addCourse")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">
@@ -96,6 +99,7 @@ export function AddCourseForm() {
 
 /** Progress is set by the learner in steps, never inferred from activity. */
 export function CourseProgress({ courseId, progress }: { courseId: string; progress: number }) {
+  const t = useTranslations("Pages.Learning");
   const { busy, submit } = useSubmit();
   const set = (next: number) =>
     void submit(() =>
@@ -110,7 +114,7 @@ export function CourseProgress({ courseId, progress }: { courseId: string; progr
         variant="outline"
         disabled={busy}
         onClick={() => set(progress - 10)}
-        aria-label="less progress"
+        aria-label={t("lessProgress")}
       >
         −10
       </Button>
@@ -121,7 +125,7 @@ export function CourseProgress({ courseId, progress }: { courseId: string; progr
         variant="outline"
         disabled={busy}
         onClick={() => set(progress + 10)}
-        aria-label="more progress"
+        aria-label={t("moreProgress")}
       >
         +10
       </Button>
@@ -130,6 +134,7 @@ export function CourseProgress({ courseId, progress }: { courseId: string; progr
 }
 
 export function AddBookForm() {
+  const t = useTranslations("Pages.Learning");
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const { busy, error, submit } = useSubmit();
@@ -155,7 +160,7 @@ export function AddBookForm() {
       }}
     >
       <label className={`${label} min-w-56 flex-1`}>
-        book
+        {t("book")}
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
@@ -165,7 +170,7 @@ export function AddBookForm() {
         />
       </label>
       <label className={label}>
-        author
+        {t("author")}
         <input
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
@@ -175,7 +180,7 @@ export function AddBookForm() {
         />
       </label>
       <Button type="submit" size="sm" variant="outline" disabled={busy || title.trim() === ""}>
-        add book
+        {t("addBook")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">
@@ -187,6 +192,7 @@ export function AddBookForm() {
 }
 
 export function BookStatus({ bookId, status }: { bookId: string; status: string }) {
+  const t = useTranslations("Pages.Learning");
   const { busy, submit } = useSubmit();
 
   return (
@@ -202,7 +208,7 @@ export function BookStatus({ bookId, status }: { bookId: string; status: string 
         )
       }
       className={field}
-      aria-label="book status"
+      aria-label={t("bookStatus")}
     >
       {["want", "reading", "finished", "abandoned"].map((option) => (
         <option key={option} value={option}>

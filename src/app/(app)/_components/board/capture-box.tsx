@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { Kbd } from "@/components/tui/kbd";
@@ -32,6 +33,7 @@ export function CaptureBox({
   columnName?: string;
 }) {
   const queryClient = useQueryClient();
+  const t = useTranslations("Pages.Capture");
   const [text, setText] = useState("");
   const [preview, setPreview] = useState<ParsedCapture | null>(null);
   const [error, setError] = useState("");
@@ -95,14 +97,14 @@ export function CaptureBox({
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-1" data-slot="capture-box">
       <label className="sr-only" htmlFor="capture-input">
-        capture a task
+        {t("label")}
       </label>
       <input
         id="capture-input"
         data-new-item=""
         value={text}
         onChange={(event) => setText(event.target.value)}
-        placeholder="buy milk tomorrow 5pm #home !2"
+        placeholder={t("placeholder")}
         autoComplete="off"
         className="border border-border bg-background px-2 py-1.5 font-mono text-xs outline-none placeholder:text-muted-foreground"
       />
@@ -110,11 +112,15 @@ export function CaptureBox({
       <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-muted-foreground">
         {shown ? (
           <>
-            <span>adds:</span>
+            <span>{t("adds")}</span>
             <span className="text-foreground">
-              {shown.title === "" ? "(tags only)" : shown.title}
+              {shown.title === "" ? t("tagsOnly") : shown.title}
             </span>
-            {shown.dueAt ? <span className="text-info">due {dayLabel(shown.dueAt)}</span> : null}
+            {shown.dueAt ? (
+              <span className="text-info">
+                {t("due")} {dayLabel(shown.dueAt)}
+              </span>
+            ) : null}
             {shown.priority ? <span className="text-warning">{shown.priority}</span> : null}
             {shown.tags.map((tag) => (
               <span key={tag} className="text-primary">
@@ -122,12 +128,15 @@ export function CaptureBox({
               </span>
             ))}
             {shown.uncertain.length > 0 ? (
-              <span className="text-warning">uncertain: {shown.uncertain.join(", ")}</span>
+              <span className="text-warning">
+                {t("uncertain")} {shown.uncertain.join(", ")}
+              </span>
             ) : null}
           </>
         ) : (
           <span>
-            <Kbd>Enter</Kbd> to add · date, <span className="text-primary">#label</span>,{" "}
+            <Kbd>Enter</Kbd> {t("enterToAdd")} · {t("date")}{" "}
+            <span className="text-primary">#label</span>,{" "}
             <span className="text-warning">!priority</span>
           </span>
         )}
@@ -136,7 +145,7 @@ export function CaptureBox({
             {error}
           </span>
         ) : null}
-        {busy ? <span role="status">saving…</span> : null}
+        {busy ? <span role="status">{t("saving")}</span> : null}
       </div>
     </form>
   );

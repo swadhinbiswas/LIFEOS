@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
  */
 export function TrashList({ items }: { items: TrashItem[] }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Trash");
   const [busy, setBusy] = useState(false);
 
   const act = async (run: () => Promise<{ ok: boolean }>) => {
@@ -47,22 +49,22 @@ export function TrashList({ items }: { items: TrashItem[] }) {
               variant="outline"
               size="sm"
               disabled={busy}
-              aria-label={`restore ${item.title}`}
+              aria-label={t("restoreAria", { title: item.title })}
               onClick={() =>
                 void act(() => restoreTrashItemAction({ kind: item.kind, id: item.id }))
               }
             >
-              restore
+              {t("restore")}
             </Button>
             <Button
               type="button"
               variant="outline"
               size="sm"
               disabled={busy}
-              aria-label={`delete ${item.title} forever`}
+              aria-label={t("deleteForeverAria", { title: item.title })}
               onClick={() => void act(() => purgeTrashItemAction({ kind: item.kind, id: item.id }))}
             >
-              delete forever
+              {t("deleteForever")}
             </Button>
           </li>
         ))}
@@ -77,11 +79,9 @@ export function TrashList({ items }: { items: TrashItem[] }) {
           data-slot="purge-expired"
           onClick={() => void act(() => purgeExpiredTrashAction())}
         >
-          purge older than 30 days
+          {t("purge")}
         </Button>
-        <p className="font-mono text-[10px] text-muted-foreground">
-          restoring a note re-indexes it and brings its backlinks back
-        </p>
+        <p className="font-mono text-[10px] text-muted-foreground">{t("restoreHint")}</p>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -17,6 +18,7 @@ export default async function HealthPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Health");
   const today = await getUserDayKey(session.user.id);
   const [summary, recent] = await Promise.all([
     healthSummary(session.user.id, today),
@@ -25,22 +27,22 @@ export default async function HealthPage() {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Health</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("title")}
+      </h1>
 
       <div className="grid max-w-3xl gap-4">
         <p className="font-mono text-[10px] text-muted-foreground" data-slot="health-disclaimer">
-          your own logs, nothing medical — entries keep the unit you type and are never converted.
+          {t("disclaimer")}
         </p>
 
-        <Panel title="Log" hint={today}>
+        <Panel title={t("log")} hint={today}>
           <HealthForm defaultDate={today} />
         </Panel>
 
-        <Panel title="Trends · 4 weeks" hint={`${summary.trends.length} kinds`}>
+        <Panel title={t("trends")} hint={t("kinds", { count: summary.trends.length })}>
           {summary.trends.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              nothing logged yet — the weekly averages appear here
-            </p>
+            <p className="font-mono text-xs text-muted-foreground">{t("nothingLogged")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {summary.trends.map((trend) => (
@@ -51,10 +53,10 @@ export default async function HealthPage() {
                 >
                   <span className="min-w-24">{trend.kind}</span>
                   <span className="tabular-nums">
-                    {trend.thisWeek ?? "—"} {trend.unit ?? ""} this week
+                    {trend.thisWeek ?? "—"} {trend.unit ?? ""} {t("thisWeek")}
                   </span>
                   <span className="text-muted-foreground tabular-nums">
-                    last {trend.lastWeek ?? "—"}
+                    {t("last")} {trend.lastWeek ?? "—"}
                   </span>
                   {trend.delta !== null ? (
                     <span className={trend.delta >= 0 ? "text-success" : "text-warning"}>
@@ -62,16 +64,18 @@ export default async function HealthPage() {
                       {trend.delta}
                     </span>
                   ) : null}
-                  <span className="ml-auto text-muted-foreground">{trend.entries} entries</span>
+                  <span className="ml-auto text-muted-foreground">
+                    {t("entries", { count: trend.entries })}
+                  </span>
                 </li>
               ))}
             </ul>
           )}
         </Panel>
 
-        <Panel title="Recent" hint={`${recent.length}`}>
+        <Panel title={t("recent")} hint={`${recent.length}`}>
           {recent.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">no entries yet</p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noEntries")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {recent.slice(0, 12).map((row) => (

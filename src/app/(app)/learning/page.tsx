@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -21,6 +22,7 @@ export default async function LearningPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Learning");
   const [courses, books] = await Promise.all([
     listCourses(session.user.id),
     listBooks(session.user.id),
@@ -28,15 +30,15 @@ export default async function LearningPage() {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Learning</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("title")}
+      </h1>
 
       <div className="grid max-w-3xl gap-4">
-        <Panel title="Courses" hint={`${courses.length}`}>
+        <Panel title={t("courses")} hint={`${courses.length}`}>
           <AddCourseForm />
           {courses.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              no courses yet — add one and track it yourself
-            </p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noCourses")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {courses.map((course) => (
@@ -59,10 +61,10 @@ export default async function LearningPage() {
           )}
         </Panel>
 
-        <Panel title="Books" hint={`${books.length}`}>
+        <Panel title={t("books")} hint={`${books.length}`}>
           <AddBookForm />
           {books.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">no books yet</p>
+            <p className="font-mono text-xs text-muted-foreground">{t("noBooks")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {books.map((book) => (
