@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import type { LayoutInput } from "@/config/dashboard-widgets";
@@ -22,6 +23,7 @@ export function LayoutControls({
   labels: Record<string, string>;
 }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Dashboard");
   const [widgets, setWidgets] = useState(layout.widgets);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -49,9 +51,7 @@ export function LayoutControls({
 
   return (
     <div className="flex flex-col gap-1" data-slot="layout-controls">
-      <p className="font-mono text-[10px] text-muted-foreground">
-        widgets on this variant — hide or move them; changes save immediately
-      </p>
+      <p className="font-mono text-[10px] text-muted-foreground">{t("layoutHint")}</p>
       <ul className="flex flex-col gap-1">
         {widgets.map((widget, index) => (
           <li key={widget.id} className="flex flex-wrap items-center gap-2 font-mono text-xs">
@@ -60,7 +60,7 @@ export function LayoutControls({
                 type="checkbox"
                 checked={widget.visible}
                 disabled={busy}
-                aria-label={`show ${labels[widget.id] ?? widget.id}`}
+                aria-label={t("show", { name: labels[widget.id] ?? widget.id })}
                 onChange={(event) =>
                   void persist(
                     widgets.map((entry) =>
@@ -76,7 +76,7 @@ export function LayoutControls({
               className={control}
               disabled={busy || index === 0}
               onClick={() => move(index, -1)}
-              aria-label={`move ${labels[widget.id] ?? widget.id} up`}
+              aria-label={t("moveUp", { name: labels[widget.id] ?? widget.id })}
             >
               ↑
             </button>
@@ -85,7 +85,7 @@ export function LayoutControls({
               className={control}
               disabled={busy || index === widgets.length - 1}
               onClick={() => move(index, 1)}
-              aria-label={`move ${labels[widget.id] ?? widget.id} down`}
+              aria-label={t("moveDown", { name: labels[widget.id] ?? widget.id })}
             >
               ↓
             </button>
@@ -94,7 +94,7 @@ export function LayoutControls({
       </ul>
       {saved ? (
         <p role="status" className="font-mono text-[10px] text-muted-foreground">
-          layout saved
+          {t("layoutSaved")}
         </p>
       ) : null}
     </div>

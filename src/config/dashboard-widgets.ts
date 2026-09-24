@@ -15,23 +15,85 @@ export interface DashboardWidget {
   id: string;
   variant: DashboardVariant;
   label: string;
+  /** Message key under `Widgets`; the dashboard translates the label (ADR-072). */
+  key: string;
   defaultSize: WidgetSize;
   /** Only what a widget cannot render without; everything else renders its own empty state. */
   note?: string;
 }
 
 export const DASHBOARD_WIDGETS: DashboardWidget[] = [
-  { id: "today.top3", variant: "today", label: "top 3", defaultSize: "m" },
-  { id: "today.counts", variant: "today", label: "overdue / due today / inbox", defaultSize: "m" },
-  { id: "today.planned", variant: "today", label: "planned minutes", defaultSize: "s" },
-  { id: "overview.kpis", variant: "overview", label: "KPI table", defaultSize: "l" },
-  { id: "overview.wins", variant: "overview", label: "habit streaks", defaultSize: "m" },
-  { id: "career.funnel", variant: "career", label: "pipeline funnel", defaultSize: "l" },
-  { id: "career.open", variant: "career", label: "open applications", defaultSize: "s" },
-  { id: "career.analytics", variant: "career", label: "sources and weeks", defaultSize: "m" },
-  { id: "productivity.kpis", variant: "productivity", label: "work KPIs", defaultSize: "m" },
-  { id: "productivity.focus", variant: "productivity", label: "focus this week", defaultSize: "s" },
-  { id: "productivity.reviews", variant: "productivity", label: "review streak", defaultSize: "s" },
+  { id: "today.top3", variant: "today", label: "top 3", key: "todayTop3", defaultSize: "m" },
+  {
+    id: "today.counts",
+    variant: "today",
+    label: "overdue / due today / inbox",
+    key: "todayCounts",
+    defaultSize: "m",
+  },
+  {
+    id: "today.planned",
+    variant: "today",
+    label: "planned minutes",
+    key: "todayPlanned",
+    defaultSize: "s",
+  },
+  {
+    id: "overview.kpis",
+    variant: "overview",
+    label: "KPI table",
+    key: "overviewKpis",
+    defaultSize: "l",
+  },
+  {
+    id: "overview.wins",
+    variant: "overview",
+    label: "habit streaks",
+    key: "overviewWins",
+    defaultSize: "m",
+  },
+  {
+    id: "career.funnel",
+    variant: "career",
+    label: "pipeline funnel",
+    key: "careerFunnel",
+    defaultSize: "l",
+  },
+  {
+    id: "career.open",
+    variant: "career",
+    label: "open applications",
+    key: "careerOpen",
+    defaultSize: "s",
+  },
+  {
+    id: "career.analytics",
+    variant: "career",
+    label: "sources and weeks",
+    key: "careerAnalytics",
+    defaultSize: "m",
+  },
+  {
+    id: "productivity.kpis",
+    variant: "productivity",
+    label: "work KPIs",
+    key: "productivityKpis",
+    defaultSize: "m",
+  },
+  {
+    id: "productivity.focus",
+    variant: "productivity",
+    label: "focus this week",
+    key: "productivityFocus",
+    defaultSize: "s",
+  },
+  {
+    id: "productivity.reviews",
+    variant: "productivity",
+    label: "review streak",
+    key: "productivityReviews",
+    defaultSize: "s",
+  },
 ];
 
 export const widgetIdsFor = (variant: DashboardVariant): string[] =>

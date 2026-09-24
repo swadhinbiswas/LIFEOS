@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -21,6 +22,13 @@ import { LayoutControls } from "./_components/layout-controls";
 
 export const metadata = { title: "Dashboard" };
 
+const VARIANT_KEY: Record<DashboardVariant, string> = {
+  today: "variantToday",
+  overview: "variantOverview",
+  career: "variantCareer",
+  productivity: "variantProductivity",
+};
+
 const money = (minor: number, unit: string | null): string => {
   const whole = (minor / 100).toLocaleString(undefined, { maximumFractionDigits: 2 });
   return unit ? `${whole} ${unit}` : whole;
@@ -35,13 +43,16 @@ const renderValue = (value: number | null, unit: string | null): string => {
 type PageProps = { searchParams: Promise<{ variant?: string }> };
 
 /**
- * `/dashboard` (spec §6.8): four variants over one registry (ADR-046). The page only renders the
- * widgets the user has visible, in their saved order; every number comes from the module that owns
- * it, and every KPI links to its source list.
+ * `/dashboard` (spec §6.8): four variants over one registry (ADR-046), translated per ADR-072. The
+ * page only renders the widgets the user has visible, in their saved order; every number comes from
+ * the module that owns it, and every KPI links to its source list.
  */
 export default async function DashboardPage({ searchParams }: PageProps) {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
+
+  const t = await getTranslations("Pages.Dashboard");
+  const tw = await getTranslations("Widgets");
 
   const { variant: requested } = await searchParams;
   const variant: DashboardVariant = DASHBOARD_VARIANTS.includes(requested as DashboardVariant)
@@ -51,7 +62,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   await ensureSystemTasksBoard(session.user.id);
   const layout = await getLayout(session.user.id, variant);
   const visible = layout.widgets.filter((widget) => widget.visible).map((widget) => widget.id);
-  const labels = Object.fromEntries(DASHBOARD_WIDGETS.map((widget) => [widget.id, widget.label]));
+  const labels = Object.fromEntries(DASHBOARD_WIDGETS.map((widget) => [widget.id, tw(widget.key)]));
 
   const { timeZone, weekStart } = await getRegionalSettings(session.user.id);
   const brief = visible.some((id) => id.startsWith("today."))
@@ -73,27 +84,29 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     "today.counts": brief ? (
       <dl className="flex flex-wrap gap-4 font-mono text-[10px] uppercase">
         <div className="flex items-center gap-1">
-          <dt className="text-muted-foreground">overdue</dt>
+          <dt className="text-muted-foreground">{t("overdue")}</dt>
           <dd className={brief.overdue.length > 0 ? "text-warning" : "text-muted-foreground"}>
             {brief.overdue.length}
           </dd>
         </div>
         <div className="flex items-center gap-1">
-          <dt className="text-muted-foreground">due today</dt>
+          <dt className="text-muted-foreground">{t("dueToday")}</dt>
           <dd className="text-muted-foreground">{brief.dueToday.length}</dd>
         </div>
         <div className="flex items-center gap-1">
-          <dt className="text-muted-foreground">inbox</dt>
+          <dt className="text-muted-foreground">{t("inbox")}</dt>
           <dd className="text-muted-foreground">{brief.inbox.length}</dd>
         </div>
       </dl>
     ) : null,
     "today.planned": brief ? (
-      <p className="font-mono text-xs tabular-nums">{brief.estimatedMinutesToday} min planned</p>
+      <p className="font-mono text-xs tabular-nums">
+        {t("minPlanned", { count: brief.estimatedMinutesToday })}
+      </p>
     ) : null,
     "today.top3": brief ? (
       brief.top.length === 0 ? (
-        <p className="font-mono text-xs text-muted-foreground">nothing open — nice</p>
+        <p className="font-mono text-xs text-muted-foreground">{t("nothingOpen")}</p>
       ) : (
         <ol className="flex flex-col gap-1">
           {brief.top.map((card) => (
@@ -112,16 +125,14 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     ) : null,
     "overview.kpis": kpis ? (
       <table className="w-full border-collapse font-mono text-xs">
-        <caption className="sr-only">
-          Key numbers with their change against the previous week, each linking to its list
-        </caption>
+        <caption className="sr-only">{t("kpiCaption")}</caption>
         <tbody>
           {kpis.values.map((kpi) => {
             const definition = KPI_DEFINITIONS[kpi.id];
             return (
               <tr key={kpi.id} data-slot="kpi-row" data-kpi={kpi.id}>
                 <th scope="row" className="border-b border-border px-2 py-1 text-left font-normal">
-                  <span title={definition?.definition}>{definition?.label ?? kpi.id}</span>
+                  <span title={t(`kpiDef_${kpi.id}`)}>{t(`kpi_${kpi.id}`)}</span>
                 </th>
                 <td className="border-b border-border px-2 py-1 text-right tabular-nums">
                   {renderValue(kpi.value, kpi.unit)}
@@ -132,7 +143,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 <td className="border-b border-border px-2 py-1">
                   {definition ? (
                     <Link href={definition.href} className="text-primary hover:underline">
-                      open list
+                      {t("openList")}
                     </Link>
                   ) : null}
                 </td>
@@ -145,13 +156,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     "overview.wins": (
       <ul className="flex flex-col gap-1 font-mono text-xs">
         {habits.length === 0 ? (
-          <li className="text-muted-foreground">no habits yet</li>
+          <li className="text-muted-foreground">{t("noHabits")}</li>
         ) : (
           habits.map((row) => (
             <li key={row.habit.id} data-slot="streak-row" className="flex items-center gap-2">
               <span className="min-w-0 flex-1 truncate">{row.habit.name}</span>
               <span className="text-muted-foreground">
-                {row.streak > 0 ? `${row.streak} day streak` : "fresh start"}
+                {row.streak > 0 ? t("streak", { count: row.streak }) : t("freshStart")}
               </span>
             </li>
           ))
@@ -173,7 +184,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     ) : null,
     "career.open": kpis ? (
       <p className="font-mono text-xs tabular-nums">
-        {renderValue(kpiById.get("openApplications")?.value ?? 0, null)} open
+        {t("openCount", { count: kpiById.get("openApplications")?.value ?? 0 })}
       </p>
     ) : null,
     "career.analytics": career ? (
@@ -192,33 +203,36 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     "productivity.kpis": kpis ? (
       <dl className="flex flex-wrap gap-4 font-mono text-xs">
         <div className="flex items-center gap-1">
-          <dt className="text-muted-foreground">tasks done</dt>
+          <dt className="text-muted-foreground">{t("tasksDone")}</dt>
           <dd className="tabular-nums">{kpiById.get("tasksDoneThisWeek")?.value ?? 0}</dd>
         </div>
         <div className="flex items-center gap-1">
-          <dt className="text-muted-foreground">focus</dt>
-          <dd className="tabular-nums">{kpiById.get("focusMinutesThisWeek")?.value ?? 0} min</dd>
+          <dt className="text-muted-foreground">{t("focus")}</dt>
+          <dd className="tabular-nums">
+            {kpiById.get("focusMinutesThisWeek")?.value ?? 0} {t("min")}
+          </dd>
         </div>
       </dl>
     ) : null,
     "productivity.focus": kpis ? (
       <p className="font-mono text-xs tabular-nums">
-        {renderValue(kpiById.get("focusMinutesThisWeek")?.value ?? 0, "min")} this week
+        {renderValue(kpiById.get("focusMinutesThisWeek")?.value ?? 0, t("min"))} {t("thisWeek")}
       </p>
     ) : null,
     "productivity.reviews": (
-      <p className="font-mono text-xs tabular-nums">{reviews.length} reviews logged</p>
+      <p className="font-mono text-xs tabular-nums">
+        {t("reviewsLogged", { count: reviews.length })}
+      </p>
     ),
   };
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Dashboard</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("title")}
+      </h1>
 
-      <nav
-        aria-label="dashboard variants"
-        className="mb-4 flex flex-wrap gap-1 font-mono text-[10px]"
-      >
+      <nav aria-label={t("title")} className="mb-4 flex flex-wrap gap-1 font-mono text-[10px]">
         {DASHBOARD_VARIANTS.map((option) => (
           <Link
             key={option}
@@ -230,13 +244,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 : "rounded-[var(--radius)] border border-border px-2 py-0.5 hover:bg-accent hover:text-accent-foreground"
             }
           >
-            {option}
+            {t(VARIANT_KEY[option])}
           </Link>
         ))}
       </nav>
 
       <div className="grid max-w-4xl gap-4">
-        <Panel title="Layout">
+        <Panel title={t("layout")}>
           <LayoutControls layout={layout} labels={labels} />
         </Panel>
 
@@ -245,7 +259,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           .map((widget) => (
             <Panel key={widget.id} title={labels[widget.id] ?? widget.id}>
               {widgets[widget.id] ?? (
-                <p className="font-mono text-xs text-muted-foreground">nothing to show yet</p>
+                <p className="font-mono text-xs text-muted-foreground">{t("nothingToShow")}</p>
               )}
             </Panel>
           ))}

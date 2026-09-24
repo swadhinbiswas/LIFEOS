@@ -24,10 +24,16 @@ test("i18n: the about page switches to Bangla and persists", async ({ page }) =>
   await expect(page.getByRole("link", { name: "ড্যাশবোর্ড" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
 
+  // A page body is translated as well (ADR-072).
+  await page.goto("/dashboard");
+  await expect(page.getByRole("heading", { name: "ড্যাশবোর্ড", level: 1 })).toBeVisible();
+
   // The cookie is the source of truth, so a reload keeps the language.
   await page.reload();
-  await expect(page.getByRole("heading", { name: "পরিচিতি", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ড্যাশবোর্ড", level: 1 })).toBeVisible();
 
+  // The switch lives on the about page; switching back restores English.
+  await page.goto("/about");
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.getByRole("heading", { name: "About", level: 1 })).toBeVisible();
 });
