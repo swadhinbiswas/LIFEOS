@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ const linksKey = (cardId: string) => ["card-goal-links", cardId] as const;
  */
 export function CardGoals({ cardId }: { cardId: string }) {
   const queryClient = useQueryClient();
+  const t = useTranslations("Pages.Board");
   const [chosen, setChosen] = useState("");
 
   const options = useQuery({
@@ -78,9 +80,9 @@ export function CardGoals({ cardId }: { cardId: string }) {
 
   return (
     <div className="flex flex-col gap-1" data-slot="card-goals">
-      <span className="font-mono text-xs text-muted-foreground">goals</span>
+      <span className="font-mono text-xs text-muted-foreground">{t("goals")}</span>
       {current.length === 0 ? (
-        <p className="font-mono text-[10px] text-muted-foreground">not linked to a goal yet</p>
+        <p className="font-mono text-[10px] text-muted-foreground">{t("notLinked")}</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {current.map((goal) => (
@@ -91,10 +93,10 @@ export function CardGoals({ cardId }: { cardId: string }) {
                 variant="ghost"
                 size="sm"
                 disabled={busy}
-                aria-label={`unlink ${goal.title}`}
+                aria-label={t("unlinkAria", { name: goal.title })}
                 onClick={() => unlink.mutate(goal.id)}
               >
-                unlink
+                {t("unlink")}
               </Button>
             </li>
           ))}
@@ -102,13 +104,11 @@ export function CardGoals({ cardId }: { cardId: string }) {
       )}
 
       {(options.data ?? []).length === 0 ? (
-        <p className="font-mono text-[10px] text-muted-foreground">
-          no goals yet — create one on the goals page
-        </p>
+        <p className="font-mono text-[10px] text-muted-foreground">{t("noGoals")}</p>
       ) : (
         <div className="flex items-center gap-2">
           <label className="sr-only" htmlFor="card-goal-select">
-            link this card to a goal
+            {t("linkToGoal")}
           </label>
           <select
             id="card-goal-select"
@@ -116,7 +116,7 @@ export function CardGoals({ cardId }: { cardId: string }) {
             onChange={(event) => setChosen(event.target.value)}
             className="h-8 min-w-0 flex-1 border border-border bg-background px-2 font-mono text-xs"
           >
-            <option value="">link to goal…</option>
+            <option value="">{t("linkToGoalOption")}</option>
             {available.map((goal) => (
               <option key={goal.id} value={goal.id}>
                 {goal.title}
@@ -130,7 +130,7 @@ export function CardGoals({ cardId }: { cardId: string }) {
             disabled={busy || chosen === ""}
             onClick={() => link.mutate(chosen)}
           >
-            link
+            {t("link")}
           </Button>
         </div>
       )}

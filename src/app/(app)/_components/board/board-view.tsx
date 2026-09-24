@@ -12,6 +12,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { useTranslations } from "next-intl";
 import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
 
@@ -55,6 +56,7 @@ export function BoardView({
     boardId,
     initialData,
   );
+  const t = useTranslations("Pages.Board");
   const { canUndo, canRedo, undo, redo, undoCount, redoCount } = useUndoRedo(boardId);
   const [viewParam, setViewParam] = useQueryState("view");
   const [query, setQuery] = useQueryState("q");
@@ -76,7 +78,7 @@ export function BoardView({
 
   const columns = payload.columns;
   const columnName = (columnId: string) =>
-    columns.find((column) => column.id === columnId)?.name ?? "column";
+    columns.find((column) => column.id === columnId)?.name ?? t("columnFallback");
 
   const visibleCards = useMemo(() => {
     const needle = query?.trim().toLowerCase() ?? "";
@@ -97,7 +99,11 @@ export function BoardView({
   const positionLabel = (card: Card): string => {
     const siblings = cardsInColumn(card.column_id);
     const index = siblings.findIndex((candidate) => candidate.id === card.id);
-    return `${index + 1} of ${siblings.length} in ${columnName(card.column_id)}`;
+    return t("positionLabel", {
+      index: index + 1,
+      total: siblings.length,
+      column: columnName(card.column_id),
+    });
   };
 
   function handleDragStart(event: DragStartEvent) {
@@ -292,7 +298,7 @@ export function BoardView({
           onClick={undo}
           className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 text-foreground hover:bg-accent hover:text-accent-foreground disabled:text-muted-foreground"
         >
-          undo (Ctrl+Z)
+          {t("undoButton")}
         </button>
         <button
           type="button"
@@ -302,7 +308,7 @@ export function BoardView({
           onClick={redo}
           className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 text-foreground hover:bg-accent hover:text-accent-foreground disabled:text-muted-foreground"
         >
-          redo (Ctrl+Shift+Z)
+          {t("redoButton")}
         </button>
       </div>
 
@@ -311,8 +317,8 @@ export function BoardView({
           data-slot="bulk-bar"
           className="flex flex-wrap items-center gap-2 border border-border bg-card px-2 py-1 font-mono text-[10px]"
         >
-          <span role="status">{selectedIds.length} selected</span>
-          <label htmlFor="bulk-move">move to</label>
+          <span role="status">{t("selected", { count: selectedIds.length })}</span>
+          <label htmlFor="bulk-move">{t("moveTo")}</label>
           <select
             id="bulk-move"
             value=""
@@ -321,7 +327,7 @@ export function BoardView({
             }}
             className="border border-border bg-background px-1 py-0.5 font-mono text-[10px]"
           >
-            <option value="">choose…</option>
+            <option value="">{t("choose")}</option>
             {columns.map((column) => (
               <option key={column.id} value={column.id}>
                 {column.name}
@@ -333,21 +339,21 @@ export function BoardView({
             className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 hover:bg-accent hover:text-accent-foreground"
             onClick={() => void bulkRemove(true)}
           >
-            archive
+            {t("archive")}
           </button>
           <button
             type="button"
             className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 hover:bg-accent hover:text-accent-foreground"
             onClick={() => void bulkRemove(false)}
           >
-            delete
+            {t("delete")}
           </button>
           <button
             type="button"
             className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 hover:bg-accent hover:text-accent-foreground"
             onClick={() => setSelectedIds([])}
           >
-            clear
+            {t("clear")}
           </button>
         </div>
       ) : null}
@@ -366,23 +372,25 @@ export function BoardView({
             announcements: {
               onDragStart: ({ active }) => {
                 const card = visibleCards.find((candidate) => candidate.id === String(active.id));
-                return card ? `Picked up ${card.title}. ${positionLabel(card)}.` : undefined;
+                return card
+                  ? t("pickedUp", { title: card.title, position: positionLabel(card) })
+                  : undefined;
               },
               onDragOver: ({ active, over }) => {
                 const card = visibleCards.find((candidate) => candidate.id === String(active.id));
                 if (!card || !over) return undefined;
-                return `${card.title} is over ${columnName(String(over.id))}.`;
+                return t("isOver", { title: card.title, column: columnName(String(over.id)) });
               },
               onDragEnd: ({ active, over }) => {
                 const card = visibleCards.find((candidate) => candidate.id === String(active.id));
                 if (!card) return undefined;
                 return over
-                  ? `Dropped ${card.title}. ${positionLabel(card)}.`
-                  : `Dropped ${card.title}.`;
+                  ? t("dropped", { title: card.title, position: positionLabel(card) })
+                  : t("droppedNoPosition", { title: card.title });
               },
               onDragCancel: ({ active }) => {
                 const card = visibleCards.find((candidate) => candidate.id === String(active.id));
-                return card ? `Cancelled moving ${card.title}.` : undefined;
+                return card ? t("cancelled", { title: card.title }) : undefined;
               },
             },
           }}

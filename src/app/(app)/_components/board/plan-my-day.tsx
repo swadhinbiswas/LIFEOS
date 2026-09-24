@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -19,6 +20,7 @@ import type { DailyBrief } from "@/server/boards/brief";
  */
 export function PlanMyDay({ boardId, brief }: { boardId: string; brief: DailyBrief }) {
   const router = useRouter();
+  const t = useTranslations("Pages.Board");
   const queryClient = useQueryClient();
   const [flash, setFlash] = useState("");
 
@@ -29,11 +31,11 @@ export function PlanMyDay({ boardId, brief }: { boardId: string; brief: DailyBri
       return result.data;
     },
     onSuccess: ({ moved }) => {
-      setFlash(moved === 0 ? "nothing overdue" : `carried over ${moved}`);
+      setFlash(moved === 0 ? t("nothingOverdue") : t("carriedOver", { count: moved }));
       void queryClient.invalidateQueries({ queryKey: ["board", boardId] });
       router.refresh();
     },
-    onError: () => setFlash("could not carry over — please retry"),
+    onError: () => setFlash(t("carryFailed")),
   });
 
   useEffect(() => {
@@ -58,23 +60,23 @@ export function PlanMyDay({ boardId, brief }: { boardId: string; brief: DailyBri
   const overdue = brief.carryEligible.length;
 
   return (
-    <Panel title="Plan my day" hint={`${brief.openCards} open`}>
+    <Panel title={t("planMyDay")} hint={t("openCards", { count: brief.openCards })}>
       <div className="flex flex-col gap-2 text-xs">
         <dl className="flex flex-wrap gap-4 font-mono text-[10px] uppercase">
           <div className="flex items-center gap-1">
-            <dt className="text-muted-foreground">overdue</dt>
+            <dt className="text-muted-foreground">{t("overdue")}</dt>
             <dd className={overdue > 0 ? "text-warning" : "text-muted-foreground"}>{overdue}</dd>
           </div>
           <div className="flex items-center gap-1">
-            <dt className="text-muted-foreground">due today</dt>
+            <dt className="text-muted-foreground">{t("dueToday")}</dt>
             <dd className="text-muted-foreground">{brief.dueToday.length}</dd>
           </div>
           <div className="flex items-center gap-1">
-            <dt className="text-muted-foreground">inbox</dt>
+            <dt className="text-muted-foreground">{t("inbox")}</dt>
             <dd className="text-muted-foreground">{brief.inbox.length}</dd>
           </div>
           <div className="flex items-center gap-1">
-            <dt className="text-muted-foreground">planned</dt>
+            <dt className="text-muted-foreground">{t("planned")}</dt>
             <dd className="text-muted-foreground tabular-nums">
               {brief.estimatedMinutesToday} min
             </dd>
@@ -82,9 +84,9 @@ export function PlanMyDay({ boardId, brief }: { boardId: string; brief: DailyBri
         </dl>
 
         <div>
-          <p className="font-mono text-[10px] text-muted-foreground uppercase">top 3</p>
+          <p className="font-mono text-[10px] text-muted-foreground uppercase">{t("top3")}</p>
           {brief.top.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">nothing open — nice</p>
+            <p className="font-mono text-xs text-muted-foreground">{t("nothingOpen")}</p>
           ) : (
             <ol className="flex flex-col gap-1">
               {brief.top.map((card) => (
@@ -112,7 +114,7 @@ export function PlanMyDay({ boardId, brief }: { boardId: string; brief: DailyBri
             disabled={carry.isPending || overdue === 0}
             onClick={() => carry.mutate()}
           >
-            carry over overdue ({overdue}) · c
+            {t("carryOver", { count: overdue })}
           </Button>
           {flash ? (
             <span role="status" className="font-mono text-[10px] text-muted-foreground">

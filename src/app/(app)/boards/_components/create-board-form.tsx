@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { createBoardAction } from "@/server/boards/actions";
  */
 export function CreateBoardForm() {
   const router = useRouter();
+  const t = useTranslations("Pages.Boards");
   const [name, setName] = useState("");
   const [template, setTemplate] = useState(BOARD_TEMPLATES[0]?.id ?? "blank");
   const [busy, setBusy] = useState(false);
@@ -39,17 +41,17 @@ export function CreateBoardForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-2 text-xs">
       <div className="flex flex-col gap-1">
-        <Label htmlFor="new-board-name">name</Label>
+        <Label htmlFor="new-board-name">{t("name")}</Label>
         <Input
           id="new-board-name"
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="reading list"
+          placeholder={t("namePlaceholder")}
           required
         />
       </div>
       <div className="flex flex-col gap-1">
-        <Label htmlFor="new-board-template">template</Label>
+        <Label htmlFor="new-board-template">{t("template")}</Label>
         <select
           id="new-board-template"
           value={template}
@@ -64,7 +66,7 @@ export function CreateBoardForm() {
         </select>
       </div>
       <Button type="submit" disabled={busy}>
-        {busy ? "creating…" : "create board"}
+        {busy ? t("creating") : t("createBoard")}
       </Button>
       {error ? (
         <p role="alert" className="text-destructive">

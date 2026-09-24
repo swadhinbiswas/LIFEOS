@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { QUICK_FILTERS, type QuickFilterId } from "@/config/board-filters";
 import { BOARD_VIEWS, type BoardView } from "@/config/boards";
 import { cn } from "@/lib/utils";
@@ -10,6 +12,21 @@ export const GROUP_OPTIONS: { id: GroupBy; label: string }[] = [
   { id: "column", label: "group by column" },
   { id: "priority", label: "group by priority" },
 ];
+
+/** Message key for each quick filter's label (spec §6.1). */
+const FILTER_KEYS: Record<QuickFilterId, string> = {
+  "due-today": "dueTodayFilter",
+  overdue: "overdueFilter",
+  "p0-p1": "p0p1",
+  "no-date": "noDate",
+  stale: "stale",
+};
+
+const GROUP_KEYS: Record<GroupBy, string> = {
+  none: "noGrouping",
+  column: "groupByColumn",
+  priority: "groupByPriority",
+};
 
 const chip = (active: boolean) =>
   cn(
@@ -49,10 +66,11 @@ export function BoardToolbar({
   /** Grouping renders in the table view; kanban swimlanes are a later chunk (no dead control). */
   showGroup: boolean;
 }) {
+  const t = useTranslations("Pages.Board");
   return (
     <div className="flex flex-wrap items-center gap-3" data-slot="board-toolbar">
       <fieldset className="flex items-center gap-1">
-        <legend className="sr-only">view</legend>
+        <legend className="sr-only">{t("view")}</legend>
         {BOARD_VIEWS.filter((candidate) => candidate === "kanban" || candidate === "table").map(
           (candidate) => (
             <button
@@ -62,7 +80,7 @@ export function BoardToolbar({
               className={chip(view === candidate)}
               onClick={() => onView(candidate)}
             >
-              {candidate}
+              {t(candidate)}
             </button>
           ),
         )}
@@ -73,7 +91,7 @@ export function BoardToolbar({
       </span>
 
       <fieldset className="flex flex-wrap items-center gap-1">
-        <legend className="sr-only">quick filters</legend>
+        <legend className="sr-only">{t("quickFilters")}</legend>
         {QUICK_FILTERS.map((filter) => (
           <button
             key={filter.id}
@@ -82,14 +100,14 @@ export function BoardToolbar({
             className={chip(filters.includes(filter.id))}
             onClick={() => onToggleFilter(filter.id)}
           >
-            {filter.label}
+            {t(FILTER_KEYS[filter.id])}
           </button>
         ))}
       </fieldset>
 
       {showGroup ? (
         <div className="flex items-center gap-1 font-mono text-[10px] text-muted-foreground">
-          <label htmlFor="board-group">group</label>
+          <label htmlFor="board-group">{t("group")}</label>
           <select
             id="board-group"
             value={group}
@@ -98,7 +116,7 @@ export function BoardToolbar({
           >
             {GROUP_OPTIONS.map((option) => (
               <option key={option.id} value={option.id}>
-                {option.label}
+                {t(GROUP_KEYS[option.id])}
               </option>
             ))}
           </select>
@@ -106,20 +124,20 @@ export function BoardToolbar({
       ) : null}
 
       <label className="sr-only" htmlFor="board-search">
-        filter cards by title
+        {t("filterByTitle")}
       </label>
       <input
         id="board-search"
         data-search=""
         value={query}
         onChange={(event) => onQuery(event.target.value)}
-        placeholder="filter cards…"
+        placeholder={t("filterCards")}
         className="w-48 border border-border bg-background px-2 py-0.5 font-mono text-xs outline-none"
       />
 
       <p className="font-mono text-[10px] text-muted-foreground" role="status">
-        {count} card{count === 1 ? "" : "s"}
-        {syncing ? " · syncing…" : ""}
+        {t("cardCount", { count })}
+        {syncing ? t("syncing") : ""}
       </p>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ function toLocalInput(iso: string): string {
  */
 export function CardReminder({ cardId }: { cardId: string }) {
   const queryClient = useQueryClient();
+  const t = useTranslations("Pages.Board");
   const [draft, setDraft] = useState("");
 
   const reminder = useQuery({
@@ -63,13 +65,15 @@ export function CardReminder({ cardId }: { cardId: string }) {
 
   return (
     <div className="flex flex-col gap-1" data-slot="card-reminder">
-      <span className="font-mono text-xs text-muted-foreground">remind me</span>
+      <span className="font-mono text-xs text-muted-foreground">{t("remindMe")}</span>
       <p data-slot="card-reminder-current" className="font-mono text-[10px] text-muted-foreground">
-        {current ? `set for ${toLocalInput(current.fireAt).replace("T", " ")}` : "no reminder set"}
+        {current
+          ? t("reminderSet", { when: toLocalInput(current.fireAt).replace("T", " ") })
+          : t("noReminder")}
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <label className="sr-only" htmlFor="card-reminder-at">
-          remind me at
+          {t("remindMeAt")}
         </label>
         <input
           id="card-reminder-at"
@@ -85,7 +89,7 @@ export function CardReminder({ cardId }: { cardId: string }) {
           disabled={save.isPending || value === ""}
           onClick={() => save.mutate(value)}
         >
-          set
+          {t("set")}
         </Button>
         {current ? (
           <Button
@@ -95,7 +99,7 @@ export function CardReminder({ cardId }: { cardId: string }) {
             disabled={clear.isPending}
             onClick={() => clear.mutate()}
           >
-            clear
+            {t("clear")}
           </Button>
         ) : null}
       </div>

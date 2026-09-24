@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ export function CardSheet({
   onDelete: (cardId: string) => void;
 }) {
   const [title, setTitle] = useState(card.title);
+  const t = useTranslations("Pages.Board");
   const [description, setDescription] = useState(card.description ?? "");
   const [estimate, setEstimate] = useState(
     card.estimate_min === null ? "" : String(card.estimate_min),
@@ -88,13 +90,13 @@ export function CardSheet({
         }}
       >
         <DialogHeader>
-          <DialogTitle>Card</DialogTitle>
-          <DialogDescription>Changes save as you go.</DialogDescription>
+          <DialogTitle>{t("cardTitle")}</DialogTitle>
+          <DialogDescription>{t("changesSave")}</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-3 text-xs">
           <div className="flex flex-col gap-1">
-            <Label htmlFor="card-title">title</Label>
+            <Label htmlFor="card-title">{t("fieldTitle")}</Label>
             <Input
               id="card-title"
               value={title}
@@ -108,7 +110,7 @@ export function CardSheet({
           </div>
 
           <div className="flex flex-col gap-1">
-            <Label htmlFor="card-description">description (markdown)</Label>
+            <Label htmlFor="card-description">{t("fieldDescription")}</Label>
             <Textarea
               id="card-description"
               rows={4}
@@ -125,7 +127,7 @@ export function CardSheet({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
-              <Label htmlFor="card-priority">priority</Label>
+              <Label htmlFor="card-priority">{t("fieldPriority")}</Label>
               <select
                 id="card-priority"
                 value={card.priority ?? ""}
@@ -136,14 +138,14 @@ export function CardSheet({
               >
                 {PRIORITIES.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {option.value === "" ? t("none") : option.label}
                   </option>
                 ))}
               </select>
             </div>
 
             <div className="flex flex-col gap-1">
-              <Label htmlFor="card-estimate">estimate (min)</Label>
+              <Label htmlFor="card-estimate">{t("fieldEstimate")}</Label>
               <Input
                 id="card-estimate"
                 inputMode="numeric"
@@ -159,7 +161,7 @@ export function CardSheet({
             </div>
 
             <div className="flex flex-col gap-1">
-              <Label htmlFor="card-start">start</Label>
+              <Label htmlFor="card-start">{t("fieldStart")}</Label>
               <Input
                 id="card-start"
                 type="date"
@@ -169,7 +171,7 @@ export function CardSheet({
             </div>
 
             <div className="flex flex-col gap-1">
-              <Label htmlFor="card-due">due</Label>
+              <Label htmlFor="card-due">{t("fieldDue")}</Label>
               <Input
                 id="card-due"
                 type="date"
@@ -180,7 +182,7 @@ export function CardSheet({
           </div>
 
           <div className="flex flex-col gap-1">
-            <Label htmlFor="card-recurrence">recurrence (RRULE)</Label>
+            <Label htmlFor="card-recurrence">{t("fieldRecurrence")}</Label>
             <Input
               id="card-recurrence"
               placeholder="FREQ=WEEKLY;INTERVAL=1"
@@ -196,12 +198,12 @@ export function CardSheet({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-muted-foreground">snooze</span>
+            <span className="font-mono text-xs text-muted-foreground">{t("snooze")}</span>
             <Button type="button" variant="outline" size="sm" onClick={() => snooze(1)}>
-              1 day
+              {t("oneDay")}
             </Button>
             <Button type="button" variant="outline" size="sm" onClick={() => snooze(7)}>
-              1 week
+              {t("oneWeek")}
             </Button>
           </div>
 
@@ -214,10 +216,10 @@ export function CardSheet({
 
           <div className="flex items-center gap-2 border-t border-border pt-3">
             <Button type="button" variant="outline" onClick={() => onArchive(card.id)}>
-              archive
+              {t("archive")}
             </Button>
             <Button type="button" variant="outline" onClick={() => onDelete(card.id)}>
-              delete
+              {t("delete")}
             </Button>
             <Button
               type="button"
@@ -225,7 +227,7 @@ export function CardSheet({
               className="ml-auto"
               onClick={() => onOpenChange(false)}
             >
-              close card
+              {t("closeCard")}
             </Button>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 
 import type { BoardColumn as Column, Card } from "@/server/boards";
@@ -48,6 +49,7 @@ export function BoardColumn({
   onAdd: (columnId: string, title: string) => Promise<void> | void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id, data: { type: "column" } });
+  const t = useTranslations("Pages.Board");
   const [collapsed, setCollapsed] = useState(false);
   const [title, setTitle] = useState("");
 
@@ -103,7 +105,7 @@ export function BoardColumn({
             "font-mono text-[10px] tabular-nums",
             overLimit ? "text-warning" : "text-muted-foreground",
           )}
-          title={column.wip_limit !== null ? `WIP limit ${column.wip_limit}` : undefined}
+          title={column.wip_limit !== null ? t("wipLimit", { limit: column.wip_limit }) : undefined}
         >
           {cards.length}
           {column.wip_limit !== null ? `/${column.wip_limit}` : ""}
@@ -180,7 +182,7 @@ export function BoardColumn({
                 style={{ listStyle: "none" }}
                 className="px-2 py-3 font-mono text-[10px] text-muted-foreground"
               >
-                no cards
+                {t("noCards")}
               </li>
             ) : null}
           </ul>
@@ -196,14 +198,14 @@ export function BoardColumn({
             }}
           >
             <label className="sr-only" htmlFor={`add-${column.id}`}>
-              add a card to {column.name}
+              {t("addCardTo", { name: column.name })}
             </label>
             <input
               id={`add-${column.id}`}
               data-new-item=""
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="+ add card"
+              placeholder={t("addCard")}
               disabled={busy}
               className="w-full bg-transparent px-1 py-1 font-mono text-xs outline-none placeholder:text-muted-foreground"
             />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ const tagsKey = (cardId: string) => ["card-tags", cardId] as const;
  */
 export function CardTags({ cardId }: { cardId: string }) {
   const queryClient = useQueryClient();
+  const t = useTranslations("Pages.Board");
   const [draft, setDraft] = useState<string | null>(null);
 
   const tags = useQuery({
@@ -47,16 +49,16 @@ export function CardTags({ cardId }: { cardId: string }) {
 
   return (
     <div className="flex flex-col gap-1" data-slot="card-tags">
-      <span className="font-mono text-xs text-muted-foreground">tags</span>
+      <span className="font-mono text-xs text-muted-foreground">{t("tags")}</span>
       <div className="flex flex-wrap items-center gap-2">
         <label className="sr-only" htmlFor="card-tags-input">
-          card tags
+          {t("cardTags")}
         </label>
         <input
           id="card-tags-input"
           value={value}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder="tags, comma separated"
+          placeholder={t("tagsPlaceholder")}
           className="h-8 min-w-0 flex-1 border border-border bg-background px-2 font-mono text-xs"
         />
         <Button
@@ -66,7 +68,7 @@ export function CardTags({ cardId }: { cardId: string }) {
           disabled={save.isPending || draft === null}
           onClick={() => save.mutate(value)}
         >
-          save tags
+          {t("saveTags")}
         </Button>
       </div>
     </div>

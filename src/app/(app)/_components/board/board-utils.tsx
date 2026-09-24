@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Panel } from "@/components/tui/panel";
@@ -25,6 +26,7 @@ const control =
  */
 export function BoardUtils({ boardId }: { boardId: string }) {
   const queryClient = useQueryClient();
+  const t = useTranslations("Pages.Board");
   const [open, setOpen] = useState(false);
   const trashKey = ["trash", boardId] as const;
 
@@ -72,21 +74,21 @@ export function BoardUtils({ boardId }: { boardId: string }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-1 font-mono text-[10px] text-muted-foreground">
-        <span>export</span>
+        <span>{t("export")}</span>
         {/* Real links: these are downloads, so a router navigation would be wrong. */}
         <a
           className={control}
           href={`/api/boards/${boardId}/export?format=csv`}
           download={`${boardId}.csv`}
         >
-          csv
+          {t("csv")}
         </a>
         <a
           className={control}
           href={`/api/boards/${boardId}/export?format=json`}
           download={`${boardId}.json`}
         >
-          json
+          {t("json")}
         </a>
         <button
           type="button"
@@ -94,14 +96,14 @@ export function BoardUtils({ boardId }: { boardId: string }) {
           aria-expanded={open}
           onClick={() => setOpen((value) => !value)}
         >
-          trash ({items.length})
+          {t("trashButton", { count: items.length })}
         </button>
       </div>
 
       {open ? (
-        <Panel title="Trash" hint={`${items.length}`}>
+        <Panel title={t("trashTitle")} hint={`${items.length}`}>
           {items.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">trash is empty</p>
+            <p className="font-mono text-xs text-muted-foreground">{t("trashEmpty")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {items.map((card) => (
@@ -119,17 +121,17 @@ export function BoardUtils({ boardId }: { boardId: string }) {
                     type="button"
                     className={control}
                     onClick={() => restore.mutate(card.id)}
-                    aria-label={`restore ${card.title}`}
+                    aria-label={t("restoreAria", { title: card.title })}
                   >
-                    restore
+                    {t("restore")}
                   </button>
                   <button
                     type="button"
                     className={control}
                     onClick={() => purgeOne.mutate(card.id)}
-                    aria-label={`delete ${card.title} forever`}
+                    aria-label={t("deleteForeverAria", { title: card.title })}
                   >
-                    delete forever
+                    {t("deleteForever")}
                   </button>
                 </li>
               ))}
@@ -142,11 +144,9 @@ export function BoardUtils({ boardId }: { boardId: string }) {
               disabled={purgeOld.isPending}
               onClick={() => purgeOld.mutate()}
             >
-              purge older than 30 days
+              {t("purge")}
             </button>
-            <p className="font-mono text-[10px] text-muted-foreground">
-              trashed cards keep their place and restore without a rewrite
-            </p>
+            <p className="font-mono text-[10px] text-muted-foreground">{t("trashKeep")}</p>
           </div>
         </Panel>
       ) : null}

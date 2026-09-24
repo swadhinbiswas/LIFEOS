@@ -2,6 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useTranslations } from "next-intl";
 
 import type { Card } from "@/server/boards";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,7 @@ export function CardTile({
     id: card.id,
     data: { type: "card", columnId: card.column_id },
   });
+  const t = useTranslations("Pages.Board");
 
   const due = card.due_at ? new Date(card.due_at).toISOString().slice(0, 10) : null;
   const matches = query.length > 0 && card.title.toLowerCase().includes(query.toLowerCase());
@@ -67,7 +69,7 @@ export function CardTile({
         <button
           type="button"
           className="mt-0.5 cursor-grab font-mono text-xs text-muted-foreground"
-          aria-label={`drag ${card.title}`}
+          aria-label={t("drag", { title: card.title })}
           {...attributes}
           {...listeners}
         >
@@ -80,7 +82,7 @@ export function CardTile({
               <span className={cn("uppercase", PRIORITY_TONE[card.priority])}>{card.priority}</span>
             ) : null}
             {due ? <time dateTime={due}>{due}</time> : null}
-            {matches ? <span className="text-primary">match</span> : null}
+            {matches ? <span className="text-primary">{t("match")}</span> : null}
           </p>
           {meta && meta.length > 0 ? (
             <p className="mt-1 flex flex-wrap items-center gap-2 font-mono text-[10px]">
@@ -108,7 +110,7 @@ export function CardTile({
             className={control}
             aria-pressed={selected ?? false}
             onClick={() => onToggleSelect(card.id)}
-            aria-label={`select ${card.title}`}
+            aria-label={t("select", { title: card.title })}
           >
             {selected ? "▣" : "▢"}
           </button>
@@ -117,7 +119,7 @@ export function CardTile({
           type="button"
           className={control}
           onClick={() => onMove(card.id, "up")}
-          aria-label={`move ${card.title} up`}
+          aria-label={t("moveUp", { title: card.title })}
         >
           ↑
         </button>
@@ -125,7 +127,7 @@ export function CardTile({
           type="button"
           className={control}
           onClick={() => onMove(card.id, "down")}
-          aria-label={`move ${card.title} down`}
+          aria-label={t("moveDown", { title: card.title })}
         >
           ↓
         </button>
@@ -133,7 +135,7 @@ export function CardTile({
           type="button"
           className={control}
           onClick={() => onMove(card.id, "left")}
-          aria-label={`move ${card.title} left`}
+          aria-label={t("moveLeft", { title: card.title })}
         >
           ←
         </button>
@@ -141,7 +143,7 @@ export function CardTile({
           type="button"
           className={control}
           onClick={() => onMove(card.id, "right")}
-          aria-label={`move ${card.title} right`}
+          aria-label={t("moveRight", { title: card.title })}
         >
           →
         </button>
@@ -149,10 +151,10 @@ export function CardTile({
           type="button"
           className={cn(control, "ml-auto")}
           onClick={() => onOpen?.(card.id)}
-          aria-label={`open ${card.title}`}
+          aria-label={t("openCard", { title: card.title })}
           hidden={!onOpen}
         >
-          open
+          {t("open")}
         </button>
       </div>
     </div>

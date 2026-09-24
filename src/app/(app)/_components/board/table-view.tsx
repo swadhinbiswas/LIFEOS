@@ -8,6 +8,7 @@ import {
   useTable,
   type ColumnDef,
 } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 import type { BoardPayload, Card } from "@/server/boards";
@@ -40,26 +41,6 @@ const features = tableFeatures({
   sortFns,
 });
 
-const columns: Array<ColumnDef<typeof features, Row>> = [
-  { accessorKey: "title", header: "card" },
-  { accessorKey: "columnName", header: "column" },
-  {
-    accessorKey: "priority",
-    header: "priority",
-    cell: (info) => info.row.original.priority,
-  },
-  {
-    accessorKey: "due",
-    header: "due",
-    cell: (info) => info.row.original.dueLabel,
-  },
-  {
-    accessorKey: "estimate",
-    header: "estimate (min)",
-    cell: (info) => (info.row.original.estimate === 0 ? "" : info.row.original.estimate),
-  },
-];
-
 const dayLabel = (date: Date | null): string =>
   date ? new Date(date).toISOString().slice(0, 10) : "";
 
@@ -84,6 +65,29 @@ function GroupTable({
   rows: Row[];
   onOpen: (cardId: string) => void;
 }) {
+  const t = useTranslations("Pages.Board");
+  const columns = useMemo<Array<ColumnDef<typeof features, Row>>>(
+    () => [
+      { accessorKey: "title", header: t("tableCard") },
+      { accessorKey: "columnName", header: t("tableColumn") },
+      {
+        accessorKey: "priority",
+        header: t("tablePriority"),
+        cell: (info) => info.row.original.priority,
+      },
+      {
+        accessorKey: "due",
+        header: t("tableDue"),
+        cell: (info) => info.row.original.dueLabel,
+      },
+      {
+        accessorKey: "estimate",
+        header: t("tableEstimate"),
+        cell: (info) => (info.row.original.estimate === 0 ? "" : info.row.original.estimate),
+      },
+    ],
+    [t],
+  );
   const table = useTable({
     key: `board-table-${label}`,
     features,
@@ -162,9 +166,10 @@ export function TableView({
   group: GroupBy;
   onOpen: (cardId: string) => void;
 }) {
+  const t = useTranslations("Pages.Board");
   const groups = useMemo(() => {
     const rows = payload.cards.map((card) => toRow(card, payload));
-    if (group === "none") return [{ key: "all", label: "all cards", rows }];
+    if (group === "none") return [{ key: "all", label: t("allCards"), rows }];
 
     const buckets = new Map<string, Row[]>();
     for (const row of rows) {
@@ -176,7 +181,7 @@ export function TableView({
     return [...buckets.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, bucket]) => ({ key, label: key, rows: bucket }));
-  }, [payload, group]);
+  }, [payload, group, t]);
 
   return (
     <div className="flex flex-col gap-4" data-slot="board-table">

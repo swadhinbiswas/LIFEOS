@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ export function SavedViews({
   onApply: (query: Record<string, string>) => void;
 }) {
   const queryClient = useQueryClient();
+  const t = useTranslations("Pages.Board");
   const key = ["saved-views", scope] as const;
   const [name, setName] = useState("");
   const [error, setError] = useState("");
@@ -54,7 +56,7 @@ export function SavedViews({
       invalidate();
     },
     onError: (mutationError: unknown) => {
-      setError(mutationError instanceof Error ? mutationError.message : "could not save the view");
+      setError(mutationError instanceof Error ? mutationError.message : t("couldNotSaveView"));
     },
   });
 
@@ -76,20 +78,20 @@ export function SavedViews({
     try {
       onApply(JSON.parse(view.query) as Record<string, string>);
     } catch {
-      setError("that saved view is unreadable");
+      setError(t("unreadableView"));
     }
   };
 
   return (
     <div className="flex flex-wrap items-center gap-1 font-mono text-[10px] text-muted-foreground">
-      <label htmlFor="saved-view-select">views</label>
+      <label htmlFor="saved-view-select">{t("views")}</label>
       <select
         id="saved-view-select"
         value={selected}
         onChange={(event) => apply(event.target.value)}
         className="border border-border bg-background px-1 py-0.5 font-mono text-[10px]"
       >
-        <option value="">{views.isLoading ? "loading…" : "saved views"}</option>
+        <option value="">{views.isLoading ? t("loading") : t("savedViews")}</option>
         {(views.data ?? []).map((view) => (
           <option key={view.id} value={view.id}>
             {view.name}
@@ -98,7 +100,7 @@ export function SavedViews({
       </select>
 
       <label className="sr-only" htmlFor="saved-view-name">
-        name for the current view
+        {t("nameViewAria")}
       </label>
       {/* Plain control with plain tokens (ADR-041): shadcn's Input carries color-mix
           backgrounds that axe cannot resolve and reports as false contrast failures. */}
@@ -106,7 +108,7 @@ export function SavedViews({
         id="saved-view-name"
         value={name}
         onChange={(event) => setName(event.target.value)}
-        placeholder="name this view…"
+        placeholder={t("nameView")}
         className="h-6 w-40 border border-border bg-background px-1 font-mono text-[10px] text-foreground outline-none placeholder:text-muted-foreground"
       />
       <Button
@@ -116,7 +118,7 @@ export function SavedViews({
         disabled={save.isPending || name.trim() === ""}
         onClick={() => save.mutate(name.trim())}
       >
-        save view
+        {t("saveView")}
       </Button>
       <Button
         type="button"
@@ -125,7 +127,7 @@ export function SavedViews({
         disabled={remove.isPending || selected === ""}
         onClick={() => remove.mutate(selected)}
       >
-        delete view
+        {t("deleteView")}
       </Button>
       {error ? (
         <span role="alert" className="text-destructive">

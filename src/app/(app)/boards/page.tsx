@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
@@ -14,22 +15,23 @@ export default async function BoardsPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const t = await getTranslations("Pages.Boards");
   const boards = await listBoards(session.user.id);
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">Boards</h1>
+      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
+        {t("title")}
+      </h1>
 
       <div className="grid gap-4">
-        <Panel title="New board">
+        <Panel title={t("newBoard")}>
           <CreateBoardForm />
         </Panel>
 
-        <Panel title="Your boards" hint={`${boards.length}`}>
+        <Panel title={t("yourBoards")} hint={`${boards.length}`}>
           {boards.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              nothing here yet — create one above
-            </p>
+            <p className="font-mono text-xs text-muted-foreground">{t("empty")}</p>
           ) : (
             <ul className="flex flex-col gap-1">
               {boards.map((board) => (
@@ -40,9 +42,9 @@ export default async function BoardsPage() {
                   >
                     <span className="min-w-0 flex-1 truncate">{board.name}</span>
                     {board.is_system ? (
-                      <span className="text-muted-foreground">tasks</span>
+                      <span className="text-muted-foreground">{t("tasksLabel")}</span>
                     ) : (
-                      <span className="text-muted-foreground">{board.template ?? "blank"}</span>
+                      <span className="text-muted-foreground">{board.template ?? t("blank")}</span>
                     )}
                   </Link>
                 </li>

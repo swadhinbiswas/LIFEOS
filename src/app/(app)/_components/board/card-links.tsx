@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,13 @@ interface CardOption {
 }
 
 const KINDS = ["relates", "blocks", "duplicates"] as const;
+const KIND_KEYS: Record<string, string> = {
+  relates: "kindRelates",
+  blocks: "kindBlocks",
+  duplicates: "kindDuplicates",
+};
+/** Return the translated label for a link kind, falling back to the raw value. */
+const kindKey = (kind: string): string | undefined => KIND_KEYS[kind];
 const linksKey = (cardId: string) => ["card-links", cardId] as const;
 const optionsKey = (cardId: string) => ["card-link-options", cardId] as const;
 
@@ -33,6 +41,7 @@ const optionsKey = (cardId: string) => ["card-link-options", cardId] as const;
  */
 export function CardLinks({ cardId }: { cardId: string }) {
   const queryClient = useQueryClient();
+  const t = useTranslations("Pages.Board");
   const [target, setTarget] = useState("");
   const [kind, setKind] = useState<(typeof KINDS)[number]>("relates");
 
@@ -85,24 +94,26 @@ export function CardLinks({ cardId }: { cardId: string }) {
 
   return (
     <div className="flex flex-col gap-1" data-slot="card-links">
-      <span className="font-mono text-xs text-muted-foreground">links to</span>
+      <span className="font-mono text-xs text-muted-foreground">{t("linksTo")}</span>
       {current.length === 0 ? (
-        <p className="font-mono text-[10px] text-muted-foreground">no linked cards yet</p>
+        <p className="font-mono text-[10px] text-muted-foreground">{t("noLinkedCards")}</p>
       ) : (
         <ul className="flex flex-col gap-1">
           {current.map((entry) => (
             <li key={entry.linkId} data-slot="card-link" className="flex items-center gap-2">
               <span className="min-w-0 flex-1 truncate font-mono text-xs">{entry.title}</span>
-              <span className="font-mono text-[10px] text-muted-foreground">{entry.kind}</span>
+              <span className="font-mono text-[10px] text-muted-foreground">
+                {kindKey(entry.kind) ? t(kindKey(entry.kind) as string) : entry.kind}
+              </span>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 disabled={unlink.isPending}
-                aria-label={`unlink ${entry.title}`}
+                aria-label={t("unlinkAria", { name: entry.title })}
                 onClick={() => unlink.mutate(entry.linkId)}
               >
-                unlink
+                {t("unlink")}
               </Button>
             </li>
           ))}
@@ -110,11 +121,11 @@ export function CardLinks({ cardId }: { cardId: string }) {
       )}
 
       {(options.data ?? []).length === 0 ? (
-        <p className="font-mono text-[10px] text-muted-foreground">no other cards to link yet</p>
+        <p className="font-mono text-[10px] text-muted-foreground">{t("noOtherCards")}</p>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
           <label className="sr-only" htmlFor="card-link-target">
-            link to card
+            {t("linkToCard")}
           </label>
           <select
             id="card-link-target"
@@ -122,7 +133,7 @@ export function CardLinks({ cardId }: { cardId: string }) {
             onChange={(event) => setTarget(event.target.value)}
             className="h-8 min-w-0 flex-1 border border-border bg-background px-2 font-mono text-xs"
           >
-            <option value="">link to card…</option>
+            <option value="">{t("linkToCardOption")}</option>
             {available.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.title}
@@ -130,7 +141,7 @@ export function CardLinks({ cardId }: { cardId: string }) {
             ))}
           </select>
           <label className="sr-only" htmlFor="card-link-kind">
-            link kind
+            {t("linkKind")}
           </label>
           <select
             id="card-link-kind"
@@ -140,7 +151,7 @@ export function CardLinks({ cardId }: { cardId: string }) {
           >
             {KINDS.map((candidate) => (
               <option key={candidate} value={candidate}>
-                {candidate}
+                {t(kindKey(candidate) as string)}
               </option>
             ))}
           </select>
@@ -151,7 +162,7 @@ export function CardLinks({ cardId }: { cardId: string }) {
             disabled={link.isPending || target === ""}
             onClick={() => link.mutate()}
           >
-            link
+            {t("link")}
           </Button>
         </div>
       )}
