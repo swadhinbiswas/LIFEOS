@@ -48,15 +48,20 @@ export function AppShell({ user, children }: { user: { name: string }; children:
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
+
+      // Modifier shortcuts stay global (spec §4.3): Ctrl/Cmd+K opens the palette even while
+      // the user is typing in a field.
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen(true);
+        return;
+      }
+
+      // Everything else is disabled inside a field so typing is never hijacked.
       if (
         target &&
         (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
       ) {
-        return;
-      }
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setPaletteOpen(true);
         return;
       }
       if (event.metaKey || event.ctrlKey || event.altKey) return;
