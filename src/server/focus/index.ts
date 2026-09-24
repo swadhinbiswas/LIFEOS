@@ -1,6 +1,13 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
+import {
+  DEFAULT_TIME_ZONE,
+  dayKeyInTimeZone,
+  startOfDayInTimeZone,
+  startOfWeekInstant,
+  type WeekStart,
+} from "@/lib/timezone";
 import { db } from "@/server/db";
 import { focus_sessions } from "@/server/db/schema";
 
@@ -87,7 +94,12 @@ export interface FocusTotals {
   sessionsToday: number;
 }
 
-export async function focusTotals(userId: string, now: Date = new Date()): Promise<FocusTotals> {
+export async function focusTotals(
+  userId: string,
+  now: Date = new Date(),
+  timeZone: string = DEFAULT_TIME_ZONE,
+  weekStart: WeekStart = "mon",
+): Promise<FocusTotals> {
   const rows = await db
     .select()
     .from(focus_sessions)
@@ -95,10 +107,9 @@ export async function focusTotals(userId: string, now: Date = new Date()): Promi
     .orderBy(desc(focus_sessions.started_at))
     .limit(500);
 
-  const startOfDay = new Date(now);
-  startOfDay.setHours(0, 0, 0, 0);
-  const startOfWeek = new Date(startOfDay);
-  startOfWeek.setDate(startOfWeek.getDate() - ((startOfWeek.getDay() + 6) % 7)); // Monday
+  // Today is the user's day; the week begins on their chosen first day (ADR-057/058).
+  const dayStart = startOfDayInTimeZone(dayKeyInTimeZone(now, timeZone), timeZone);
+  const weekStartInstant = startOfWeekInstant(now, timeZone, weekStart);
 
   const minutesOf = (session: FocusSession): number =>
     session.ended_at
@@ -117,8 +128,8 @@ export async function focusTotals(userId: string, now: Date = new Date()): Promi
   for (const session of rows) {
     if (session.kind !== "focus") continue;
     const started = new Date(session.started_at).getTime();
-    if (started >= startOfWeek.getTime()) weekMin += minutesOf(session);
-    if (started >= startOfDay.getTime()) {
+    if (started >= weekStartInstant.getTime()) weekMin += minutesOf(session);
+    if (started >= dayStart.getTime()) {
       todayMin += minutesOf(session);
       sessionsToday += 1;
     }

@@ -5,7 +5,10 @@ import {
   endOfDayInTimeZone,
   isValidTimeZone,
   resolveTimeZone,
+  resolveWeekStart,
   startOfDayInTimeZone,
+  startOfWeekInTimeZone,
+  startOfWeekInstant,
 } from "./timezone";
 
 describe("timezone helpers (spec 6.9, adr-057)", () => {
@@ -36,5 +39,16 @@ describe("timezone helpers (spec 6.9, adr-057)", () => {
     expect(dayKeyInTimeZone(new Date("2026-09-24T10:00:00.000Z"), "Nowhere/Nope")).toBe(
       "2026-09-24",
     );
+  });
+
+  it("anchors the week to the chosen first day", () => {
+    const thursday = new Date("2026-09-24T12:00:00.000Z");
+    expect(startOfWeekInTimeZone(thursday, "UTC", "mon")).toBe("2026-09-21");
+    expect(startOfWeekInTimeZone(thursday, "UTC", "sun")).toBe("2026-09-20");
+    expect(startOfWeekInstant(thursday, "Asia/Kolkata", "mon").toISOString()).toBe(
+      "2026-09-20T18:30:00.000Z",
+    );
+    expect(resolveWeekStart("sun")).toBe("sun");
+    expect(resolveWeekStart(null)).toBe("mon");
   });
 });

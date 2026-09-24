@@ -79,3 +79,38 @@ export function startOfDayInTimeZone(dayKey: string, timeZone: string): Date {
 export function endOfDayInTimeZone(dayKey: string, timeZone: string): Date {
   return startOfDayInTimeZone(nextDay(dayKey), timeZone);
 }
+
+// ---------------------------------------------------------------------------
+// Week start (spec §6.9, ADR-058)
+// ---------------------------------------------------------------------------
+
+export type WeekStart = "mon" | "sun";
+
+export function resolveWeekStart(value: string | null | undefined): WeekStart {
+  return value === "sun" ? "sun" : "mon";
+}
+
+const shiftKey = (dayKey: string, days: number): string => {
+  const [year, month, day] = dayKey.split("-").map(Number);
+  const date = new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1));
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+};
+
+/** The `YYYY-MM-DD` of the first day of `instant`'s week in `timeZone`, for the chosen start. */
+export function startOfWeekInTimeZone(
+  instant: Date,
+  timeZone: string,
+  weekStart: WeekStart,
+): string {
+  const day = dayKeyInTimeZone(instant, timeZone);
+  const [year, month, date] = day.split("-").map(Number);
+  const jsDay = new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, date ?? 1)).getUTCDay();
+  const offset = weekStart === "mon" ? (jsDay + 6) % 7 : jsDay;
+  return shiftKey(day, -offset);
+}
+
+/** The UTC instant of the start of `instant`'s week in `timeZone` and week start. */
+export function startOfWeekInstant(instant: Date, timeZone: string, weekStart: WeekStart): Date {
+  return startOfDayInTimeZone(startOfWeekInTimeZone(instant, timeZone, weekStart), timeZone);
+}

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
 import { focusTotals, getRunningSession, listSessions } from "@/server/focus";
+import { getRegionalSettings } from "@/server/settings";
 
 import { FocusTimer } from "./_components/focus-timer";
 
@@ -17,9 +18,10 @@ export default async function FocusPage() {
   const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
+  const { timeZone, weekStart } = await getRegionalSettings(session.user.id);
   const [running, totals, sessions] = await Promise.all([
     getRunningSession(session.user.id),
-    focusTotals(session.user.id),
+    focusTotals(session.user.id, new Date(), timeZone, weekStart),
     listSessions(session.user.id),
   ]);
 

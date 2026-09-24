@@ -15,6 +15,7 @@ import { getDashboardKpis, KPI_DEFINITIONS } from "@/server/dashboard";
 import { getLayout } from "@/server/dashboard/widgets";
 import { listHabits } from "@/server/habits";
 import { listReviews } from "@/server/reviews";
+import { getRegionalSettings } from "@/server/settings";
 
 import { LayoutControls } from "./_components/layout-controls";
 
@@ -52,11 +53,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const visible = layout.widgets.filter((widget) => widget.visible).map((widget) => widget.id);
   const labels = Object.fromEntries(DASHBOARD_WIDGETS.map((widget) => [widget.id, widget.label]));
 
+  const { timeZone, weekStart } = await getRegionalSettings(session.user.id);
   const brief = visible.some((id) => id.startsWith("today."))
-    ? await getDailyBrief(session.user.id)
+    ? await getDailyBrief(session.user.id, new Date(), timeZone)
     : null;
   const kpis = visible.some((id) => id.startsWith("overview.") || id.startsWith("productivity."))
-    ? await getDashboardKpis(session.user.id)
+    ? await getDashboardKpis(session.user.id, new Date(), timeZone, weekStart)
     : null;
   const habits = visible.includes("overview.wins") ? await listHabits(session.user.id) : [];
   const career = visible.some((id) => id.startsWith("career."))

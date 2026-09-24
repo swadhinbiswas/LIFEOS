@@ -1349,6 +1349,32 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-058 — Configurable week start for every "this week" number
+
+- **Status:** accepted (2026-09-24)
+- **Context:** ADR-057 moved day bucketing to the user's timezone but deliberately left
+  `week_start` (and the week boundaries that depend on it) on UTC Monday. The spec's §6.9 line is
+  "store UTC, render in user tz, **week start configurable**", so half the sentence was still open.
+  The existing week computations were also subtly wrong: they used `Date#setHours`/`setDate` on the
+  **server's** local time, not the user's zone.
+- **Decision:**
+  - **`user_settings.week_start` holds `mon` | `sun`** (default `mon`, invalid resolves to `mon`,
+    same tolerance rule as the timezone).
+  - The week start **combines with the timezone** in one helper pair
+    (`startOfWeekInTimeZone` / `startOfWeekInstant`), and the two settings are read and written
+    together on `/settings` (`getRegionalSettings`).
+  - Applied to every "this week" figure: the dashboard KPIs and both week windows they compare
+    against, and the focus module's `focusTotals`. This also removes the server-local-time bug:
+    the boundary is now the user's zone, not the host's.
+  - **Career analytics' per-week buckets stay Monday-Anchored** for now: they are a historical
+    report over application dates rather than a personal "this week", and converting them would
+    change the shape of a stored report. Recorded here rather than half-done.
+- **Consequences:** "this week" means the user's week in the user's zone everywhere it is a
+  personal figure. Cost: two more settings reads on the dashboard and focus pages, and a second
+  control in the regional panel.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

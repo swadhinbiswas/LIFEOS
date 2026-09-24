@@ -2,7 +2,12 @@ import { eq } from "drizzle-orm";
 
 import { parseThemeOverrides, themeOverridesSchema, type ThemeOverrides } from "@/config/themes";
 import { newId } from "@/lib/id";
-import { dayKeyInTimeZone, resolveTimeZone } from "@/lib/timezone";
+import {
+  dayKeyInTimeZone,
+  resolveTimeZone,
+  resolveWeekStart,
+  type WeekStart,
+} from "@/lib/timezone";
 import { db } from "@/server/db";
 import { user_settings } from "@/server/db/schema";
 
@@ -70,4 +75,30 @@ export async function setTimeZone(userId: string, timeZone: string): Promise<voi
 /** The user's current calendar day — the one default every day-key service resolves to. */
 export async function getUserDayKey(userId: string, at: Date = new Date()): Promise<string> {
   return dayKeyInTimeZone(at, await getTimeZone(userId));
+}
+
+/** Timezone + week start in one read, for the surfaces that need both (dashboards). */
+export async function getRegionalSettings(
+  userId: string,
+): Promise<{ timeZone: string; weekStart: WeekStart }> {
+  const rows = await db
+    .select({ timezone: user_settings.timezone, weekStart: user_settings.week_start })
+    .from(user_settings)
+    .where(eq(user_settings.user_id, userId))
+    .limit(1);
+  return {
+    timeZone: resolveTimeZone(rows[0]?.timezone),
+    weekStart: resolveWeekStart(rows[0]?.weekStart),
+  };
+}
+
+export async function setWeekStart(userId: string, weekStart: string): Promise<void> {
+  const value = resolveWeekStart(weekStart);
+  await db
+    .insert(user_settings)
+    .values({ id: newId(), user_id: userId, week_start: value })
+    .onConflictDoUpdate({
+      target: user_settings.user_id,
+      set: { week_start: value, updated_at: new Date() },
+    });
 }

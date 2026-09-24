@@ -12,7 +12,12 @@ import {
 } from "@/server/db/schema";
 import { ensureJobBoard } from "@/server/career";
 import { getBoard } from "@/server/boards";
-import { dayKey } from "@/server/habits/streak";
+import {
+  DEFAULT_TIME_ZONE,
+  dayKeyInTimeZone,
+  startOfWeekInstant,
+  type WeekStart,
+} from "@/lib/timezone";
 
 import { computeKpis, type KpiValue } from "./kpis";
 
@@ -28,13 +33,6 @@ import { computeKpis, type KpiValue } from "./kpis";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const startOfWeek = (date: Date): Date => {
-  const day = new Date(date);
-  day.setHours(0, 0, 0, 0);
-  day.setDate(day.getDate() - ((day.getDay() + 6) % 7)); // Monday
-  return day;
-};
-
 export interface DashboardKpis {
   values: KpiValue[];
   /** The window the deltas compare against, for the page's caption. */
@@ -44,9 +42,13 @@ export interface DashboardKpis {
 export async function getDashboardKpis(
   userId: string,
   now: Date = new Date(),
+  timeZone: string = DEFAULT_TIME_ZONE,
+  weekStart: WeekStart = "mon",
 ): Promise<DashboardKpis> {
-  const thisWeek = startOfWeek(now);
+  const thisWeek = startOfWeekInstant(now, timeZone, weekStart);
   const lastWeek = new Date(thisWeek.getTime() - 7 * DAY_MS);
+  const thisWeekKey = dayKeyInTimeZone(thisWeek, timeZone);
+  const lastWeekKey = dayKeyInTimeZone(lastWeek, timeZone);
 
   const jobBoard = await ensureJobBoard(userId);
   const jobPayload = await getBoard(userId, jobBoard.id);
@@ -101,10 +103,10 @@ export async function getDashboardKpis(
       db
         .select({ date: habit_logs.date })
         .from(habit_logs)
-        .where(and(eq(habit_logs.user_id, userId), gte(habit_logs.date, dayKey(lastWeek)))),
+        .where(and(eq(habit_logs.user_id, userId), gte(habit_logs.date, lastWeekKey))),
     ]);
 
-  const habitLogsThisWeek = habitLogsWeek.filter((row) => row.date >= dayKey(thisWeek)).length;
+  const habitLogsThisWeek = habitLogsWeek.filter((row) => row.date >= thisWeekKey).length;
   const habitLogsLastWeek = habitLogsWeek.length - habitLogsThisWeek;
 
   const focusRows = await db
@@ -171,7 +173,7 @@ export async function getDashboardKpis(
     currency: budgetRows[0]?.currency ?? null,
   });
 
-  return { values, weekStart: dayKey(thisWeek) };
+  return { values, weekStart: thisWeekKey };
 }
 
 /** Kept for callers that only need the definition text (the page's tooltips). */

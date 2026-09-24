@@ -7,7 +7,7 @@ import { THEME_COOKIE } from "@/config/app";
 import { themeOverridesSchema } from "@/config/themes";
 import { isValidTimeZone } from "@/lib/timezone";
 import { auth } from "@/server/auth";
-import { saveThemeOverrides, setTimeZone } from "@/server/settings";
+import { saveThemeOverrides, setTimeZone, setWeekStart } from "@/server/settings";
 
 /**
  * Thin Server-Action adapter over the settings service (spec §7.2): REST/MCP/AI adapters call
@@ -54,5 +54,21 @@ export async function setTimeZoneAction(
   if (!session) return { ok: false, message: "you are signed out" };
 
   await setTimeZone(session.user.id, parsed.data.timeZone);
+  return { ok: true };
+}
+
+const weekStartInput = z.object({ weekStart: z.enum(["mon", "sun"]) });
+
+/** Persist the user's week start (ADR-058); it anchors every "this week" number. */
+export async function setWeekStartAction(
+  input: unknown,
+): Promise<{ ok: boolean; message?: string }> {
+  const parsed = weekStartInput.safeParse(input);
+  if (!parsed.success) return { ok: false, message: "unknown week start" };
+
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { ok: false, message: "you are signed out" };
+
+  await setWeekStart(session.user.id, parsed.data.weekStart);
   return { ok: true };
 }

@@ -14,7 +14,8 @@ for (const suffix of ["", "-journal", "-wal", "-shm"]) {
 const { migrate } = await import("drizzle-orm/libsql/migrator");
 const { db } = await import("@/server/db");
 const { users } = await import("@/server/db/schema");
-const { getUserDayKey, getTimeZone, setTimeZone } = await import("./index");
+const { getUserDayKey, getRegionalSettings, getTimeZone, setTimeZone, setWeekStart } =
+  await import("./index");
 
 const USER = "01HSET000000000000000000001";
 /** 23:30 UTC — already the next day in Kolkata (+05:30). */
@@ -44,5 +45,15 @@ describe("settings: timezone (spec 6.9, adr-057)", () => {
   it("refuses an unusable zone by falling back to UTC rather than throwing", async () => {
     await setTimeZone(USER, "Nowhere/Nope");
     expect(await getTimeZone(USER)).toBe("UTC");
+  });
+
+  it("stores the week start with the timezone, defaulting both", async () => {
+    expect(await getRegionalSettings(USER)).toEqual({ timeZone: "UTC", weekStart: "mon" });
+
+    await setWeekStart(USER, "sun");
+    expect(await getRegionalSettings(USER)).toEqual({ timeZone: "UTC", weekStart: "sun" });
+
+    await setWeekStart(USER, "bogus");
+    expect((await getRegionalSettings(USER)).weekStart).toBe("mon");
   });
 });

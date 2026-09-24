@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 
 import { Panel } from "@/components/tui/panel";
 import { auth } from "@/server/auth";
-import { getTimeZone } from "@/server/settings";
+import { getRegionalSettings } from "@/server/settings";
 
 import { ProfileForm } from "./_components/profile-form";
-import { TimeZoneForm } from "./_components/time-zone-form";
+import { RegionalForm } from "./_components/regional-form";
 
 export const metadata = { title: "Profile" };
 
@@ -20,7 +20,7 @@ export default async function SettingsPage() {
   if (!session) redirect("/sign-in");
 
   const joined = new Date(session.user.createdAt).toISOString().slice(0, 10);
-  const timeZone = await getTimeZone(session.user.id);
+  const { timeZone, weekStart } = await getRegionalSettings(session.user.id);
 
   return (
     <>
@@ -31,9 +31,10 @@ export default async function SettingsPage() {
         </Panel>
         <Panel title="Regional">
           <p className="font-mono text-[10px] text-muted-foreground">
-            your day — habits, the calendar, what counts as “due today” — follows this zone.
+            your day — habits, the calendar, what counts as “due today” — follows this zone, and
+            every “this week” number starts on the day you choose.
           </p>
-          <TimeZoneForm current={timeZone} />
+          <RegionalForm timeZone={timeZone} weekStart={weekStart} />
         </Panel>
       </div>
     </>
