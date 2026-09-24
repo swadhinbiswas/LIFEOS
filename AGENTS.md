@@ -12,20 +12,21 @@ career/CV, habits, notes, finance) rendered as a keyboard-first, TUI-skinned web
    is not optional, never commit secrets, ask only when genuinely blocked.
 2. **Phase gate:** do not start phase N+1 until phase N's checks pass and a status report has been
    given to the user. The user asked to stop at each phase boundary and report.
-   - Current phase: **0 → complete (research docs written; no app code yet)**. Next: Phase 1.
+   - Current phase: **4 → complete** (dashboards + life modules; gate green: 196 unit, 37 e2e,
+     build, typecheck, lint). Next: **Phase 5, awaiting the user's go-ahead**.
 
 ## Repository map
 
-| Path                                      | Purpose                                                                                                                                                   |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `prompt.md`                               | Full spec (17 sections). Never edit without being asked.                                                                                                  |
-| `docs/RESEARCH.md`                        | Phase 0 research: NexaCRM measurements, competitor teardown, TUI study, best practices, library verification, seed research, vendor findings, open risks. |
-| `docs/ERD.md`                             | Entity-relationship model derived from spec §7.3.                                                                                                         |
-| `docs/DECISIONS.md`                       | Append-only ADR log. Every non-obvious choice gets an entry **before** the code that implements it.                                                       |
-| `docs/MVP-SCOPE.md`                       | The MVP cut-list: what ships, what is deferred, what is excluded.                                                                                         |
-| `docs/research/github-swadhinbiswas.json` | Raw seed research (fetched GitHub API data + profile README, with `fetched_at`). Refresh, don't trust forever.                                            |
-| `docs/reference/`                         | NexaCRM reference screenshots (study only — see license note below).                                                                                      |
-| `src/` …                                  | Not created yet. Scaffolding starts in Phase 1 per `prompt.md` §14.                                                                                       |
+| Path                                      | Purpose                                                                                                                                                                                         |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prompt.md`                               | Full spec (17 sections). Never edit without being asked.                                                                                                                                        |
+| `docs/RESEARCH.md`                        | Phase 0 research: NexaCRM measurements, competitor teardown, TUI study, best practices, library verification, seed research, vendor findings, open risks.                                       |
+| `docs/ERD.md`                             | Entity-relationship model derived from spec §7.3.                                                                                                                                               |
+| `docs/DECISIONS.md`                       | Append-only ADR log. Every non-obvious choice gets an entry **before** the code that implements it.                                                                                             |
+| `docs/MVP-SCOPE.md`                       | The MVP cut-list: what ships, what is deferred, what is excluded.                                                                                                                               |
+| `docs/research/github-swadhinbiswas.json` | Raw seed research (fetched GitHub API data + profile README, with `fetched_at`). Refresh, don't trust forever.                                                                                  |
+| `docs/reference/`                         | NexaCRM reference screenshots (study only — see license note below).                                                                                                                            |
+| `src/`                                    | The app: feature-first `src/server/<module>` services (single writer per table), `src/app/(app)/<route>` pages, `src/config` (nav, shortcuts, themes, registries), `src/lib`, `src/components`. |
 
 ## Hard rules (extracted from spec §1, §10, §12)
 
@@ -46,14 +47,15 @@ career/CV, habits, notes, finance) rendered as a keyboard-first, TUI-skinned web
 
 ## Commands
 
-Phase 0 has no app code, so there is nothing to run yet. From Phase 1 onward the standing gate is:
+The standing gate for every chunk is:
 
 ```bash
-pnpm typecheck && pnpm lint && pnpm test && pnpm build
+pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build
 ```
 
-plus exercising the phase's main flows in a browser. Each phase ends with: run checks →
-commit (conventional format, e.g. `feat(boards): …`) → print a short status report.
+plus `pnpm e2e` (Playwright, includes the axe sweep) for anything that touches a route. Each phase
+ends with: run the gate → commit (conventional format, e.g. `feat(boards): …`) → print a short
+status report.
 
 ## Conventions
 
