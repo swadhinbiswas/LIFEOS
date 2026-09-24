@@ -56,7 +56,14 @@ const AUTH_ROUTES = [
   "/reset-password",
   "/verify-email",
 ];
-const SHELL_ROUTES = ["/settings", "/settings/appearance", "/tasks", "/inbox", "/boards"];
+const SHELL_ROUTES = [
+  "/settings",
+  "/settings/appearance",
+  "/tasks",
+  "/inbox",
+  "/boards",
+  "/career/jobs",
+];
 
 /**
  * Phase 1 axe gate (spec §13 / ADR-029): every shell surface passes axe-core, and the two
