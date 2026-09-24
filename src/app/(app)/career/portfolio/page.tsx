@@ -4,6 +4,7 @@ import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
 import { listGrowth, parseProjectTech } from "@/server/career/growth";
 
+import { AddAchievementForm, AddProjectForm, AddSkillForm } from "./_components/growth-forms";
 import { SampleActions } from "./_components/sample-actions";
 
 export const metadata = { title: "Portfolio" };
@@ -37,6 +38,7 @@ export default async function PortfolioPage() {
         </Panel>
 
         <Panel title="Projects" hint={`${growth.projects.length}`}>
+          <AddProjectForm />
           {growth.projects.length === 0 ? (
             <p className="font-mono text-xs text-muted-foreground">
               no projects yet — import the sample portfolio to see how this fills up
@@ -78,6 +80,7 @@ export default async function PortfolioPage() {
         </Panel>
 
         <Panel title="Skills" hint={`${growth.skills.length}`}>
+          <AddSkillForm />
           {growth.skills.length === 0 ? (
             <p className="font-mono text-xs text-muted-foreground">no skills recorded yet</p>
           ) : (
@@ -93,6 +96,30 @@ export default async function PortfolioPage() {
                     <span className="text-warning">{"★".repeat(skill.level)}</span>
                   ) : null}
                   {skill.is_demo ? <span className="text-muted-foreground">(sample)</span> : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel title="Brag doc" hint={`${growth.achievements.length}`}>
+          <AddAchievementForm />
+          {growth.achievements.length === 0 ? (
+            <p className="font-mono text-xs text-muted-foreground">
+              nothing yet — record wins here as they happen
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {growth.achievements.map((achievement) => (
+                <li
+                  key={achievement.id}
+                  data-slot="achievement-row"
+                  className="flex flex-wrap items-center gap-2 border border-border px-2 py-1 font-mono text-xs"
+                >
+                  <span className="min-w-0 flex-1 truncate">{achievement.title}</span>
+                  {achievement.impact ? (
+                    <span className="text-muted-foreground">{achievement.impact}</span>
+                  ) : null}
                 </li>
               ))}
             </ul>

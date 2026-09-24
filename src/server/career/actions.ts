@@ -16,13 +16,19 @@ import {
 } from "@/server/career";
 import {
   clearSampleGrowth,
+  createAchievement,
+  createProject,
+  createSkill,
   importSamplePortfolio,
   type ImportSummary,
 } from "@/server/career/growth";
 import {
   addInterviewInput,
   addOfferInput,
+  createAchievementInput,
   createJobInput,
+  createProjectInput,
+  createSkillInput,
   updateJobInput,
 } from "@/server/career/schemas";
 
@@ -87,4 +93,44 @@ export async function importSamplePortfolioAction(): Promise<ActionResult<Import
 
 export async function clearSampleGrowthAction(): Promise<ActionResult<{ removed: number }>> {
   return run(async (userId) => ({ removed: await clearSampleGrowth(userId) }));
+}
+
+export async function createSkillAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    const parsed = createSkillInput.parse(input);
+    await createSkill(userId, parsed);
+    return null;
+  });
+}
+
+export async function createProjectAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    const parsed = createProjectInput.parse(input);
+    await createProject(userId, {
+      name: parsed.name,
+      description: parsed.description ?? null,
+      url: parsed.url ?? null,
+      repo: parsed.url ?? null,
+      tech: {
+        language: parsed.language ?? null,
+        stars: parsed.stars ?? 0,
+        topics: [],
+      },
+      featured: parsed.featured ?? false,
+    });
+    return null;
+  });
+}
+
+export async function createAchievementAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    const parsed = createAchievementInput.parse(input);
+    await createAchievement(userId, {
+      title: parsed.title,
+      description: parsed.description ?? null,
+      impact: parsed.impact ?? null,
+      occurredAt: parsed.occurredAt ?? null,
+    });
+    return null;
+  });
 }

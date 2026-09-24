@@ -94,3 +94,24 @@ export type UpdateJobInput = z.infer<typeof updateJobInput>;
 export type MoveJobStageInput = z.infer<typeof moveJobStageInput>;
 export type AddInterviewInput = z.infer<typeof addInterviewInput>;
 export type AddOfferInput = z.infer<typeof addOfferInput>;
+
+export const createSkillInput = z.object({
+  name: z.string().trim().min(1).max(120),
+  level: z.number().int().min(1).max(5).nullable().optional(),
+});
+
+export const createProjectInput = z.object({
+  name: z.string().trim().min(1).max(200),
+  description: optionalText(2_000),
+  url: optionalText(2_000),
+  language: optionalText(80),
+  stars: z.number().int().min(0).max(10_000_000).nullable().optional(),
+  featured: z.boolean().optional(),
+});
+
+export const createAchievementInput = z.object({
+  title: z.string().trim().min(1).max(300),
+  description: optionalText(10_000),
+  impact: optionalText(1_000),
+  occurredAt: z.coerce.date().nullable().optional(),
+});
