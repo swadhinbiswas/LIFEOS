@@ -14,6 +14,7 @@ import {
   updateJob,
   type JobCardMeta,
 } from "@/server/career";
+import { addQuestion, addStory } from "@/server/career/prep";
 import {
   clearSampleGrowth,
   createAchievement,
@@ -25,6 +26,8 @@ import {
 import {
   addInterviewInput,
   addOfferInput,
+  addQuestionInput,
+  addStoryInput,
   createAchievementInput,
   createJobInput,
   createProjectInput,
@@ -131,6 +134,22 @@ export async function createAchievementAction(input: unknown): Promise<ActionRes
       impact: parsed.impact ?? null,
       occurredAt: parsed.occurredAt ?? null,
     });
+    return null;
+  });
+}
+
+export async function addQuestionAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    const parsed = addQuestionInput.parse(input);
+    await addQuestion(userId, parsed);
+    return null;
+  });
+}
+
+export async function addStoryAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    const parsed = addStoryInput.parse(input);
+    await addStory(userId, parsed);
     return null;
   });
 }

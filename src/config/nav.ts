@@ -5,6 +5,7 @@ import {
   LayoutGrid,
   ListTodo,
   Palette,
+  MessageSquareQuote,
   Sparkles,
   UserRound,
   type LucideIcon,
@@ -27,6 +28,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/career/jobs", label: "Jobs", icon: Briefcase },
   { href: "/career/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/career/portfolio", label: "Portfolio", icon: Sparkles },
+  { href: "/career/interview-prep", label: "Prep", icon: MessageSquareQuote },
   { href: "/settings", label: "Profile", icon: UserRound },
   { href: "/settings/appearance", label: "Appearance", icon: Palette },
 ];

@@ -115,3 +115,18 @@ export const createAchievementInput = z.object({
   impact: optionalText(1_000),
   occurredAt: z.coerce.date().nullable().optional(),
 });
+
+export const addQuestionInput = z.object({
+  question: z.string().trim().min(1).max(1_000),
+  category: optionalText(120),
+  difficulty: z.enum(["easy", "medium", "hard"]).nullable().optional(),
+  answer: optionalText(20_000),
+});
+
+export const addStoryInput = z.object({
+  title: z.string().trim().min(1).max(300),
+  situation: optionalText(10_000),
+  task: optionalText(10_000),
+  action: optionalText(10_000),
+  result: optionalText(10_000),
+});
