@@ -91,12 +91,13 @@ test("card sheet: deep link, edits persist, delete is undoable", async ({ page }
   await expect(page.getByRole("dialog")).toBeVisible();
 
   const renamed = "draft the release note (v2)";
-  const titleField = page.getByLabel("title", { exact: true });
+  const sheet = page.getByRole("dialog");
+  const titleField = sheet.getByLabel("title", { exact: true });
   await expect(titleField).toHaveValue(title);
   await titleField.fill(renamed);
   await titleField.blur();
-  await page.getByLabel("priority").selectOption("p1");
-  await page.getByLabel("due").fill("2026-10-01");
+  await sheet.getByLabel("priority").selectOption("p1");
+  await sheet.getByLabel("due").fill("2026-10-01");
   await page.waitForLoadState("networkidle");
 
   // Leave the deep link before asserting the board (the open modal hides it from a11y).
@@ -115,4 +116,61 @@ test("card sheet: deep link, edits persist, delete is undoable", async ({ page }
   await page.waitForLoadState("networkidle");
   await page.goto("/tasks");
   await expect(serverCard(page, "Inbox", renamed)).toBeVisible();
+});
+
+/**
+ * Table view + filters (spec §6.1): the same board data rendered through TanStack Table v9,
+ * with URL-owned sorting state, quick-filter chips and grouping.
+ */
+test("table view: sorting, quick filters and grouping", async ({ page }) => {
+  test.setTimeout(90_000);
+  const email = uniqueEmail("table");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/tasks");
+
+  const adder = page.getByLabel("add a card to Inbox");
+  for (const title of ["alpha task", "beta task"]) {
+    await adder.click();
+    await adder.fill(title);
+    await adder.press("Enter");
+  }
+  await expect(serverCard(page, "Inbox", "alpha task")).toBeVisible();
+  await expect(serverCard(page, "Inbox", "beta task")).toBeVisible();
+
+  // Give alpha a P0 so the priority filter and grouping have something to select.
+  const alphaId = await serverCard(page, "Inbox", "alpha task").getAttribute("data-card-id");
+  await page.goto(`/tasks?card=${alphaId}`);
+  await page.getByRole("dialog").getByLabel("priority").selectOption("p0");
+  await page.waitForLoadState("networkidle");
+  await page.goto("/tasks");
+
+  // Switch to the table view; the choice lands in the URL.
+  await page.getByRole("button", { name: "table" }).click();
+  const table = page.locator('[data-slot="board-table"]');
+  await expect(table.locator('[data-slot="table-row"]')).toHaveCount(2);
+  await expect(page).toHaveURL(/view=table/u);
+
+  // Quick filter: P0–P1 keeps only alpha, and the URL carries it.
+  await page.getByRole("button", { name: "P0–P1" }).click();
+  await expect(table.locator('[data-slot="table-row"]')).toHaveCount(1);
+  await expect(table.locator('[data-slot="table-row"]')).toContainText("alpha task");
+  await expect(page).toHaveURL(/filter=p0-p1/u);
+
+  // Clearing the chip brings both rows back.
+  await page.getByRole("button", { name: "P0–P1" }).click();
+  await expect(table.locator('[data-slot="table-row"]')).toHaveCount(2);
+
+  // Sort by the card column: ascending then descending flips the first row.
+  const cardHeader = table.getByRole("button", { name: "card" }).first();
+  await cardHeader.click();
+  await expect(table.locator('[data-slot="table-row"]').first()).toContainText("alpha task");
+  await cardHeader.click();
+  await expect(table.locator('[data-slot="table-row"]').first()).toContainText("beta task");
+
+  // Grouping splits the table into per-group sections.
+  await page.getByLabel("group").selectOption("priority");
+  await expect(table.locator("section h2")).toHaveCount(2);
+  await expect(table.locator("section", { hasText: "p0" })).toContainText("alpha task");
 });

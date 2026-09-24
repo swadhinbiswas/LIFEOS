@@ -13,22 +13,29 @@ import {
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { useQueryState } from "nuqs";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
+import {
+  cardMatchesFilter,
+  parseQuickFilters,
+  serializeQuickFilters,
+} from "@/config/board-filters";
 import type { BoardPayload, Card } from "@/server/boards";
 
 import { BoardColumn } from "./board-column";
+import { BoardToolbar, type GroupBy } from "./board-toolbar";
 import { CardSheet } from "./card-sheet";
 import { type MoveDirection } from "./card-tile";
+import { TableView } from "./table-view";
 import { useBoard } from "./use-board";
 
 const byPosition = (a: Card, b: Card) =>
   a.position < b.position ? -1 : a.position > b.position ? 1 : 0;
 
 /**
- * The one board surface (spec §6.1, ADR-042): kanban rendering over the board query, pointer
- * and keyboard drag sensors (ADR-016) plus explicit move buttons, and nuqs-owned URL state so
- * a filtered board is shareable.
+ * The one board surface (spec §6.1, ADR-042): kanban or table over the same query, with
+ * pointer + keyboard drag sensors (ADR-016), explicit move buttons, and nuqs-owned URL state
+ * (`?view=`, `?filter=`, `?group=`, `?q=`, `?card=`) so any board state is shareable.
  */
 export function BoardView({
   boardId,
@@ -41,9 +48,16 @@ export function BoardView({
     boardId,
     initialData,
   );
+  const [viewParam, setViewParam] = useQueryState("view");
   const [query, setQuery] = useQueryState("q");
+  const [filterParam, setFilterParam] = useQueryState("filter");
+  const [groupParam, setGroupParam] = useQueryState("group");
   const [cardParam, setCardParam] = useQueryState("card");
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+
+  const view = viewParam === "table" ? "table" : "kanban";
+  const filters = useMemo(() => parseQuickFilters(filterParam), [filterParam]);
+  const group: GroupBy = groupParam === "column" || groupParam === "priority" ? groupParam : "none";
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -51,11 +65,24 @@ export function BoardView({
   );
 
   const columns = payload.columns;
-  const cards = payload.cards;
   const columnName = (columnId: string) =>
     columns.find((column) => column.id === columnId)?.name ?? "column";
+
+  const visibleCards = useMemo(() => {
+    const needle = query?.trim().toLowerCase() ?? "";
+    return payload.cards.filter((card) => {
+      if (needle && !card.title.toLowerCase().includes(needle)) return false;
+      return filters.every((filter) => cardMatchesFilter(card, filter));
+    });
+  }, [payload.cards, query, filters]);
+
   const cardsInColumn = (columnId: string) =>
-    cards.filter((card) => card.column_id === columnId).sort(byPosition);
+    visibleCards.filter((card) => card.column_id === columnId).sort(byPosition);
+
+  const openCard = cardParam ? (payload.cards.find((card) => card.id === cardParam) ?? null) : null;
+  const activeCard = activeCardId
+    ? (payload.cards.find((card) => card.id === activeCardId) ?? null)
+    : null;
 
   const positionLabel = (card: Card): string => {
     const siblings = cardsInColumn(card.column_id);
@@ -63,22 +90,18 @@ export function BoardView({
     return `${index + 1} of ${siblings.length} in ${columnName(card.column_id)}`;
   };
 
-  const activeCard = activeCardId ? (cards.find((card) => card.id === activeCardId) ?? null) : null;
-  /** The open detail sheet, resolved from the URL so the card is deep-linkable (ADR-042). */
-  const openCard = cardParam ? (cards.find((card) => card.id === cardParam) ?? null) : null;
-
   function handleDragStart(event: DragStartEvent) {
     setActiveCardId(String(event.active.id));
   }
 
   function handleDragEnd(event: DragEndEvent) {
     setActiveCardId(null);
-    const card = cards.find((candidate) => candidate.id === String(event.active.id));
+    const card = visibleCards.find((candidate) => candidate.id === String(event.active.id));
     if (!card || !event.over) return;
     const overId = String(event.over.id);
     if (overId === card.id) return;
 
-    const overCard = cards.find((candidate) => candidate.id === overId);
+    const overCard = visibleCards.find((candidate) => candidate.id === overId);
     const toColumnId =
       overCard?.column_id ?? (columns.some((c) => c.id === overId) ? overId : null);
     if (!toColumnId) return;
@@ -99,7 +122,7 @@ export function BoardView({
 
   /** The non-drag keyboard path (ADR-016) — same service call as a drop. */
   function handleMove(cardId: string, direction: MoveDirection) {
-    const card = cards.find((candidate) => candidate.id === cardId);
+    const card = visibleCards.find((candidate) => candidate.id === cardId);
     if (!card) return;
     const siblings = cardsInColumn(card.column_id);
     const index = siblings.findIndex((candidate) => candidate.id === cardId);
@@ -132,87 +155,92 @@ export function BoardView({
     });
   }
 
-  const filtered = (columnId: string) => {
-    const inColumn = cardsInColumn(columnId);
-    const needle = query?.trim().toLowerCase();
-    if (!needle) return inColumn;
-    return inColumn.filter((card) => card.title.toLowerCase().includes(needle));
+  const toggleFilter = (filter: (typeof filters)[number]) => {
+    const next = filters.includes(filter)
+      ? filters.filter((candidate) => candidate !== filter)
+      : [...filters, filter];
+    void setFilterParam(serializeQuickFilters(next));
   };
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-3">
-        <label className="sr-only" htmlFor="board-filter">
-          filter cards by title
-        </label>
-        <input
-          id="board-filter"
-          value={query ?? ""}
-          onChange={(event) => void setQuery(event.target.value === "" ? null : event.target.value)}
-          placeholder="filter cards…"
-          className="w-56 border border-border bg-background px-2 py-1 font-mono text-xs outline-none"
-        />
-        <p className="font-mono text-[10px] text-muted-foreground" role="status">
-          {cards.length} card{cards.length === 1 ? "" : "s"}
-          {isFetching ? " · syncing…" : ""}
-        </p>
-      </div>
+      <BoardToolbar
+        view={view}
+        onView={(next) => void setViewParam(next === "kanban" ? null : next)}
+        filters={filters}
+        onToggleFilter={toggleFilter}
+        group={group}
+        onGroup={(next) => void setGroupParam(next === "none" ? null : next)}
+        query={query ?? ""}
+        onQuery={(value) => void setQuery(value === "" ? null : value)}
+        count={visibleCards.length}
+        syncing={isFetching}
+        showGroup={view === "table"}
+      />
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCorners}
-        accessibility={{
-          announcements: {
-            onDragStart: ({ active }) => {
-              const card = cards.find((candidate) => candidate.id === String(active.id));
-              return card ? `Picked up ${card.title}. ${positionLabel(card)}.` : undefined;
+      {view === "table" ? (
+        <TableView
+          payload={{ ...payload, cards: visibleCards }}
+          group={group}
+          onOpen={(cardId) => void setCardParam(cardId)}
+        />
+      ) : (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          accessibility={{
+            announcements: {
+              onDragStart: ({ active }) => {
+                const card = visibleCards.find((candidate) => candidate.id === String(active.id));
+                return card ? `Picked up ${card.title}. ${positionLabel(card)}.` : undefined;
+              },
+              onDragOver: ({ active, over }) => {
+                const card = visibleCards.find((candidate) => candidate.id === String(active.id));
+                if (!card || !over) return undefined;
+                return `${card.title} is over ${columnName(String(over.id))}.`;
+              },
+              onDragEnd: ({ active, over }) => {
+                const card = visibleCards.find((candidate) => candidate.id === String(active.id));
+                if (!card) return undefined;
+                return over
+                  ? `Dropped ${card.title}. ${positionLabel(card)}.`
+                  : `Dropped ${card.title}.`;
+              },
+              onDragCancel: ({ active }) => {
+                const card = visibleCards.find((candidate) => candidate.id === String(active.id));
+                return card ? `Cancelled moving ${card.title}.` : undefined;
+              },
             },
-            onDragOver: ({ active, over }) => {
-              const card = cards.find((candidate) => candidate.id === String(active.id));
-              if (!card || !over) return undefined;
-              return `${card.title} is over ${columnName(String(over.id))}.`;
-            },
-            onDragEnd: ({ active, over }) => {
-              const card = cards.find((candidate) => candidate.id === String(active.id));
-              if (!card) return undefined;
-              return over
-                ? `Dropped ${card.title}. ${positionLabel(card)}.`
-                : `Dropped ${card.title}.`;
-            },
-            onDragCancel: ({ active }) => {
-              const card = cards.find((candidate) => candidate.id === String(active.id));
-              return card ? `Cancelled moving ${card.title}.` : undefined;
-            },
-          },
-        }}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onDragCancel={() => setActiveCardId(null)}
-      >
-        <div className="flex gap-3 overflow-x-auto pb-2" data-slot="board">
-          {columns.map((column) => (
-            <BoardColumn
-              key={column.id}
-              column={column}
-              cards={filtered(column.id)}
-              query={query ?? ""}
-              busy={isFetching}
-              onMove={handleMove}
-              onOpen={(cardId) => void setCardParam(cardId)}
-              onAdd={(columnId, title) => {
-                createCard.mutate({ columnId, title });
-              }}
-            />
-          ))}
-        </div>
-        <DragOverlay>
-          {activeCard ? (
-            <div className="border border-ring bg-background px-2 py-1 font-mono text-xs">
-              {activeCard.title}
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+          }}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={() => setActiveCardId(null)}
+        >
+          <div className="flex gap-3 overflow-x-auto pb-2" data-slot="board">
+            {columns.map((column) => (
+              <BoardColumn
+                key={column.id}
+                column={column}
+                cards={cardsInColumn(column.id)}
+                query={query ?? ""}
+                busy={isFetching}
+                onMove={handleMove}
+                onOpen={(cardId) => void setCardParam(cardId)}
+                onAdd={(columnId, title) => {
+                  createCard.mutate({ columnId, title });
+                }}
+              />
+            ))}
+          </div>
+          <DragOverlay>
+            {activeCard ? (
+              <div className="border border-ring bg-background px-2 py-1 font-mono text-xs">
+                {activeCard.title}
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      )}
 
       {openCard ? (
         <CardSheet
