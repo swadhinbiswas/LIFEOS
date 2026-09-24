@@ -17,6 +17,7 @@ const { users } = await import("@/server/db/schema");
 const { createApiKey } = await import("@/server/api-keys");
 const cardsRoute = await import("@/app/api/v1/cards/route");
 const cardRoute = await import("@/app/api/v1/cards/[id]/route");
+const ingestRoute = await import("@/app/api/v1/ingest/route");
 
 const USER = "01HV10000000000000000000001";
 const OTHER = "01HV10000000000000000000002";
@@ -163,5 +164,30 @@ describe("REST /api/v1/cards (spec 9.1, adr-063)", () => {
 
     const otherList = await asJson(await get("/api/v1/cards", otherFullKey));
     expect((otherList.data as Array<{ id: string }>).map((row) => row.id)).not.toContain(id);
+  });
+
+  it("ingests a capture string with the same grammar as the inbox", async () => {
+    const response = await ingestRoute.POST(
+      new Request("http://test/api/v1/ingest", {
+        method: "POST",
+        headers: authHeaders(fullKey),
+        body: JSON.stringify({ text: "email the landlord tomorrow #home" }),
+      }),
+    );
+    expect(response.status).toBe(201);
+    const body = await asJson(response);
+    const data = body.data as { card: { id: string }; parsed: { tags: string[] } };
+    expect(data.parsed.tags).toEqual(["home"]);
+    expect((await getOne(data.card.id, fullKey)).status).toBe(200);
+
+    // A read-only key cannot ingest.
+    const denied = await ingestRoute.POST(
+      new Request("http://test/api/v1/ingest", {
+        method: "POST",
+        headers: authHeaders(readOnlyKey),
+        body: JSON.stringify({ text: "nope" }),
+      }),
+    );
+    expect(denied.status).toBe(403);
   });
 });

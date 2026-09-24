@@ -7,8 +7,8 @@ not decisions (those are in `docs/DECISIONS.md`).
 
 - Phases 0–4 complete and reported. **Phase 5 in progress** (API, MCP, webhooks, docs).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **218 passed** ✓ · `pnpm e2e` **45 passed, twice** ✓.
-- ADR-044 … ADR-064 record the decisions. Nothing is pushed; all work is on local `master`.
+  `pnpm test` **219 passed** ✓ · `pnpm e2e` **45 passed, twice** ✓.
+- ADR-044 … ADR-065 record the decisions. Nothing is pushed; all work is on local `master`.
 
 ## Phase 5 so far
 
@@ -21,8 +21,10 @@ not decisions (those are in `docs/DECISIONS.md`).
   (ADR-063).
 - MCP server `/api/mcp` (Streamable HTTP, stateless JSON responses): tools `search`, `create_card`,
   `move_card`, `get_daily_brief`, Bearer-key scopes, Origin guard (ADR-064).
-- Next in phase: `/api/v1/ingest` + Shortcut docs, outgoing webhooks, OpenAPI 3.1 + `/docs/api`,
-  the cross-tenant isolation suite for both new surfaces.
+- `POST /api/v1/ingest` for Shortcuts/automations, reusing the capture grammar, with the recipe in
+  `docs/INGEST.md` (ADR-065).
+- Next in phase: outgoing webhooks, OpenAPI 3.1 + `/docs/api`, the cross-tenant isolation suite for
+  both new surfaces.
 
 ## The Phase-4 chunks
 

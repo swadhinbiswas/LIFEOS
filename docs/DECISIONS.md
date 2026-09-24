@@ -1521,6 +1521,25 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-065 — `/api/v1/ingest`: the capture grammar over HTTP for Shortcuts and automations
+
+- **Status:** accepted (2026-09-24)
+- **Context:** §9.1 wants an ingest endpoint plus a Shortcut recipe so a phone can capture without
+  opening the app. The app already has the natural-language capture grammar (§4.3) and one function
+  that implements it (`captureTask`).
+- **Decision:**
+  - `/api/v1/ingest` is a **thin adapter over `captureTask`** with the REST envelope (ADR-063),
+    a Bearer key holding `write:tasks`, an optional `Idempotency-Key` and the per-actor rate limit.
+  - Body is `{ text, columnName? }`; the `201` response returns the created card **and** the parsed
+    fields, so a client can show what was understood.
+  - A copy-paste recipe (curl + iOS Shortcut steps) lives in **`docs/INGEST.md`**.
+  - **One capture per request**; batching is not offered.
+- **Consequences:** a Shortcut, bookmarklet or automation produces exactly the card the inbox box
+  would — same parser, same labels from `#tags`, same due-date handling — so nothing can drift.
+  Cost: one endpoint and a short doc.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
