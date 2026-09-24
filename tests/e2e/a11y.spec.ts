@@ -61,6 +61,7 @@ const SHELL_ROUTES = [
   "/settings/appearance",
   "/tasks",
   "/dashboard",
+  "/dashboard?variant=career",
   "/reviews",
   "/habits",
   "/goals",

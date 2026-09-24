@@ -410,6 +410,35 @@ export const reviews = sqliteTable(
 );
 
 // ---------------------------------------------------------------------------
+// Dashboards (§6.8)
+// ---------------------------------------------------------------------------
+
+/**
+ * One row per user/variant/widget (ADR-046). A missing row means "registry default", so a newly
+ * shipped widget appears without a migration, and the whole layout is replaced atomically on save.
+ */
+export const dashboard_widgets = sqliteTable(
+  "dashboard_widgets",
+  {
+    id: text("id").primaryKey(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** `today` | `overview` | `career` | `productivity`. */
+    variant: text("variant").notNull(),
+    /** Must exist in `config/dashboard-widgets.ts` (validated before writing). */
+    widget_id: text("widget_id").notNull(),
+    visible: integer("visible", { mode: "boolean" }).notNull().default(true),
+    position: integer("position").notNull().default(0),
+    ...timestamps(),
+  },
+  (t) => [
+    uniqueIndex("dashboard_widgets_unq").on(t.user_id, t.variant, t.widget_id),
+    index("dashboard_widgets_user_variant_idx").on(t.user_id, t.variant),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Notifications (§6.9)
 // ---------------------------------------------------------------------------
 

@@ -1016,6 +1016,36 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-046 — Dashboard widgets: a registry plus a per-user layout table (JSON in the page)
+
+- **Status:** accepted (2026-09-24)
+- **Context:** spec §6.8 wants four dashboard variants made of configurable widgets (show/hide,
+  reorder, resize) **saved per user**, and every KPI must link to its source list with an
+  accessible table alternative. The dashboard already has a fixture-tested KPI module and one page.
+- **Decision:**
+  - A **registry** (`src/config/dashboard-widgets.ts`) is the single list of widgets: id, variant,
+    label, default size, default order. Unknown ids can never be persisted because the layout is
+    validated by Zod against the registry — the same "config is code, not rows" rule as board
+    templates and theme presets.
+  - **Persistence is a `dashboard_widgets` table** (one row per user/variant/widget) rather than a
+    JSON blob in `user_settings`: a layout row is independently updatable, and the table keeps the
+    "no unvalidated JSON at rest" property the rest of the schema has. A missing row means "use the
+    registry default", so a new widget ships visible without a migration or a backfill.
+  - **Whole-layout saves.** The page sends the complete layout (visible flags + order) in one
+    server action and the service replaces that variant's rows in a transaction. It is atomic,
+    idempotent and avoids a per-keystroke write stream.
+  - **Resize is deferred** (the column exists, no UI): the spec asks for S/M/L, but shipping sizes
+    without deciding what each size means for every widget would be a placeholder control. Sizes
+    land with the widget that needs them.
+  - **Charts stay tables where a chart would come first.** The accessibility rule (§4.4) is that
+    colour is never the only signal and every chart has a table alternative; where a sparkline
+    would be decoration over one number, the number is rendered.
+- **Consequences:** adding a widget is one registry entry plus its data source; the four variants
+  are the same page filtered by variant, so there is no second dashboard implementation. Cost: a
+  table and a full-layout server action, both small.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

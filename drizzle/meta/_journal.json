@@ -43,6 +43,13 @@
       "when": 1790252055125,
       "tag": "0005_notes_fts",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1790256434225,
+      "tag": "0006_puzzling_the_fallen",
+      "breakpoints": true
     }
   ]
 }
