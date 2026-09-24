@@ -15,7 +15,15 @@ interface KeySummary {
   lastUsedAt: string | null;
 }
 
-const SCOPES = ["read:*", "write:tasks", "write:jobs", "write:notes", "admin:export"] as const;
+const SCOPES = [
+  "read:*",
+  "write:tasks",
+  "write:jobs",
+  "write:notes",
+  "write:life",
+  "write:finance",
+  "admin:export",
+] as const;
 
 /**
  * API-key management (spec §9.1, ADR-062). Creating shows the token **once**; afterwards only the

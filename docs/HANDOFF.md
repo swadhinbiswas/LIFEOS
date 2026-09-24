@@ -7,8 +7,8 @@ not decisions (those are in `docs/DECISIONS.md`).
 
 - Phases 0–4 complete and reported. **Phase 5 in progress** (API, MCP, webhooks, docs).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **225 passed** ✓ · `pnpm e2e` **47 passed, twice** ✓.
-- ADR-044 … ADR-069 record the decisions. Nothing is pushed; all work is on local `master`.
+  `pnpm test` **229 passed** ✓ · `pnpm e2e` **47 passed, twice** ✓.
+- ADR-044 … ADR-070 record the decisions. Nothing is pushed; all work is on local `master`.
 
 ## Phase 5 so far
 
@@ -19,6 +19,9 @@ not decisions (those are in `docs/DECISIONS.md`).
   POST create with Idempotency-Key, GET/PATCH (If-Match ETag) /DELETE, Bearer-key or session auth,
   per-actor rate limit, the shared `{ error: { code, message, details, request_id } }` shape
   (ADR-063).
+- REST coverage for every module through a **resource registry** (ADR-070): jobs, notes, habits
+  (+logs), goals, accounts, transactions, subscriptions, health, courses, books, reviews,
+  notifications via `/api/v1/[resource]` (+`/[id]`), plus static `/focus/sessions`, `/settings`.
 - MCP server `/api/mcp` (Streamable HTTP, stateless JSON responses): tools `search`, `create_card`,
   `move_card`, `get_daily_brief`, Bearer-key scopes, Origin guard (ADR-064).
 - `POST /api/v1/ingest` for Shortcuts/automations, reusing the capture grammar, with the recipe in
@@ -33,8 +36,7 @@ not decisions (those are in `docs/DECISIONS.md`).
 - Two-user isolation suite across the REST and MCP surfaces, plus an MCP wire-level acceptance e2e
   (initialize → tools/list → the four tools → the moved card live on the board) (ADR-068).
 - Next: the Phase 5 acceptance/report. Deferred: a live external MCP client transcript (the protocol
-  is exercised over HTTP in the e2e), REST coverage for the remaining resources, MCP
-  resources/prompts, and the incremental i18n surface pass.
+  is exercised over HTTP in the e2e), MCP resources/prompts, and the incremental i18n surface pass.
 
 ## The Phase-4 chunks
 

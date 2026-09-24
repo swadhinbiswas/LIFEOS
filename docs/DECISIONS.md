@@ -1634,6 +1634,36 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-070 — REST coverage: a resource registry behind one dynamic route pair
+
+- **Status:** accepted (2026-09-24)
+- **Context:** ADR-063 shipped cards + ingest. §9.1 says every piece of user data is reachable over
+  REST; a route file per resource would repeat the same envelope, cursor, auth and rate-limit
+  boilerplate a dozen times and drift between resources.
+- **Decision:**
+  - A **registry** (`src/server/api/v1/resources.ts`) defines each resource as one object: read and
+    write scopes, optional create/update Zod schemas, and list/get/create/update/remove adapters
+    over the owning service.
+  - **One dynamic route pair** — `/api/v1/[resource]` and `/api/v1/[resource]/[id]` — serves every
+    registry resource with the same envelope, cursor pagination, sparse fields, Idempotency-Key,
+    scope checks and rate limit. `/cards` keeps its dedicated route for its richer filters.
+  - Resources: jobs, notes, habits (+`/habits/[id]/logs`), goals, accounts, transactions,
+    subscriptions, health, courses, books, reviews, notifications. **Focus sessions**
+    (`/focus/sessions`, start/stop) and regional **settings** get static routes — their shape is a
+    lifecycle/singleton, not a plain collection.
+  - **Pagination:** derived, per-user-bounded lists (habits, goals, accounts, subscriptions,
+    courses, books, reviews, notifications) page in memory over the service's list; the large tables
+    (jobs, notes, transactions, health) page in SQL on `(created_at, id)`.
+  - Scopes gain **`write:life`** and **`write:finance`**; a service "not found" is a **404** (a
+    cross-tenant id must not leak existence) while a Zod failure is a 400.
+  - The **OpenAPI document enumerates every registry resource**, so the docs cannot advertise a
+    partial API.
+- **Consequences:** a new resource is one registry entry, and the envelope/auth/pagination cannot
+  drift between resources. Cost: the dynamic route is less obvious to grep than a file per resource,
+  and a few bounded lists paginate in memory.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

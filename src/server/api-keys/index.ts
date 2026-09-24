@@ -22,6 +22,8 @@ export const API_SCOPES = [
   "write:tasks",
   "write:jobs",
   "write:notes",
+  "write:life",
+  "write:finance",
   "admin:export",
 ] as const;
 export type ApiScope = (typeof API_SCOPES)[number];

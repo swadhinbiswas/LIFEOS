@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { RESOURCES } from "./v1/resources";
 import { cardSchema, createCardBody, ingestBody, updateCardBody } from "./v1/schemas";
 
 /**
@@ -75,6 +76,89 @@ const listParameters = [
   },
 ] as const;
 
+const idParameter = [
+  { name: "id", in: "path", required: true, schema: { type: "string" } },
+] as const;
+
+const okItem = {
+  description: "One item",
+  content: { "application/json": { schema: { type: "object" } } },
+} as const;
+const okCreated = {
+  description: "Created",
+  content: { "application/json": { schema: { type: "object" } } },
+} as const;
+const okPage = {
+  description: "A page of items",
+  content: { "application/json": { schema: { type: "object" } } },
+} as const;
+
+const bodyOf = (schema: z.ZodType) => ({
+  required: true,
+  content: { "application/json": { schema: jsonSchema(schema) } },
+});
+
+/** Paths for every registry resource (ADR-070), so the docs never advertise a partial API. */
+function resourcePaths(): Record<string, unknown> {
+  const paths: Record<string, unknown> = {};
+  for (const [name, def] of Object.entries(RESOURCES)) {
+    paths[`/api/v1/${name}`] = {
+      get: {
+        summary: `List ${name}`,
+        parameters: listParameters,
+        responses: { "200": okPage, "401": errorResponse, "403": errorResponse },
+      },
+      ...(def.create
+        ? {
+            post: {
+              summary: `Create ${name}`,
+              parameters: [idempotencyHeader],
+              ...(def.createSchema ? { requestBody: bodyOf(def.createSchema) } : {}),
+              responses: {
+                "201": okCreated,
+                "400": errorResponse,
+                "401": errorResponse,
+                "403": errorResponse,
+              },
+            },
+          }
+        : {}),
+    };
+
+    if (def.get || def.update || def.remove) {
+      paths[`/api/v1/${name}/{id}`] = {
+        parameters: idParameter,
+        ...(def.get
+          ? {
+              get: {
+                summary: `Read one ${name}`,
+                responses: { "200": okItem, "401": errorResponse, "404": errorResponse },
+              },
+            }
+          : {}),
+        ...(def.update
+          ? {
+              patch: {
+                summary: `Update ${name}`,
+                ...(def.updateSchema ? { requestBody: bodyOf(def.updateSchema) } : {}),
+                responses: { "200": okItem, "400": errorResponse, "404": errorResponse },
+              },
+            }
+          : {}),
+        ...(def.remove
+          ? {
+              delete: {
+                summary: `Delete ${name}`,
+                responses: { "204": { description: "Deleted" }, "404": errorResponse },
+              },
+            }
+          : {}),
+      };
+    }
+  }
+  return paths;
+}
+
 export function openApiDocument(): Record<string, unknown> {
   return {
     openapi: "3.1.0",
@@ -117,6 +201,52 @@ export function openApiDocument(): Record<string, unknown> {
       },
     },
     paths: {
+      ...resourcePaths(),
+      "/api/v1/focus/sessions": {
+        get: {
+          summary: "List focus sessions",
+          parameters: listParameters,
+          responses: { "200": okPage, "401": errorResponse },
+        },
+        post: {
+          summary: "Start a focus session",
+          requestBody: bodyOf(
+            z.object({ plannedMin: z.number().optional(), cardId: z.string().optional() }),
+          ),
+          responses: { "201": okCreated, "400": errorResponse, "403": errorResponse },
+        },
+      },
+      "/api/v1/focus/sessions/{id}/stop": {
+        post: {
+          summary: "Stop a focus session",
+          parameters: idParameter,
+          responses: { "200": okItem, "404": errorResponse },
+        },
+      },
+      "/api/v1/habits/{id}/logs": {
+        post: {
+          summary: "Log a habit for a day",
+          parameters: idParameter,
+          requestBody: bodyOf(z.object({ date: z.string().optional(), value: z.number() })),
+          responses: { "201": okCreated, "404": errorResponse },
+        },
+      },
+      "/api/v1/settings": {
+        get: {
+          summary: "Read regional settings (timezone, week start)",
+          responses: { "200": okItem, "401": errorResponse },
+        },
+        patch: {
+          summary: "Update regional settings",
+          requestBody: bodyOf(
+            z.object({
+              timeZone: z.string().optional(),
+              weekStart: z.enum(["mon", "sun"]).optional(),
+            }),
+          ),
+          responses: { "200": okItem, "400": errorResponse, "403": errorResponse },
+        },
+      },
       "/api/v1/cards": {
         get: {
           summary: "List cards",
