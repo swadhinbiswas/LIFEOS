@@ -62,7 +62,8 @@ test("help cheat-sheet lists the active bindings", async ({ page }) => {
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText("move focus");
   await expect(dialog).toContainText("toggle theme");
+  await expect(dialog).toContainText("calendar");
   // Views that do not exist yet must not be advertised.
   await expect(dialog).not.toContainText("timeline");
-  await expect(dialog).not.toContainText("calendar");
+  await expect(dialog).not.toContainText("workflows");
 });

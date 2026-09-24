@@ -1194,6 +1194,35 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-052 — Calendar: server-rendered month/week/agenda, no calendar dependency
+
+- **Status:** accepted (2026-09-24)
+- **Context:** #24 (IN, Phase 4) asks for month/week/agenda views over all dated items. Phase-0
+  research named `react-big-calendar 1.20.0`, so it was re-checked at build time (operating rule:
+  verify, don't recall). It still requires a localizer package (date-fns/dayjs/moment) plus its
+  own stylesheet and a fixed-height client container, and its React 19 support is an open upstream
+  issue. LifeOS has a TUI grid aesthetic, a server-first page model and an axe gate; ADR-046
+  already settled the same question for charts ("prefer server-rendered SVG/tables over a charting
+  library; no new dependency without a decision").
+- **Decision:**
+  - **Build the calendar server-side; add no dependency.** A `<table>` month grid, a `<table>`
+    week grid and an agenda list are rendered by a server component from the owning services, and
+    every event is a real link to its surface. Pure date/grid maths lives in `calendar/grid.ts` and
+    is unit-tested.
+  - **One queried range per view** (a month grid, seven days, or thirty), so the calendar never
+    loads more than the page shows.
+  - **Sources in v1:** cards with a due or start date, interviews with `starts_at`, and tracked
+    subscriptions with `renews_at`. Habits and focus sessions are deliberately excluded: habits are
+    day facts already shown on the habit page, and focus sessions record what happened rather than
+    what is planned — including them would bury the calendar.
+  - **Days are UTC day keys**, consistent with habit logs (ADR-045). Per-user timezone rendering is
+    part of the later §6.9 timezone/i18n work and is not invented here.
+- **Consequences:** the calendar is SSR'd, axe-scannable and dependency-free, and it needs no
+  hydration. Cost: no hour-level time grid and no drag-to-create — a day grid across the three
+  views is the MVP cut, and a time grid is a later enhancement.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

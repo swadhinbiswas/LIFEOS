@@ -1,0 +1,102 @@
+/** @vitest-environment node */
+import { rmSync } from "node:fs";
+
+import { beforeAll, describe, expect, it } from "vitest";
+
+// ADR-029: this integration file owns its own database; assignment must precede any import that
+// reaches src/env.ts. The name is unique per process because vitest collects and runs a file in
+// separate processes, and a shared name makes those two race the first DDL into SQLITE_BUSY.
+const DB_FILE = `.data/calendar-int-${process.pid}`;
+process.env.DATABASE_URL = `file:${DB_FILE}.db`;
+for (const suffix of ["", "-journal", "-wal", "-shm"]) {
+  rmSync(`${DB_FILE}.db${suffix}`, { force: true });
+}
+
+const { migrate } = await import("drizzle-orm/libsql/migrator");
+const { db } = await import("@/server/db");
+const { users } = await import("@/server/db/schema");
+const { createCard, ensureSystemTasksBoard, getBoard } = await import("@/server/boards");
+const { addInterview, createJob } = await import("@/server/career");
+const { createSubscription } = await import("@/server/finance");
+const { getCalendar } = await import("./index");
+
+const USER = "01HCAL000000000000000000001";
+const OTHER = "01HCAL000000000000000000002";
+const RANGE = { from: "2026-09-21", to: "2026-09-27" };
+
+describe("calendar events (spec 6.9, adr-052)", () => {
+  beforeAll(async () => {
+    await migrate(db, { migrationsFolder: "./drizzle" });
+    await db.insert(users).values(
+      [USER, OTHER].map((id) => ({
+        id,
+        email: `${id.toLowerCase()}@example.test`,
+        name: id,
+        created_at: new Date(),
+        updated_at: new Date(),
+      })),
+    );
+  });
+
+  it("gathers due cards, interviews and renewals in range, oldest first", async () => {
+    const board = await ensureSystemTasksBoard(USER);
+    const payload = await getBoard(USER, board.id);
+    const inbox = payload.columns.find((column) => column.name === "Inbox");
+    if (!inbox) throw new Error("the system board has no Inbox column");
+
+    await createCard(USER, {
+      boardId: board.id,
+      columnId: inbox.id,
+      title: "ship the calendar",
+      dueAt: new Date("2026-09-24T09:00:00.000Z"),
+    });
+    await createCard(USER, {
+      boardId: board.id,
+      columnId: inbox.id,
+      title: "start something",
+      startAt: new Date("2026-09-22T00:00:00.000Z"), // date-only start
+    });
+    await createCard(USER, {
+      boardId: board.id,
+      columnId: inbox.id,
+      title: "next month",
+      dueAt: new Date("2026-11-01T00:00:00.000Z"), // out of range
+    });
+
+    const job = await createJob(USER, { title: "Backend Engineer" });
+    await addInterview(USER, {
+      applicationId: job.application.id,
+      kind: "tech",
+      startsAt: new Date("2026-09-23T14:00:00.000Z"),
+    });
+
+    await createSubscription(USER, {
+      name: "Cloud storage",
+      amountMinor: 999,
+      currency: "EUR",
+      cadence: "month",
+      renewsAt: new Date("2026-09-25T00:00:00.000Z"),
+    });
+
+    const events = await getCalendar(USER, RANGE);
+    expect(events.map((event) => [event.date, event.time, event.kind])).toEqual([
+      ["2026-09-22", null, "task"], // date-only start
+      ["2026-09-23", "14:00", "interview"],
+      ["2026-09-24", "09:00", "task"],
+      ["2026-09-25", null, "subscription"], // date-only renewal
+    ]);
+    expect(events.map((event) => event.title)).toEqual([
+      "start something",
+      "Backend Engineer · tech",
+      "ship the calendar",
+      "Cloud storage",
+    ]);
+
+    const task = events.find((event) => event.title === "ship the calendar");
+    expect(task?.href).toMatch(/^\/tasks\?card=/u);
+    expect(events.find((event) => event.kind === "subscription")?.href).toBe("/finance");
+
+    // Another user's calendar is empty.
+    expect(await getCalendar(OTHER, RANGE)).toEqual([]);
+  });
+});

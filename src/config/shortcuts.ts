@@ -21,6 +21,7 @@ export const KEY_BINDINGS: BindingGroup[] = [
       { keys: ["Ctrl", "K"], label: "command palette" },
       { keys: ["g", "t"], label: "tasks" },
       { keys: ["g", "i"], label: "inbox" },
+      { keys: ["g", "c"], label: "calendar" },
       { keys: ["g", "b"], label: "boards" },
       { keys: ["g", "n"], label: "notifications" },
       { keys: ["g", "s"], label: "settings" },
@@ -52,6 +53,7 @@ export const KEY_BINDINGS: BindingGroup[] = [
 export const GOTO_TARGETS: Record<string, string> = {
   t: "/tasks",
   i: "/inbox",
+  c: "/calendar",
   b: "/boards",
   n: "/notifications",
   s: "/settings",

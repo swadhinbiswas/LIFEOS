@@ -1,6 +1,7 @@
 import {
   BarChart3,
   Briefcase,
+  CalendarDays,
   Inbox,
   LayoutDashboard,
   LayoutGrid,
@@ -33,6 +34,7 @@ export interface NavItem {
 
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/reviews", label: "Reviews", icon: ClipboardCheck },
   { href: "/tasks", label: "Tasks", icon: ListTodo },
   { href: "/habits", label: "Habits", icon: Repeat },
