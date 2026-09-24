@@ -22,7 +22,7 @@ export default async function SignInPage({ searchParams }: PageProps) {
   ];
 
   return (
-    <Panel title="Sign in">
+    <Panel title="Sign in" titleAs="h1">
       <SignInForm next={next} notice={notice} />
       <SocialButtons providers={socials} next={next} />
     </Panel>

@@ -11,7 +11,7 @@ export default function SignUpPage() {
   ];
 
   return (
-    <Panel title="Create account">
+    <Panel title="Create account" titleAs="h1">
       <SignUpForm />
       <SocialButtons providers={socials} next="/settings" />
     </Panel>

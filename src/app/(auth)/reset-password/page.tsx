@@ -16,7 +16,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
   if (!token) {
     // Real failure state: the link is malformed or was opened without its query string.
     return (
-      <Panel title="Reset password">
+      <Panel title="Reset password" titleAs="h1">
         <div className="flex flex-col gap-3 text-xs">
           <p role="alert" className="text-destructive">
             this reset link is missing its token
@@ -31,7 +31,7 @@ export default async function ResetPasswordPage({ searchParams }: PageProps) {
   }
 
   return (
-    <Panel title="Set new password">
+    <Panel title="Set new password" titleAs="h1">
       <ResetPasswordForm token={token} />
     </Panel>
   );

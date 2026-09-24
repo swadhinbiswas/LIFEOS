@@ -13,7 +13,7 @@ export default async function VerifyEmailPage({ searchParams }: PageProps) {
   // The client notice consumes the token once on mount (StrictMode-safe ref guard);
   // verifying during render would burn the single-use token twice in development.
   return (
-    <Panel title="Verify email">
+    <Panel title="Verify email" titleAs="h1">
       <VerifyEmailNotice token={token} />
     </Panel>
   );
