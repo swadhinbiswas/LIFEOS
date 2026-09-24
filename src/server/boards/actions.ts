@@ -23,6 +23,8 @@ import {
   createBoardInput,
   createCardInput,
   moveCardInput,
+  revertMoveInput,
+  revertUpdateInput,
   savedViewIdInput,
   savedViewInput,
   savedViewScopeInput,
@@ -35,6 +37,7 @@ import {
   type SavedView,
 } from "@/server/boards/views";
 import { carryOverOverdue } from "@/server/boards/brief";
+import { revertMove, revertUpdate } from "@/server/boards/revert";
 import { listTrash, purgeCard, purgeTrash } from "@/server/boards/trash";
 import type { Card } from "@/server/boards";
 import { getServerSession } from "@/server/auth/session";
@@ -151,6 +154,18 @@ export async function purgeCardAction(input: unknown): Promise<ActionResult<null
     await purgeCard(userId, cardIdInput.parse(input).cardId);
     return null;
   });
+}
+
+/**
+ * Undo/redo adapters. They take no version from the client: the stack stores intent and the
+ * service reads the current version, so an undo cannot fail because a refetch moved it on.
+ */
+export async function revertMoveAction(input: unknown): Promise<ActionResult<Card>> {
+  return run((userId) => revertMove(userId, revertMoveInput.parse(input)));
+}
+
+export async function revertUpdateAction(input: unknown): Promise<ActionResult<Card>> {
+  return run((userId) => revertUpdate(userId, revertUpdateInput.parse(input)));
 }
 
 export async function listSavedViewsAction(input: unknown): Promise<ActionResult<SavedView[]>> {

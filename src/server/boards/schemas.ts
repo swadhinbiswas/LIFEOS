@@ -107,6 +107,25 @@ export const savedViewScopeSchema = z.enum(["tasks", "jobs", "board"]);
 
 export const boardIdInput = z.object({ boardId: z.string().min(1) });
 
+/** Reversal inputs (undo/redo): intent only — the service reads the current version. */
+export const revertMoveInput = z.object({
+  cardId: z.string().min(1),
+  toColumnId: z.string().min(1),
+  prevCardId: z.string().min(1).nullable(),
+  nextCardId: z.string().min(1).nullable(),
+});
+
+export const revertUpdateInput = z.object({
+  cardId: z.string().min(1),
+  title: z.string().trim().min(1).max(500).optional(),
+  description: z.string().max(20_000).nullable().optional(),
+  priority: prioritySchema.nullable().optional(),
+  dueAt: timestamp.nullable().optional(),
+  startAt: timestamp.nullable().optional(),
+  estimateMin: z.number().int().min(0).max(100_000).nullable().optional(),
+  recurrence: recurrence.nullable().optional(),
+});
+
 export const savedViewInput = z.object({
   scope: savedViewScopeSchema,
   name: z.string().trim().min(1).max(80),
