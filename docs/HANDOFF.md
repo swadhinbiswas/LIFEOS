@@ -7,7 +7,7 @@ not decisions (those are in `docs/DECISIONS.md`).
 
 - Phases 0–3 complete and reported. **Phase 4 complete** (dashboards + life modules).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **198 passed** ✓ · `pnpm e2e` **39 passed, twice** ✓.
+  `pnpm test` **198 passed** ✓ · `pnpm e2e` **40 passed, twice** ✓.
 - ADR-044 … ADR-053 record the phase's decisions. Nothing is pushed; all work is on local `master`.
 
 ## The Phase-4 chunks
@@ -26,16 +26,15 @@ not decisions (those are in `docs/DECISIONS.md`).
 - `d286561` i18n scaffold (ADR-053)
 - undo/redo shipped: Ctrl+Z / Ctrl+Shift+Z over the version-free reversal actions (spec §6.1)
 - per-card reminders delivered by the notification sweep (ADR-054)
+- PWA: installable manifest + network-first shell cache (ADR-055)
 
 ## Outstanding gaps (deliberate, with next steps)
 
-1. **PWA installability + offline read cache** are deferred (ADR-051); offline **capture** syncs,
-   which is the phase-acceptance item.
-2. **i18n is a scaffold** (ADR-053): `/about` is translated (en/bn) with a cookie locale; the shell
+1. **i18n is a scaffold** (ADR-053): `/about` is translated (en/bn) with a cookie locale; the shell
    is English. Translated pathnames and a per-user locale setting are pending.
-3. **Generic tags apply to notes only** (ADR-049); cards keep their board-scoped labels.
+2. **Generic tags apply to notes only** (ADR-049); cards keep their board-scoped labels.
    `card_links` (card↔card) is unwired.
-4. **Dates are UTC everywhere** (ADR-045/052/053); per-user timezone rendering is the open §6.9
+3. **Dates are UTC everywhere** (ADR-045/052/053); per-user timezone rendering is the open §6.9
    timezone item.
 
 ## Next: Phase 5 (awaiting the user's go-ahead)

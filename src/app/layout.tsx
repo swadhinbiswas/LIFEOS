@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fira_Code, IBM_Plex_Mono, JetBrains_Mono } from "next/font/google";
 import { GeistMono } from "geist/font/mono";
 import { cookies } from "next/headers";
@@ -9,6 +9,7 @@ import { APP_DESCRIPTION, APP_NAME, THEME_COOKIE } from "@/config/app";
 import { accentCssVars, parseThemeOverrides, themeAttrs } from "@/config/themes";
 
 import "./globals.css";
+import { ServiceWorkerRegistrar } from "@/components/service-worker";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,9 @@ export const metadata: Metadata = {
   title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
   description: APP_DESCRIPTION,
 };
+
+/** Browser chrome colour; the PWA manifest carries the same value (ADR-055). */
+export const viewport: Viewport = { themeColor: "#1a1b26" };
 
 /**
  * Resolves `colorMode: "system"` against the OS preference before first paint, so SSR
@@ -75,6 +79,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className="min-h-dvh antialiased">
         <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        <ServiceWorkerRegistrar />
         <Toaster />
       </body>
     </html>

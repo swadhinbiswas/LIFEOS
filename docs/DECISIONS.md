@@ -1273,6 +1273,30 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-055 — PWA: installable manifest + a service worker with a network-first shell cache
+
+- **Status:** accepted (2026-09-24)
+- **Context:** MVP #29 lists "installable, offline read cache, offline quick-capture queue". ADR-051
+  shipped the capture queue and deferred the first two "because a partial service worker risks
+  stale caches", with no plan recorded for finishing them.
+- **Decision:**
+  - **Installability without raster icons:** `app/manifest.ts` (standalone, theme colours) plus a
+    single SVG icon served at `sizes: "any"`, which Chromium accepts for installability; no image
+    toolchain is added to the repo.
+  - **`public/sw.js`** with a deliberately narrow policy: **network-first for navigations** (online
+    always gets fresh HTML; offline falls back to the last rendered shell), **cache-first for
+    immutable `/_next/static` and media**, and **nothing else cached** — server actions, API routes
+    and RSC fetches pass straight through, so no write or live query is ever served stale.
+  - **Registered in production only** (a service worker and dev HMR is a bad mix), and the caches
+    are **cleared on sign-out**, so a shared browser cannot show a previous user's cached shell.
+  - **The read cache is honestly a snapshot:** server components do not run offline, so a page shows
+    its last render; reads work, writes need the connection (or the capture queue, ADR-051).
+- **Consequences:** #29 is complete — installable, offline shell read, offline capture with sync.
+  Cost: a service worker to maintain and a cache-clearing step on sign-out; offline data is stale
+  by construction, which the UI already reflects by seeing a disconnected server.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

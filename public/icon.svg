@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LifeOS">
+  <rect width="512" height="512" rx="112" fill="#1a1b26" />
+  <rect x="64" y="64" width="384" height="384" rx="48" fill="none" stroke="#7aa2f7" stroke-width="16" />
+  <text x="256" y="344" font-family="monospace" font-size="240" font-weight="700" fill="#7dcfff" text-anchor="middle">L</text>
+</svg>

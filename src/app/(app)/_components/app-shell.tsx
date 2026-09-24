@@ -121,6 +121,11 @@ export function AppShell({
   async function signOut() {
     setSigningOut(true);
     await authClient.signOut();
+    // ADR-055: never leave a previous user's cached shell on a shared browser.
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    }
     router.push("/sign-in");
     router.refresh();
   }
