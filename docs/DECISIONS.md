@@ -1494,6 +1494,33 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-064 — MCP server `/api/mcp`: stateless Streamable HTTP, JSON responses, same services
+
+- **Status:** accepted (2026-09-24)
+- **Context:** §9.2 requires an MCP server over Streamable HTTP, Bearer-key auth, and the tools
+  `search` / `create_card` / `move_card` / `get_daily_brief`, sharing the service layer and audit
+  with the UI. The docs were re-read at build time: the **2026-07-28** revision makes Streamable
+  HTTP POST-only with per-request metadata and keeps the **initialize handshake** for backward
+  compatibility; earlier revisions (2025-06-18 / 2025-11-25) use that handshake and an optional
+  session.
+- **Decision:**
+  - **Stateless, JSON-response Streamable HTTP:** one JSON-RPC message per POST, replies are
+    `application/json`, **no `Mcp-Session-Id`** is issued, `GET`/`DELETE` return `405` (this profile
+    has no server-initiated streams). The server negotiates the protocol version, echoing a
+    supported one and otherwise answering with the latest.
+  - **The Origin header is validated when present** (the spec's DNS-rebinding guard); a mismatch is
+    `403`.
+  - **Auth is the Bearer API key** (ADR-062). A tool whose scope the key lacks returns an MCP
+    **tool error** (`isError: true`), not a JSON-RPC error, so the agent sees a usable message.
+  - **Tools are thin adapters** over `search`, the card service and the daily brief — the same
+    services the UI and REST call — so an agent can do nothing the app cannot.
+  - **JSON-RPC batches are rejected**, matching 2026-07-28.
+- **Consequences:** a client connects with one URL and a key and gets four tools with no session
+  bookkeeping. Cost: streaming progress, resources and prompts are not implemented; they can be
+  added on the same endpoint without changing the tools.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
