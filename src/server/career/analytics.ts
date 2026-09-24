@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/server/db";
-import { job_applications } from "@/server/db/schema";
+import { cards, job_applications } from "@/server/db/schema";
 import { getBoard } from "@/server/boards";
 
 import { ensureJobBoard, getFunnel, type Funnel } from "./index";
@@ -114,21 +114,49 @@ export async function getCareerAnalytics(
     perWeek.push({ weekStart: start.toISOString().slice(0, 10), count });
   }
 
-  const ghosted: GhostRow[] = [];
-  for (const application of applications) {
-    const card = cardsById.get(application.card_id);
-    if (!card || card.completed_at) continue;
-    const history = parseHistory(application.stage_history);
+  const ghosted = await getFollowUpsDue(userId, now, ghostThresholdDays);
+
+  return { funnel, bySource, perWeek, ghosted, ghostThresholdDays: ghostThresholdDays };
+}
+
+/**
+ * Open applications with no stage change for `thresholdDays` — the "stale application" rule,
+ * shared by the analytics page (21 days → "ghosted") and the notification sweep's follow-up
+ * nudge (7 days, ADR-047), so one definition answers both instead of two that drift.
+ */
+export async function getFollowUpsDue(
+  userId: string,
+  now: Date = new Date(),
+  thresholdDays = 7,
+): Promise<GhostRow[]> {
+  const rows = await db
+    .select({
+      cardId: job_applications.card_id,
+      history: job_applications.stage_history,
+      createdAt: job_applications.created_at,
+      title: cards.title,
+    })
+    .from(job_applications)
+    .innerJoin(cards, eq(cards.id, job_applications.card_id))
+    .where(
+      and(
+        eq(job_applications.user_id, userId),
+        isNull(cards.deleted_at),
+        isNull(cards.archived_at),
+        isNull(cards.completed_at),
+      ),
+    );
+
+  const due: GhostRow[] = [];
+  for (const row of rows) {
+    const history = parseHistory(row.history);
     const last = history.at(-1);
     const stage = last?.to ?? "—";
     if (TERMINAL_STAGES.has(stage)) continue;
-    const since = new Date(last?.at ?? application.created_at).getTime();
+    const since = new Date(last?.at ?? row.createdAt).getTime();
     const days = Math.floor((now.getTime() - since) / DAY_MS);
-    if (days >= ghostThresholdDays) {
-      ghosted.push({ cardId: card.id, title: card.title, stage, days });
-    }
+    if (days >= thresholdDays) due.push({ cardId: row.cardId, title: row.title, stage, days });
   }
-  ghosted.sort((a, b) => b.days - a.days);
-
-  return { funnel, bySource, perWeek, ghosted, ghostThresholdDays: ghostThresholdDays };
+  due.sort((a, b) => b.days - a.days);
+  return due;
 }

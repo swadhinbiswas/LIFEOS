@@ -1046,6 +1046,41 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-047 — Notification centre: lazy on-read generation with per-source dedupe keys
+
+- **Status:** accepted (2026-09-24)
+- **Context:** spec §6.9 asks for a notifications centre; MVP scope #28 ships the **in-app** centre
+  plus nudges, and #61 defers email/web-push delivery channels and quiet hours. The `notifications`
+  table exists (migration 0004) but has no service, and the events it should carry are
+  **time-based** — a task becomes overdue as the clock passes, a habit is missed at a day
+  rollover, a job goes quiet after a week — so no mutation writes them at the moment they become
+  true, and the MVP has no worker/cron.
+- **Decision:**
+  - **Generate on read (a lazy sweep), not on write.** `getNotifications` first evaluates the
+    sources and inserts what is missing, then returns the list. A page load therefore catches up
+    every time-based nudge without a scheduler; a future digest cron can call the same service.
+  - **Idempotence is a `dedupe_key` column with `UNIQUE(user_id, dedupe_key)`** (migration 0007).
+    Each generated row carries a key that encodes its source and window
+    (`task:<day>`, `habit:<habitId>:<day>`, `job:<cardId>:<week>`); re-sweeping conflicts and
+    inserts nothing. Manual/system rows may leave the key null (SQLite's unique index treats
+    nulls as distinct).
+  - **Sources in this chunk:** due/overdue **tasks** (one aggregate nudge per day, scoped to the
+    system Tasks board), **habits** missed yesterday while still active (per habit, so it is
+    individually actionable), and **job follow-ups** with no stage change for ≥7 days (per
+    application, once a week). The follow-up definition is the same "stale application" rule the
+    career analytics already uses for ghosted detection — one definition, two windows.
+  - **Mark-read is a write** (`read_at`), with a mark-all. The header bell shows the unread count
+    as a text badge, never colour alone.
+  - **No per-type controls or quiet hours yet** (#61 / the Phase 7 settings suite own those), and
+    **the `reminders` table stays untouched**: explicit user-set reminders have no UI requirement
+    in §6.9, so building a consumer now would be a placeholder, not a feature.
+- **Consequences:** the centre needs no background worker and the same call is safe to repeat;
+  changing a nudge's window means changing only its key function. Cost: one column + unique-index
+  migration and a sweep (three tenant-scoped queries) on notifications reads, which is cheap and
+  cannot drift from the source data.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

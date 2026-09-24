@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Bell } from "lucide-react";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { StatusLine } from "@/components/tui/status-line";
@@ -29,11 +30,14 @@ const SIDEBAR_MODES: readonly string[] = ["expanded", "icon", "full"];
 export function AppShell({
   user,
   focus,
+  unread,
   children,
 }: {
   user: { name: string };
   /** A running focus session, so the timer is ambient across pages (spec §6.7). */
   focus: { id: string; startedAt: string } | null;
+  /** Unread notifications for the header bell (spec §6.9). */
+  unread: number;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -193,6 +197,24 @@ export function AppShell({
               stop focus
             </Button>
           ) : null}
+          <Link
+            href="/notifications"
+            data-slot="notification-bell"
+            aria-label={unread > 0 ? `notifications, ${unread} unread` : "notifications"}
+            className="inline-flex items-center gap-1 rounded-[var(--radius)] px-2 py-1 font-mono text-xs hover:bg-accent hover:text-accent-foreground"
+          >
+            <Bell aria-hidden="true" className="size-4" />
+            <span className="nav-label">notifications</span>
+            {unread > 0 ? (
+              <span
+                data-slot="notification-count"
+                className="tabular-nums text-warning"
+                aria-hidden="true"
+              >
+                {unread > 99 ? "99+" : unread}
+              </span>
+            ) : null}
+          </Link>
           <Button type="button" variant="outline" size="sm" onClick={sidebarButton}>
             sidebar
           </Button>

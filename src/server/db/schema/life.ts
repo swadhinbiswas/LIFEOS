@@ -455,8 +455,17 @@ export const notifications = sqliteTable(
     body: text("body"),
     /** Where clicking it should go. */
     href: text("href"),
+    /**
+     * Idempotence key for generated notifications (`source:scope`, ADR-047). A re-sweep that
+     * rebuilds the same nudge conflicts on UNIQUE(user_id, dedupe_key) and inserts nothing.
+     * Null for rows created outside the sweep (nulls are distinct in SQLite unique indexes).
+     */
+    dedupe_key: text("dedupe_key"),
     read_at: integer("read_at", { mode: "timestamp_ms" }),
     ...timestamps(),
   },
-  (t) => [index("notifications_user_read_idx").on(t.user_id, t.read_at)],
+  (t) => [
+    index("notifications_user_read_idx").on(t.user_id, t.read_at),
+    uniqueIndex("notifications_dedupe_unq").on(t.user_id, t.dedupe_key),
+  ],
 );
