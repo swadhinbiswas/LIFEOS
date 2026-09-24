@@ -1540,6 +1540,31 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-066 — Outgoing webhooks: best-effort signed deliveries with a replayable log
+
+- **Status:** accepted (2026-09-24)
+- **Context:** §9.3 wants subscribable events, an HMAC-SHA256 signature header, retries with
+  exponential backoff (QStash), and a delivery log with replay. No QStash token is configured, and
+  the app must keep working without one.
+- **Decision:**
+  - Tables **`webhooks_out`** (url, secret, events JSON, active) and **`webhook_deliveries`**
+    (event, payload, response_status, error, attempts, delivered_at).
+  - **`emitEvent(userId, type, data)` is called from the services that own the write** (board
+    create/update/move, notes, habits, career stage change) and is **best-effort: it never throws
+    and never blocks correctness**; it signs the exact body with **HMAC-SHA256**
+    (`x-lifeos-signature: sha256=…`) and records one delivery row per matching subscription.
+  - **Scheduled retries with exponential backoff are deferred** until a queue is configured;
+    instead the log is **replayable by hand** (a `redeliver` action writes a fresh delivery), which
+    is the same recovery path with one click.
+  - **Secrets are generated per subscription and shown once** — it is the receiver's shared secret,
+    so it must not be readable afterwards.
+  - Delivery is a plain `fetch` with a short timeout.
+- **Consequences:** a receiver can verify authenticity and replay a lost delivery without a worker.
+  Cost: retries are manual until a queue is added, and a slow endpoint can add latency to a write
+  (bounded by the timeout).
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

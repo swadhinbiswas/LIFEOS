@@ -11,6 +11,7 @@ import {
   job_applications,
   offers,
 } from "@/server/db/schema";
+import { emitEvent } from "@/server/webhooks";
 import {
   BoardError,
   createBoard,
@@ -217,6 +218,13 @@ export async function moveJobStage(userId: string, input: MoveJobStageInput): Pr
     .update(job_applications)
     .set({ stage_history: JSON.stringify(history) })
     .where(and(eq(job_applications.id, application.id), eq(job_applications.user_id, userId)));
+
+  await emitEvent(userId, "job.stage_changed", {
+    applicationId: application.id,
+    cardId: application.card_id,
+    from: current?.name ?? null,
+    to: stage.name,
+  });
 
   return card;
 }

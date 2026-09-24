@@ -3,8 +3,15 @@ import { redirect } from "next/navigation";
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
 import { listApiKeys, toKeySummary } from "@/server/api-keys";
+import {
+  listDeliveries,
+  listWebhooks,
+  toDeliverySummary,
+  toWebhookSummary,
+} from "@/server/webhooks";
 
 import { ApiKeys } from "./_components/api-keys";
+import { Webhooks } from "./_components/webhooks";
 
 export const metadata = { title: "Integrations" };
 
@@ -18,6 +25,8 @@ export default async function IntegrationsPage() {
 
   const keys = (await listApiKeys(session.user.id)).map(toKeySummary);
   const active = keys.filter((key) => !key.revoked).length;
+  const webhooks = (await listWebhooks(session.user.id)).map(toWebhookSummary);
+  const deliveries = (await listDeliveries(session.user.id)).map(toDeliverySummary);
 
   return (
     <>
@@ -32,6 +41,14 @@ export default async function IntegrationsPage() {
             hash, scoped and revocable.
           </p>
           <ApiKeys keys={keys} />
+        </Panel>
+
+        <Panel title="Webhooks" hint={`${webhooks.length}`}>
+          <p className="font-mono text-[10px] text-muted-foreground">
+            outgoing events signed with HMAC-SHA256 in the x-lifeos-signature header — deliveries
+            are logged and can be replayed.
+          </p>
+          <Webhooks webhooks={webhooks} deliveries={deliveries} />
         </Panel>
       </div>
     </>

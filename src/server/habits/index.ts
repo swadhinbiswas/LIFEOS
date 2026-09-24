@@ -4,6 +4,7 @@ import { newId } from "@/lib/id";
 import { db } from "@/server/db";
 import { habit_logs, habits } from "@/server/db/schema";
 import { getUserDayKey } from "@/server/settings";
+import { emitEvent } from "@/server/webhooks";
 
 import { computeStreak, recentDays, shiftDay, targetProgress, type HabitDay } from "./streak";
 
@@ -140,6 +141,8 @@ export async function setHabitLog(
       target: [habit_logs.habit_id, habit_logs.date],
       set: { value: input.value, note: input.note ?? null, updated_at: new Date() },
     });
+
+  await emitEvent(userId, "habit.logged", { habitId: input.habitId, date, value: input.value });
 }
 
 export async function deleteHabit(userId: string, habitId: string): Promise<void> {

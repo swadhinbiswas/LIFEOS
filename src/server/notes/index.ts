@@ -4,6 +4,7 @@ import { newId } from "@/lib/id";
 import { db } from "@/server/db";
 import { note_links, notes } from "@/server/db/schema";
 import { getUserDayKey } from "@/server/settings";
+import { emitEvent } from "@/server/webhooks";
 
 import { extractWikiLinks, toPlainText } from "./wiki";
 
@@ -162,6 +163,7 @@ export async function createNote(
   await indexNote(row);
   await syncLinks(userId, row);
   await resolveIncoming(userId, row.title);
+  await emitEvent(userId, "note.created", { id: row.id, title: row.title, kind: row.kind });
   return row;
 }
 

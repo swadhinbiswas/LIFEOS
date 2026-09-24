@@ -10,3 +10,4 @@ export * from "./boards";
 export * from "./career";
 export * from "./life";
 export * from "./api";
+export * from "./webhooks";

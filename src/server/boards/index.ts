@@ -10,6 +10,7 @@ import { DEFAULT_CARD_FIELDS, DEFAULT_VIEW_CONFIG } from "@/config/boards";
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
 import { board_columns, boards, card_labels, cards, labels } from "@/server/db/schema";
+import { emitEvent } from "@/server/webhooks";
 
 import type {
   CreateBoardInput,
@@ -553,6 +554,12 @@ export async function createCard(userId: string, input: CreateCardInput): Promis
     })
     .returning();
   if (!row) throw new BoardError("invalid", "card insert returned no row");
+  await emitEvent(userId, "card.created", {
+    id: row.id,
+    title: row.title,
+    board_id: row.board_id,
+    column_id: row.column_id,
+  });
   return row;
 }
 
@@ -582,7 +589,10 @@ export async function updateCard(userId: string, input: UpdateCardInput): Promis
     .returning();
 
   const row = updated[0];
-  if (row) return row;
+  if (row) {
+    await emitEvent(userId, "card.updated", { id: row.id, title: row.title });
+    return row;
+  }
 
   // 0 rows means the card is gone or somebody else wrote first (ADR-011).
   await requireCard(userId, input.cardId);
@@ -686,6 +696,10 @@ export async function moveCard(userId: string, input: MoveCardInput): Promise<Ca
           await spawnNextOccurrence(userId, card).catch((error: unknown) => {
             console.error("[boards] could not schedule the next occurrence", error);
           });
+        }
+        await emitEvent(userId, "card.moved", { id: row.id, column_id: row.column_id });
+        if (column.is_done && card.column_id !== column.id) {
+          await emitEvent(userId, "card.completed", { id: row.id, title: row.title });
         }
         return row;
       }

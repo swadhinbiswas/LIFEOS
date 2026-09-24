@@ -13,8 +13,8 @@ career/CV, habits, notes, finance) rendered as a keyboard-first, TUI-skinned web
 2. **Phase gate:** do not start phase N+1 until phase N's checks pass and a status report has been
    given to the user. The user asked to stop at each phase boundary and report.
    - Current phase: **5 → in progress** (API keys, REST `/api/v1/cards`, MCP `/api/mcp`,
-     `/api/v1/ingest` shipped, ADR-062…065; gate green: 219 unit, 45 e2e, build, typecheck, lint).
-     Next in phase: outgoing webhooks, OpenAPI + `/docs/api`, isolation suite.
+     `/api/v1/ingest`, outgoing webhooks shipped, ADR-062…066; gate green: 221 unit, 45 e2e,
+     build, typecheck, lint). Next in phase: OpenAPI + `/docs/api`, isolation suite.
 
 ## Repository map
 
