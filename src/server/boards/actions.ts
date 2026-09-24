@@ -33,6 +33,7 @@ import {
   listSavedViews,
   type SavedView,
 } from "@/server/boards/views";
+import { carryOverOverdue } from "@/server/boards/brief";
 import { getServerSession } from "@/server/auth/session";
 import type { Board } from "@/server/boards";
 
@@ -128,6 +129,10 @@ export async function restoreCardAction(input: unknown): Promise<ActionResult<nu
     await restoreCardService(userId, cardIdInput.parse(input).cardId);
     return null;
   });
+}
+
+export async function carryOverAction(): Promise<ActionResult<{ moved: number }>> {
+  return run(async (userId) => ({ moved: await carryOverOverdue(userId) }));
 }
 
 export async function listSavedViewsAction(input: unknown): Promise<ActionResult<SavedView[]>> {
