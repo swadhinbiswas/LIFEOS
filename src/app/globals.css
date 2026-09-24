@@ -289,3 +289,33 @@ html[data-sidebar-mode="full"] {
     outline-offset: 2px;
   }
 }
+
+/* --- App shell (ADR-028): sidebar variant/mode are pure CSS, driven by the data attributes --- */
+.app-sidebar {
+  flex-shrink: 0;
+}
+
+/* Icon rail: labels leave the visual flow, but stay as title/aria-label on every row. */
+html[data-sidebar-mode="icon"] .app-sidebar .nav-label,
+html[data-sidebar-mode="icon"] .app-sidebar .app-sidebar-brand {
+  display: none;
+}
+html[data-sidebar-mode="icon"] .app-sidebar nav a {
+  justify-content: center;
+}
+
+/* Mode `full`: the bar leaves the flow (content full-width) and opens as an overlay. */
+html[data-sidebar-mode="full"] .app-shell {
+  display: block;
+}
+html[data-sidebar-mode="full"] .app-sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  transform: translateX(-102%);
+}
+html[data-sidebar-mode="full"] .app-shell[data-overlay="open"] .app-sidebar {
+  transform: none;
+}

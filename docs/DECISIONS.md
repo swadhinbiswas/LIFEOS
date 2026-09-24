@@ -871,6 +871,32 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-041 — Customizer controls use plain token colours (axe cannot resolve `color-mix`)
+
+- **Status:** accepted (2026-09-24)
+- **Context:** the axe gate (ADR-029 / spec §13) flagged the Appearance customizer's segmented
+  controls with `color-contrast` failures — `#9b9994` on `#8ca5cf` (1.13:1) — while
+  `getComputedStyle` on those very elements reported AA-passing colours
+  (`rgb(43,42,39)` on `rgb(250,247,240)`, and `rgb(250,247,240)` on `rgb(47,95,179)`,
+  ≈7.4–14:1). The reported values are ~50/50 blends of each element's own text and background,
+  i.e. axe-core 4.13 fell back to pixel sampling because it could not resolve one colour in the
+  cascade: Tailwind v4 compiles opacity modifiers (`hover:bg-primary/80`,
+  `dark:hover:bg-input/50`) to `color-mix(in oklab, …)`, which axe's colour parser rejects. The
+  shadcn `Button` carries such classes on every variant, so any control using it is at risk of
+  the same false positive.
+- **Decision:** the customizer's segmented/radio controls render plain `<button>`s using only
+  plain token utilities (`bg-primary`, `text-primary-foreground`, `border-border`,
+  `bg-background`, `text-foreground`) — no opacity modifiers, no `border-input` (`color-mix`),
+  no shadows. The axe rule set stays fully enabled (no rule or selector exclusions), and
+  ADR-033's computed contrast suite remains the authority on token pairs. The scan also resets
+  interaction state (pointer away, blur) so it evaluates resting styles.
+- **Consequences:** the a11y gate passes on real, resolvable colours and can still catch a
+  genuine contrast regression. New controls that axe scans should avoid Tailwind opacity
+  modifiers, or expect a canvas-sampled false positive; shadcn `Button` remains fine for
+  navbar/dialog actions axe already resolves.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

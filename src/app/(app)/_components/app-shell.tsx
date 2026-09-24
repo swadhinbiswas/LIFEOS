@@ -1,0 +1,149 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
+
+import { StatusLine } from "@/components/tui/status-line";
+import { Button } from "@/components/ui/button";
+import { APP_NAME, APP_TAGLINE } from "@/config/app";
+import { NAV_ITEMS } from "@/config/nav";
+import { SHELL_HINTS } from "@/config/shortcuts";
+import { authClient } from "@/lib/auth-client";
+import { useThemeStore } from "@/lib/theme-store";
+import { cn } from "@/lib/utils";
+
+/** Cycle order per ADR-028: `[` walks expanded → icon → full → expanded. */
+const SIDEBAR_MODES: readonly string[] = ["expanded", "icon", "full"];
+
+/**
+ * The (app) shell: sidebar (geometry is pure CSS driven by the ADR-024/028 data attributes),
+ * header, scrollable main column and the spec §4.1 status line. Client-side because it owns
+ * the keyboard bindings, the sidebar overlay and sign-out.
+ */
+export function AppShell({ user, children }: { user: { name: string }; children: ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const sidebarMode = useThemeStore((state) => state.overrides.sidebarMode);
+  const setOverride = useThemeStore((state) => state.set);
+  const [overlayDismissed, setOverlayDismissed] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  // Derived, not synced: entering `full` reveals the bar; Esc/`[` dismiss it (ADR-028).
+  const overlayOpen = sidebarMode === "full" && !overlayDismissed;
+
+  const cycleSidebar = useCallback(() => {
+    const index = SIDEBAR_MODES.indexOf(sidebarMode);
+    const next = SIDEBAR_MODES[(index + 1) % SIDEBAR_MODES.length] ?? "expanded";
+    setOverlayDismissed(false);
+    setOverride("sidebarMode", next);
+  }, [setOverride, sidebarMode]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (
+        target &&
+        (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))
+      ) {
+        return;
+      }
+      if (event.key === "[") {
+        event.preventDefault();
+        cycleSidebar();
+      } else if (event.key === "Escape" && overlayOpen) {
+        setOverlayDismissed(true);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [cycleSidebar, overlayOpen]);
+
+  async function signOut() {
+    setSigningOut(true);
+    await authClient.signOut();
+    router.push("/sign-in");
+    router.refresh();
+  }
+
+  const sidebarButton = () => {
+    if (sidebarMode === "full") {
+      setOverlayDismissed((dismissed) => !dismissed);
+      return;
+    }
+    cycleSidebar();
+  };
+
+  return (
+    <div
+      className="app-shell flex min-h-svh bg-background"
+      data-overlay={overlayOpen ? "open" : "closed"}
+    >
+      <aside
+        className="app-sidebar"
+        style={{ width: "var(--sidebar-width)", margin: "var(--sidebar-gap)" }}
+      >
+        <div
+          className="flex h-full flex-col border-border bg-card"
+          style={{
+            borderRadius: "var(--sidebar-radius)",
+            boxShadow: "var(--sidebar-shadow)",
+            borderWidth: "var(--sidebar-border-width)",
+            borderStyle: "solid",
+          }}
+        >
+          <p className="app-sidebar-brand px-3 py-3 font-mono text-sm font-semibold tracking-tight">
+            {APP_NAME}
+          </p>
+          <nav aria-label="Primary" className="flex flex-1 flex-col gap-1 p-2">
+            {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  title={label}
+                  className={cn(
+                    "flex items-center gap-2 rounded-[var(--radius)] px-2 py-1.5 font-mono text-xs",
+                    "hover:bg-accent hover:text-accent-foreground",
+                    active && "bg-accent text-accent-foreground",
+                  )}
+                >
+                  <Icon aria-hidden="true" className="size-4 shrink-0" />
+                  <span className="nav-label truncate">{label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+          <p className="nav-label truncate border-t border-border px-3 py-2 font-mono text-xs text-muted-foreground">
+            {user.name}
+          </p>
+        </div>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center gap-3 border-b border-border px-3 py-2">
+          <p className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">
+            {APP_TAGLINE}
+          </p>
+          <Button type="button" variant="outline" size="sm" onClick={sidebarButton}>
+            sidebar
+          </Button>
+          <Button type="button" variant="ghost" size="sm" onClick={signOut} disabled={signingOut}>
+            {signingOut ? "signing out…" : "sign out"}
+          </Button>
+        </header>
+
+        <main className="min-w-0 flex-1 p-4">
+          <div className="mx-auto w-full" style={{ maxWidth: "var(--content-max-width)" }}>
+            {children}
+          </div>
+        </main>
+
+        <StatusLine path={pathname} sync="synced" hints={SHELL_HINTS} />
+      </div>
+    </div>
+  );
+}

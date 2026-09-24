@@ -293,6 +293,18 @@ export function themeAttrs(overrides: ThemeOverrides, osDark: boolean): Record<s
 // Pure function shared by SSR, the live theme store and tests.
 // ---------------------------------------------------------------------------
 
+/** Keys `accentCssVars()` may set — the live store clears exactly these before re-applying. */
+export const ACCENT_CSS_VARS = [
+  "--accent",
+  "--primary",
+  "--primary-foreground",
+  "--chart-1",
+  "--chart-2",
+  "--chart-3",
+  "--chart-4",
+  "--chart-5",
+] as const;
+
 export function accentCssVars(overrides: ThemeOverrides, osDark: boolean): Record<string, string> {
   const hex = overrides.accent;
   if (!hex) return {};
