@@ -23,14 +23,18 @@ export function CardTile({
   card,
   query,
   focused,
+  selected,
   onMove,
   onOpen,
+  onToggleSelect,
 }: {
   card: Card;
   query: string;
   focused?: boolean;
+  selected?: boolean;
   onMove: (cardId: string, direction: MoveDirection) => void;
   onOpen?: (cardId: string) => void;
+  onToggleSelect?: (cardId: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: card.id,
@@ -46,12 +50,14 @@ export function CardTile({
       data-slot="card"
       data-card-id={card.id}
       data-focused={focused ? "true" : undefined}
+      data-selected={selected ? "true" : undefined}
       tabIndex={-1}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         "group/card border border-border bg-background outline-none",
         // Focus is communicated by the border token as well as the ring (spec §4.4).
         focused && "border-ring ring-2 ring-ring/40",
+        selected && "border-primary ring-2 ring-primary/40",
         isDragging && "opacity-40",
       )}
     >
@@ -79,6 +85,17 @@ export function CardTile({
 
       {/* Keyboard-complete path (ADR-016): the move buttons call the same service as drag. */}
       <div className="flex items-center gap-1 border-t border-border px-1 py-1 opacity-60 focus-within:opacity-100 md:opacity-0 md:group-hover/card:opacity-100 md:group-focus-within/card:opacity-100">
+        {onToggleSelect ? (
+          <button
+            type="button"
+            className={control}
+            aria-pressed={selected ?? false}
+            onClick={() => onToggleSelect(card.id)}
+            aria-label={`select ${card.title}`}
+          >
+            {selected ? "▣" : "▢"}
+          </button>
+        ) : null}
         <button
           type="button"
           className={control}

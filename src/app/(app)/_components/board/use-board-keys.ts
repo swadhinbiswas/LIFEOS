@@ -29,6 +29,9 @@ export interface BoardKeyHandlers {
   onToggleComplete: (card: Card) => void;
   onReorder: (card: Card, direction: "up" | "down") => void;
   onDelete: (card: Card) => void;
+  onToggleSelect: (card: Card) => void;
+  onClearSelection: () => void;
+  hasSelection: boolean;
   onView: (view: "kanban" | "table") => void;
   /** Off in the table view, whose own controls handle the same concepts. */
   enabled: boolean;
@@ -49,6 +52,9 @@ export function useBoardKeys({
   onToggleComplete,
   onReorder,
   onDelete,
+  onToggleSelect,
+  onClearSelection,
+  hasSelection,
   onView,
   enabled,
 }: BoardKeyHandlers): void {
@@ -92,6 +98,13 @@ export function useBoardKeys({
 
       // Everything below is kanban-only.
       if (!enabled) return;
+
+      // Escape clears a bulk selection before anything else consumes it.
+      if (event.key === "Escape" && hasSelection) {
+        event.preventDefault();
+        onClearSelection();
+        return;
+      }
 
       if (event.key === "j" || event.key === "ArrowDown") {
         event.preventDefault();
@@ -137,6 +150,11 @@ export function useBoardKeys({
         onToggleComplete(focused);
         return;
       }
+      if (event.key === "x") {
+        event.preventDefault();
+        onToggleSelect(focused);
+        return;
+      }
       if (event.key === "J" || event.key === "K") {
         event.preventDefault();
         onReorder(focused, event.key === "J" ? "down" : "up");
@@ -159,6 +177,9 @@ export function useBoardKeys({
     onToggleComplete,
     onReorder,
     onDelete,
+    onToggleSelect,
+    onClearSelection,
+    hasSelection,
     onView,
     enabled,
   ]);

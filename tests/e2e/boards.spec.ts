@@ -208,3 +208,42 @@ test("trash: a deleted card restores from the trash panel", async ({ page }) => 
   await expect(page.locator('[data-slot="trash-card"]', { hasText: title })).toHaveCount(0);
   await expect(serverCard(page, "Inbox", title)).toBeVisible();
 });
+
+/** Bulk actions (spec §6.1): select with `x`, then move the selection together. */
+test("bulk actions: select two cards with x and move them together", async ({ page }) => {
+  test.setTimeout(90_000);
+  const email = uniqueEmail("bulk");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/tasks");
+
+  const adder = page.getByLabel("add a card to Inbox");
+  for (const title of ["bulk one", "bulk two"]) {
+    await adder.click();
+    await adder.fill(title);
+    await adder.press("Enter");
+  }
+  await expect(serverCard(page, "Inbox", "bulk one")).toBeVisible();
+  await expect(serverCard(page, "Inbox", "bulk two")).toBeVisible();
+  await adder.blur();
+
+  // Keyboard selection: focus the first card, select, focus the next, select.
+  await page.keyboard.press("j");
+  await page.keyboard.press("x");
+  await page.keyboard.press("j");
+  await page.keyboard.press("x");
+
+  const bar = page.locator('[data-slot="bulk-bar"]');
+  await expect(bar).toContainText("2 selected");
+
+  await bar.getByLabel("move to").selectOption({ label: "Today" });
+  await expect(serverCard(page, "Today", "bulk one")).toBeVisible();
+  await expect(serverCard(page, "Today", "bulk two")).toBeVisible();
+  await expect(bar).toHaveCount(0);
+  await page.waitForLoadState("networkidle");
+
+  await page.reload();
+  await expect(serverCard(page, "Today", "bulk one")).toBeVisible();
+  await expect(serverCard(page, "Today", "bulk two")).toBeVisible();
+});

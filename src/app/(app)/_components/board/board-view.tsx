@@ -58,6 +58,7 @@ export function BoardView({
   const [cardParam, setCardParam] = useQueryState("card");
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const view = viewParam === "table" ? "table" : "kanban";
   const filters = useMemo(() => parseQuickFilters(filterParam), [filterParam]);
@@ -183,19 +184,47 @@ export function BoardView({
     void setQuery(state.q ?? null);
   };
 
-  /** Space toggles done: into the done column, or back to the first open one (spec §4.3). */
-  const toggleComplete = (card: Card) => {
-    const done = columns.find((column) => column.is_done);
-    const firstOpen = columns.find((column) => !column.is_done);
-    const target = done && card.column_id !== done.id ? done : firstOpen;
-    if (!target || target.id === card.column_id) return;
-    moveCard.mutate({
-      cardId: card.id,
-      version: card.version,
-      toColumnId: target.id,
-      prevCardId: cardsInColumn(target.id).at(-1)?.id ?? null,
-      nextCardId: null,
-    });
+  /** Space toggles done: into the done column, or back to the first open one (spec §4.3). */ const toggleComplete =
+    (card: Card) => {
+      const done = columns.find((column) => column.is_done);
+      const firstOpen = columns.find((column) => !column.is_done);
+      const target = done && card.column_id !== done.id ? done : firstOpen;
+      if (!target || target.id === card.column_id) return;
+      moveCard.mutate({
+        cardId: card.id,
+        version: card.version,
+        toColumnId: target.id,
+        prevCardId: cardsInColumn(target.id).at(-1)?.id ?? null,
+        nextCardId: null,
+      });
+    };
+
+  const toggleSelect = (cardId: string) =>
+    setSelectedIds((current) =>
+      current.includes(cardId) ? current.filter((id) => id !== cardId) : [...current, cardId],
+    );
+
+  /** Bulk moves are sequential and chain their predecessors, so order is deterministic. */
+  const bulkMove = async (toColumnId: string) => {
+    let previousId: string | null = cardsInColumn(toColumnId).at(-1)?.id ?? null;
+    for (const cardId of selectedIds) {
+      const card = payload.cards.find((candidate) => candidate.id === cardId);
+      if (!card) continue;
+      await moveCard.mutateAsync({
+        cardId,
+        version: card.version,
+        toColumnId,
+        prevCardId: previousId,
+        nextCardId: null,
+      });
+      previousId = cardId;
+    }
+    setSelectedIds([]);
+  };
+
+  const bulkRemove = async (archive: boolean) => {
+    for (const cardId of selectedIds) await removeCard.mutateAsync({ cardId, archive });
+    setSelectedIds([]);
   };
 
   useBoardKeys({
@@ -207,6 +236,9 @@ export function BoardView({
     onToggleComplete: toggleComplete,
     onReorder: (card, direction) => handleMove(card.id, direction),
     onDelete: (card) => removeCard.mutate({ cardId: card.id }),
+    onToggleSelect: (card) => toggleSelect(card.id),
+    onClearSelection: () => setSelectedIds([]),
+    hasSelection: selectedIds.length > 0,
     onView: (next) => void setViewParam(next === "kanban" ? null : "table"),
     enabled: view === "kanban",
   });
@@ -243,6 +275,52 @@ export function BoardView({
       />
 
       <BoardUtils boardId={boardId} />
+
+      {selectedIds.length > 0 ? (
+        <div
+          data-slot="bulk-bar"
+          className="flex flex-wrap items-center gap-2 border border-border bg-card px-2 py-1 font-mono text-[10px]"
+        >
+          <span role="status">{selectedIds.length} selected</span>
+          <label htmlFor="bulk-move">move to</label>
+          <select
+            id="bulk-move"
+            value=""
+            onChange={(event) => {
+              if (event.target.value) void bulkMove(event.target.value);
+            }}
+            className="border border-border bg-background px-1 py-0.5 font-mono text-[10px]"
+          >
+            <option value="">choose…</option>
+            {columns.map((column) => (
+              <option key={column.id} value={column.id}>
+                {column.name}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 hover:bg-accent hover:text-accent-foreground"
+            onClick={() => void bulkRemove(true)}
+          >
+            archive
+          </button>
+          <button
+            type="button"
+            className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 hover:bg-accent hover:text-accent-foreground"
+            onClick={() => void bulkRemove(false)}
+          >
+            delete
+          </button>
+          <button
+            type="button"
+            className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 hover:bg-accent hover:text-accent-foreground"
+            onClick={() => setSelectedIds([])}
+          >
+            clear
+          </button>
+        </div>
+      ) : null}
 
       {view === "table" ? (
         <TableView
@@ -293,6 +371,8 @@ export function BoardView({
                 onMove={handleMove}
                 onOpen={(cardId) => void setCardParam(cardId)}
                 focusedCardId={focusedId}
+                selectedCardIds={selectedIds}
+                onToggleSelect={toggleSelect}
                 onAdd={(columnId, title) => {
                   createCard.mutate({ columnId, title });
                 }}

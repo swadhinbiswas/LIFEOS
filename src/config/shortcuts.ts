@@ -38,6 +38,7 @@ export const KEY_BINDINGS: BindingGroup[] = [
       { keys: ["h", "l"], label: "change column" },
       { keys: ["Enter"], label: "open card" },
       { keys: ["Space"], label: "complete" },
+      { keys: ["x"], label: "select" },
       { keys: ["Shift", "J/K"], label: "reorder" },
       { keys: ["Del"], label: "delete" },
       { keys: ["c"], label: "carry over overdue" },

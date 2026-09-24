@@ -30,6 +30,8 @@ export function BoardColumn({
   onMove,
   onOpen,
   focusedCardId,
+  selectedCardIds,
+  onToggleSelect,
   onAdd,
 }: {
   column: Column;
@@ -39,6 +41,8 @@ export function BoardColumn({
   onMove: (cardId: string, direction: MoveDirection) => void;
   onOpen?: (cardId: string) => void;
   focusedCardId?: string | null;
+  selectedCardIds?: string[];
+  onToggleSelect?: (cardId: string) => void;
   onAdd: (columnId: string, title: string) => Promise<void> | void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.id, data: { type: "column" } });
@@ -67,8 +71,10 @@ export function BoardColumn({
       card={card}
       query={query}
       focused={card.id === focusedCardId}
+      selected={selectedCardIds?.includes(card.id) ?? false}
       onMove={onMove}
       onOpen={onOpen}
+      onToggleSelect={onToggleSelect}
     />
   );
 
