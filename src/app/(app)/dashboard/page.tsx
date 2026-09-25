@@ -20,6 +20,7 @@ import { dayKeyInTimeZone } from "@/lib/timezone";
 import { briefEnabled, latestBrief } from "@/server/ai/brief";
 import { getDashboardKpis, KPI_DEFINITIONS } from "@/server/dashboard";
 import { completedDailySeries } from "@/server/dashboard/completion";
+import { templatesForVariant } from "@/config/dashboard-templates";
 import { constellationRows, habitConsistencySeries } from "@/server/dashboard/habits";
 import { getLayout } from "@/server/dashboard/widgets";
 import { focusDailySeries } from "@/server/focus";
@@ -35,6 +36,7 @@ import { FunnelChart } from "./_components/funnel-chart";
 import { HabitConstellation } from "./_components/habit-constellation";
 import { partitionQueue, QueueSplit } from "./_components/queue-split";
 import { SignalTiles } from "./_components/signal-tiles";
+import { TemplatePicker } from "./_components/template-picker";
 import { StaleApplications } from "./_components/stale-applications";
 import { TrendChart } from "./_components/trend-chart";
 
@@ -67,6 +69,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   // Career vocabulary (stage / in stage / mean days / no jobs) is the analytics page's own copy, so
   // it is reused rather than duplicated — a second copy is a second thing to keep in sync.
   const tc = await getTranslations("Pages.Career");
+  const tt = await getTranslations("Widgets.templates");
 
   const { variant: requested } = await searchParams;
   const variant: DashboardVariant = DASHBOARD_VARIANTS.includes(requested as DashboardVariant)
@@ -313,7 +316,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               />
               <Link
                 href={`/tasks?card=${card.id}`}
-                className="min-w-0 flex-1 truncate font-mono text-xs hover:text-primary"
+                className="flex min-h-8 min-w-0 flex-1 items-center truncate font-mono
+                  text-xs hover:text-primary"
               >
                 {card.title}
               </Link>
@@ -596,6 +600,14 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           <div className="mt-2">
             <Panel title={t("layout")}>
               <LayoutControls layout={layout} labels={labels} />
+              <TemplatePicker
+                variant={variant}
+                templates={templatesForVariant(variant).map((template) => ({
+                  id: template.id,
+                  label: tt(template.key),
+                  hint: tt(template.hintKey),
+                }))}
+              />
             </Panel>
           </div>
         </details>

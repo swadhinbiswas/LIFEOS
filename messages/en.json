@@ -176,13 +176,31 @@
     "productivityKpis": "work KPIs",
     "productivityDone": "tasks done per day",
     "productivityFocus": "focus rhythm",
-    "productivityReviews": "review streak"
+    "productivityReviews": "review streak",
+    "templates": {
+      "day": "the day",
+      "dayHint": "brief, counts, top 3, queue, planned",
+      "balanced": "balanced",
+      "balancedHint": "everything, in the order you would read it",
+      "focus": "deep work",
+      "focusHint": "top 3, focus rhythm and planned minutes",
+      "everything": "everything",
+      "everythingHint": "every widget this variant has",
+      "numbers": "numbers",
+      "numbersHint": "the KPIs and the habit streaks",
+      "pipeline": "the pipeline",
+      "pipelineHint": "funnel, velocity, follow-ups and sources",
+      "shipped": "shipped",
+      "shippedHint": "output, focus rhythm and the review streak"
+    }
   },
   "Pages": {
     "Dashboard": {
       "title": "Dashboard",
       "layout": "Layout",
       "customize": "customize",
+      "starters": "start with a layout",
+      "startersHint": "applying one replaces the current layout",
       "chartTitle": "Habit consistency",
       "chartHint": "Share of habits checked off, last 28 days",
       "layoutHint": "widgets on this variant — hide or move them; changes save immediately",

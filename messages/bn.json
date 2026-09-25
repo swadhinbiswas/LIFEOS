@@ -176,13 +176,31 @@
     "productivityKpis": "কাজের KPI",
     "productivityDone": "প্রতিদিন সম্পন্ন কাজ",
     "productivityFocus": "ফোকাসের ছন্দ",
-    "productivityReviews": "রিভিউ ধারা"
+    "productivityReviews": "রিভিউ ধারা",
+    "templates": {
+      "day": "আজ",
+      "dayHint": "ব্রিফ, সংখ্যা, শীর্ষ ৩, সারি, পরিকল্পিত মিনিট",
+      "balanced": "ভারসাম্যপূর্ণ",
+      "balancedHint": "সবকিছু, যেভাবে পড়তেন সেভাবেই",
+      "focus": "গভীর কাজ",
+      "focusHint": "শীর্ষ ৩, ফোকাসের ছন্দ ও পরিকল্পিত মিনিট",
+      "everything": "সবকিছু",
+      "everythingHint": "এই ভ্যারিয়েন্টের প্রতিটি উইজেট",
+      "numbers": "সংখ্যা",
+      "numbersHint": "KPI ও অভ্যাসের ধারা",
+      "pipeline": "পাইপলাইন",
+      "pipelineHint": "ফানেল, গতি, ফলো-আপ ও সূত্র",
+      "shipped": "শিপড",
+      "shippedHint": "আউটপুট, ফোকাসের ছন্দ ও রিভিউ ধারা"
+    }
   },
   "Pages": {
     "Dashboard": {
       "title": "ড্যাশবোর্ড",
       "layout": "বিন্যাস",
       "customize": "কাস্টমাইজ",
+      "starters": "start with a layout",
+      "startersHint": "applying one replaces the current layout",
       "chartTitle": "অভ্যাসের ধারাবাহিকতা",
       "chartHint": "শেষ ২৮ দিনে কত শতাংশ অভ্যাস সম্পন্ন হয়েছে",
       "layoutHint": "এই ভ্যারিয়েন্টের উইজেট — লুকান বা সরান; বদল সঙ্গে সঙ্গে সেভ হয়",
