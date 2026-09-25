@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { THEME_COOKIE } from "@/config/app";
 import { parseThemeOverrides } from "@/config/themes";
+import { billingReady } from "@/env";
 import { auth } from "@/server/auth";
 import { getRunningSession } from "@/server/focus";
 import { unreadCount } from "@/server/notifications";
@@ -39,6 +40,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         user={{ name: session.user.name }}
         focus={focus ? { id: focus.id, startedAt: new Date(focus.started_at).toISOString() } : null}
         unread={unread}
+        billing={billingReady}
       >
         {children}
       </AppShell>

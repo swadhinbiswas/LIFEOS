@@ -64,6 +64,7 @@
     "portfolio": "Portfolio",
     "prep": "Prep",
     "profile": "Profile",
+    "billing": "Billing",
     "integrations": "Integrations",
     "api": "API docs",
     "appearance": "Appearance",
@@ -922,6 +923,34 @@
       "testing": "testing…",
       "testOk": "connected: {provider} / {model}",
       "testFailed": "connection failed: {message}"
+    },
+    "Billing": {
+      "title": "Billing",
+      "plan": "Plan",
+      "status": "Status",
+      "renews": "Renews {date}",
+      "manage": "manage billing",
+      "launchTitle": "Free forever during launch",
+      "launchBody": "Everything is free and unlimited. Paid plans open later, and early users are protected.",
+      "freeUntil": "Free during launch",
+      "notAvailable": "Not available yet",
+      "founder": "Founder",
+      "founderYes": "You joined during the free period.",
+      "founderNo": "You joined after the free period.",
+      "upgradePro": "upgrade to Pro",
+      "upgradeTeam": "upgrade to Team"
+    },
+    "Pricing": {
+      "title": "Pricing",
+      "intro": "LifeOS is free during launch. A Pro plan is planned; early users keep their access.",
+      "comingSoon": "Pro coming later, early users are protected",
+      "unlimited": "Unlimited",
+      "perMonth": "/ month",
+      "featuresTitle": "What you get",
+      "featureAi": "AI copilot",
+      "featureMcp": "MCP + REST API",
+      "featureExports": "Exports and data ownership",
+      "featureTeams": "Shared workspaces"
     },
     "Capture": {
       "label": "capture a task",

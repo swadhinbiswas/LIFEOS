@@ -3,6 +3,7 @@ import {
   Bot,
   Briefcase,
   CalendarDays,
+  CreditCard,
   Inbox,
   LayoutDashboard,
   LayoutGrid,
@@ -36,6 +37,8 @@ export interface NavItem {
   /** Key under the `Nav` namespace in the message catalog. */
   key: string;
   icon: LucideIcon;
+  /** Only shown when billing is enabled (ADR-082) — there is no billing UI otherwise. */
+  requiresBilling?: boolean;
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -59,6 +62,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/career/portfolio", key: "portfolio", icon: Sparkles },
   { href: "/career/interview-prep", key: "prep", icon: MessageSquareQuote },
   { href: "/settings", key: "profile", icon: UserRound },
+  { href: "/settings/billing", key: "billing", icon: CreditCard, requiresBilling: true },
   { href: "/settings/integrations", key: "integrations", icon: KeyRound },
   { href: "/settings/ai", key: "aiSettings", icon: Bot },
   { href: "/docs/api", key: "api", icon: FileCode },

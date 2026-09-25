@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { DEFAULT_PLAN, planById, type PlanId } from "@/config/plans";
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
-import { subscriptions } from "@/server/db/schema";
+import { subscriptions, users } from "@/server/db/schema";
 
 /**
  * Subscription state (spec §11, ADR-080). This is the only writer of `subscriptions`; the webhook
@@ -52,6 +52,19 @@ export async function currentPlanId(userId: string): Promise<PlanId> {
   return subscription.status === "active" || subscription.status === "on_hold"
     ? planById(subscription.plan).id
     : DEFAULT_PLAN;
+}
+
+/**
+ * Whether the user was recorded during the free period (spec §11, ADR-082). Read-only; the column
+ * is set by the auth flow and the FOUNDER_PERKS policy decides what it may entitle later.
+ */
+export async function isFounder(userId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ founder: users.joined_during_free_period })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return row?.founder ?? false;
 }
 
 export interface UpsertSubscriptionInput {

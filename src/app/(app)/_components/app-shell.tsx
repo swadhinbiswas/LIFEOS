@@ -34,6 +34,7 @@ export function AppShell({
   user,
   focus,
   unread,
+  billing,
   children,
 }: {
   user: { name: string };
@@ -41,6 +42,8 @@ export function AppShell({
   focus: { id: string; startedAt: string } | null;
   /** Unread notifications for the header bell (spec §6.9). */
   unread: number;
+  /** Whether the billing surface exists at all (ADR-082); hidden when false. */
+  billing: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -185,26 +188,28 @@ export function AppShell({
             {APP_NAME}
           </p>
           <nav aria-label={tShell("primaryNav")} className="flex flex-1 flex-col gap-1 p-2">
-            {NAV_ITEMS.map(({ href, key, icon: Icon }) => {
-              const label = tNav(key);
-              const active = pathname === href;
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  aria-current={active ? "page" : undefined}
-                  title={label}
-                  className={cn(
-                    "flex items-center gap-2 rounded-[var(--radius)] px-2 py-1.5 font-mono text-xs",
-                    "hover:bg-accent hover:text-accent-foreground",
-                    active && "bg-accent text-accent-foreground",
-                  )}
-                >
-                  <Icon aria-hidden="true" className="size-4 shrink-0" />
-                  <span className="nav-label truncate">{label}</span>
-                </Link>
-              );
-            })}
+            {NAV_ITEMS.filter((item) => !item.requiresBilling || billing).map(
+              ({ href, key, icon: Icon }) => {
+                const label = tNav(key);
+                const active = pathname === href;
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    aria-current={active ? "page" : undefined}
+                    title={label}
+                    className={cn(
+                      "flex items-center gap-2 rounded-[var(--radius)] px-2 py-1.5 font-mono text-xs",
+                      "hover:bg-accent hover:text-accent-foreground",
+                      active && "bg-accent text-accent-foreground",
+                    )}
+                  >
+                    <Icon aria-hidden="true" className="size-4 shrink-0" />
+                    <span className="nav-label truncate">{label}</span>
+                  </Link>
+                );
+              },
+            )}
           </nav>
           <p className="nav-label truncate border-t border-border px-3 py-2 font-mono text-xs text-muted-foreground">
             {user.name}

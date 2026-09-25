@@ -64,6 +64,7 @@
     "portfolio": "পোর্টফোলিও",
     "prep": "প্রস্তুতি",
     "profile": "প্রোফাইল",
+    "billing": "বিলিং",
     "integrations": "ইন্টিগ্রেশন",
     "api": "এপিআই ডকস",
     "appearance": "চেহারা",
@@ -922,6 +923,34 @@
       "testing": "পরীক্ষা হচ্ছে…",
       "testOk": "সংযুক্ত: {provider} / {model}",
       "testFailed": "সংযোগ ব্যর্থ: {message}"
+    },
+    "Billing": {
+      "title": "বিলিং",
+      "plan": "প্ল্যান",
+      "status": "অবস্থা",
+      "renews": "নবায়ন {date}",
+      "manage": "বিলিং পরিচালনা",
+      "launchTitle": "লঞ্চে চিরকাল ফ্রি",
+      "launchBody": "সবকিছু ফ্রি ও আনলিমিটেড। পেইড প্ল্যান পরে আসবে, আর প্রথম ব্যবহারকারীরা সুরক্ষিত।",
+      "freeUntil": "লঞ্চে ফ্রি",
+      "notAvailable": "এখনো পাওয়া যাচ্ছে না",
+      "founder": "প্রতিষ্ঠাতা",
+      "founderYes": "আপনি ফ্রি সময়কালে যোগ দিয়েছেন।",
+      "founderNo": "আপনি ফ্রি সময়কালের পরে যোগ দিয়েছেন।",
+      "upgradePro": "Pro-তে আপগ্রেড",
+      "upgradeTeam": "Team-এ আপগ্রেড"
+    },
+    "Pricing": {
+      "title": "মূল্য",
+      "intro": "লঞ্চে LifeOS ফ্রি। একটি Pro প্ল্যানের পরিকল্পনা আছে; প্রথম ব্যবহারকারীরা নিজেদের অ্যাক্সেস রাখেন।",
+      "comingSoon": "Pro পরে আসবে, প্রথম ব্যবহারকারীরা সুরক্ষিত",
+      "unlimited": "আনলিমিটেড",
+      "perMonth": "/ মাস",
+      "featuresTitle": "যা পাবেন",
+      "featureAi": "এআই কোপাইলট",
+      "featureMcp": "MCP + REST API",
+      "featureExports": "এক্সপোর্ট ও ডেটা মালিকানা",
+      "featureTeams": "শেয়ার করা ওয়ার্কস্পেস"
     },
     "Capture": {
       "label": "একটি কাজ ক্যাপচার করুন",

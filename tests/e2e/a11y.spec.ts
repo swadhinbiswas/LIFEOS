@@ -55,12 +55,14 @@ const AUTH_ROUTES = [
   "/forgot-password",
   "/reset-password",
   "/verify-email",
+  "/pricing",
 ];
 const SHELL_ROUTES = [
   "/settings",
   "/settings/appearance",
   "/settings/integrations",
   "/settings/ai",
+  "/settings/billing",
   "/ai",
   "/docs/api",
   "/about",

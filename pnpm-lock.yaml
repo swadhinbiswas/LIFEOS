@@ -35,6 +35,9 @@ importers:
       '@dnd-kit/utilities':
         specifier: 3.2.2
         version: 3.2.2(react@19.3.0)
+      '@dodopayments/nextjs':
+        specifier: 0.3.9
+        version: 0.3.9(next@16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@26.6.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(zod@4.6.5)
       '@hookform/resolvers':
         specifier: 5.9.1
         version: 5.9.1(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.88.0(react@19.3.0))(zod@4.6.5)
@@ -74,6 +77,9 @@ importers:
       cn:
         specifier: 0.4.0
         version: 0.4.0
+      dodopayments:
+        specifier: 2.51.0
+        version: 2.51.0
       drizzle-orm:
         specifier: 0.45.3
         version: 0.45.3(@libsql/client@0.18.0)(@upstash/redis@1.39.0)(kysely@0.29.6)
@@ -201,6 +207,9 @@ importers:
       shadcn:
         specifier: 4.21.0
         version: 4.21.0(typescript@6.0.3)
+      standardwebhooks:
+        specifier: 1.0.0
+        version: 1.0.0
       tailwindcss:
         specifier: 4.3.3
         version: 4.3.3
@@ -653,6 +662,17 @@ packages:
     resolution: {integrity: sha512-+MKAJEOfaBe5SmV6t34p80MMKhjvUz0vRrvVJbPT0WElzaOJ/1xs+D+KDv+tD/NE5ujfrChEcshd4fLn0wpiqg==}
     peerDependencies:
       react: '>=16.8.0'
+
+  '@dodopayments/core@0.3.15':
+    resolution: {integrity: sha512-xbBqfY7Ytq6c0jR1qmV8UqqyA7qGnOoP5g02NpDOWyCgkeXLxcAfr6z/g8FkPNCiFcI405oIwi0AlFDVUKm6SA==}
+    peerDependencies:
+      zod: ^3.25.0 || ^4.0.0
+
+  '@dodopayments/nextjs@0.3.9':
+    resolution: {integrity: sha512-AxKISyMwvtUxaNU9QYSIehLXYwG/cWlciQsg0ddfvQXS/jXD/0ArR7/Iys9tOOnXkBbORHbWyljzE1AlXqtk6w==}
+    peerDependencies:
+      next: ^14.0.0 || ^15.0.0 || ^16.0.0
+      zod: ^3.25.0 || ^4.0.0
 
   '@dotenvx/dotenvx@1.75.1':
     resolution: {integrity: sha512-/BITOC9dmS/edY2zQwZNicQ059O6RKabtQfyEafV0nGtfYRNHYy1DIPiYVcov40+tob9hfmBnbR963dS+EQ1DQ==}
@@ -3600,6 +3620,10 @@ packages:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
     engines: {node: '>=0.10.0'}
 
+  dodopayments@2.51.0:
+    resolution: {integrity: sha512-dQRA3z218WZT25oNH1olCSwHuazeS7/bt7AkwE3qzwaIfImhQN8lfoQNc6exCQ6hdt8+pDfUkihuR5+pKtPQZA==}
+    hasBin: true
+
   dom-accessibility-api@0.5.16:
     resolution: {integrity: sha512-X7BJ2yElsnOJ30pZF4uIIDfBEVgF4XEBxL9Bxhy6dnrm5hkzqmsWHGTiHqRiITNhMyFLyAiWndIJP7Z1NTteDg==}
 
@@ -5464,6 +5488,9 @@ packages:
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
 
+  standardwebhooks@1.0.0:
+    resolution: {integrity: sha512-BbHGOQK9olHPMvQNHWul6MYlrRTAOKn03rOe4A8O3CLWhNf4YHBqq2HJKKC+sfqpxiBY52pNeesD6jIiLDz8jg==}
+
   standardwebhooks@1.1.1:
     resolution: {integrity: sha512-bCbX9ZEyFkWPsRz7Bl3NuQUJohmwGSev/yhr7vhaGPlc4AfIrspIRa6cPTBuI1ItmrTDJ4d/S2hCsfe4+vQGnQ==}
 
@@ -6536,6 +6563,18 @@ snapshots:
     dependencies:
       react: 19.3.0
       tslib: 2.8.1
+
+  '@dodopayments/core@0.3.15(zod@4.6.5)':
+    dependencies:
+      dodopayments: 2.51.0
+      standardwebhooks: 1.0.0
+      zod: 4.6.5
+
+  '@dodopayments/nextjs@0.3.9(next@16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@26.6.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(zod@4.6.5)':
+    dependencies:
+      '@dodopayments/core': 0.3.15(zod@4.6.5)
+      next: 16.3.6(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@26.6.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      zod: 4.6.5
 
   '@dotenvx/dotenvx@1.75.1':
     dependencies:
@@ -9064,6 +9103,10 @@ snapshots:
     dependencies:
       esutils: 2.0.3
 
+  dodopayments@2.51.0:
+    dependencies:
+      standardwebhooks: 1.0.0
+
   dom-accessibility-api@0.5.16: {}
 
   dom-accessibility-api@0.6.3: {}
@@ -11150,6 +11193,11 @@ snapshots:
   stable-hash@0.0.5: {}
 
   stackback@0.0.2: {}
+
+  standardwebhooks@1.0.0:
+    dependencies:
+      '@stablelib/base64': 1.0.1
+      fast-sha256: 1.3.0
 
   standardwebhooks@1.1.1:
     dependencies:

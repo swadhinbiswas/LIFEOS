@@ -74,6 +74,14 @@ const envSchema = z
     AI_COMPATIBLE_API_KEY: z.string().min(1).optional(),
     AI_DEFAULT_PROVIDER: z.string().min(1).optional(),
     AI_DEFAULT_MODEL: z.string().min(1).optional(),
+    // --- Billing (ADR-013/080/081): all optional; billing UI stays hidden unless enabled + keyed ---
+    DODO_PAYMENTS_API_KEY: z.string().min(1).optional(),
+    DODO_PAYMENTS_WEBHOOK_KEY: z.string().min(1).optional(),
+    DODO_PAYMENTS_RETURN_URL: z.url().optional(),
+    DODO_PAYMENTS_ENVIRONMENT: z.enum(["test_mode", "live_mode"]).optional(),
+    /** Product ids from the Dodo dashboard; a plan without one is not offered. */
+    DODO_PRODUCT_PRO: z.string().min(1).optional(),
+    DODO_PRODUCT_TEAM: z.string().min(1).optional(),
   })
   .superRefine((env, ctx) => {
     for (const [a, b] of pairs) {
@@ -132,3 +140,10 @@ export const hasPlatformAi = Boolean(
   env.OPENROUTER_API_KEY ||
   env.AI_COMPATIBLE_BASE_URL,
 );
+/**
+ * ADR-080/082 — billing is available only when the flag is on **and** the Dodo keys and webhook
+ * secret are present. Everything billing-related keys off this single signal.
+ */
+export const billingReady =
+  billingEnabled && Boolean(env.DODO_PAYMENTS_API_KEY && env.DODO_PAYMENTS_WEBHOOK_KEY);
+export const dodoEnvironment = env.DODO_PAYMENTS_ENVIRONMENT ?? "test_mode";
