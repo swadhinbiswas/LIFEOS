@@ -8,7 +8,7 @@
  *  - everything else — server actions (POST), /api, RSC fetches — passes straight through and is
  *    never cached, so no write or live query is ever served stale.
  */
-const VERSION = "lifeos-v1";
+const VERSION = "lifeos-v2";
 const STATIC_CACHE = `${VERSION}-static`;
 const PAGE_CACHE = `${VERSION}-pages`;
 const MAX_PAGES = 30;

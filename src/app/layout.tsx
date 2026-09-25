@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fira_Code, IBM_Plex_Mono, JetBrains_Mono } from "next/font/google";
 import { GeistMono } from "geist/font/mono";
 import { cookies } from "next/headers";
+import Script from "next/script";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 
@@ -74,8 +75,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <head>
         {/* Runs before paint by design (ADR-024, no FOUC) — a static string with no
-            user input, not an inline event handler. */}
-        <script dangerouslySetInnerHTML={{ __html: SYSTEM_MODE_SCRIPT }} />
+            user input, not an inline event handler. `next/script` with `beforeInteractive`
+            injects it into the initial HTML instead of React mounting a <script> node
+            on the client, which would never execute and warns at hydration. */}
+        <Script
+          id="system-color-mode"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: SYSTEM_MODE_SCRIPT }}
+        />
       </head>
       <body className="min-h-dvh antialiased">
         <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
