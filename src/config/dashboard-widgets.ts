@@ -88,6 +88,20 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: "l",
   },
   {
+    id: "career.velocity",
+    variant: "career",
+    label: "applications per week",
+    key: "careerVelocity",
+    defaultSize: "m",
+  },
+  {
+    id: "career.stale",
+    variant: "career",
+    label: "needs a follow-up",
+    key: "careerStale",
+    defaultSize: "m",
+  },
+  {
     id: "career.open",
     variant: "career",
     label: "open applications",
@@ -97,7 +111,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
   {
     id: "career.analytics",
     variant: "career",
-    label: "sources and weeks",
+    label: "sources",
     key: "careerAnalytics",
     defaultSize: "m",
   },
@@ -109,11 +123,18 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: "m",
   },
   {
+    id: "productivity.done",
+    variant: "productivity",
+    label: "tasks done per day",
+    key: "productivityDone",
+    defaultSize: "m",
+  },
+  {
     id: "productivity.focus",
     variant: "productivity",
-    label: "focus this week",
+    label: "focus rhythm",
     key: "productivityFocus",
-    defaultSize: "s",
+    defaultSize: "m",
   },
   {
     id: "productivity.reviews",

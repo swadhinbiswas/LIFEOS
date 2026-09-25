@@ -8,6 +8,8 @@ export interface SignalTile {
   value: number;
   /** Status token for the pip: `danger` / `warning` / `info` / `muted`. */
   tone: "danger" | "warning" | "info" | "muted";
+  /** Unit after the figure, e.g. "min" or "%". A bare "0" says less than "0 min". */
+  suffix?: string;
   /** 0…1 share of the open-card total, for the micro-meter; omit for no meter. */
   share?: number;
 }
@@ -55,18 +57,27 @@ export function SignalTiles({
             />
             <span className="truncate">{tile.label}</span>
           </dt>
-          <dd className="font-mono text-2xl leading-none font-semibold tabular-nums">
-            {tile.value}
+          {/* The meter describes the figure, so it belongs inside the <dd>: a <dl> may only hold
+              dt/dd groups, and axe rejects a progressbar as a direct child (only-dlitems). */}
+          <dd className="flex flex-col gap-1">
+            <span className="font-mono text-2xl leading-none font-semibold tabular-nums">
+              {tile.value}
+              {tile.suffix ? (
+                <span className="ml-1 text-[10px] font-normal text-muted-foreground uppercase">
+                  {tile.suffix}
+                </span>
+              ) : null}
+            </span>
+            {tile.share === undefined ? null : (
+              <AsciiMeter
+                value={tile.share}
+                label={meterLabel(tile.label)}
+                cells={10}
+                showValue={false}
+                className="text-[10px]"
+              />
+            )}
           </dd>
-          {tile.share === undefined ? null : (
-            <AsciiMeter
-              value={tile.share}
-              label={meterLabel(tile.label)}
-              cells={10}
-              showValue={false}
-              className="text-[10px]"
-            />
-          )}
         </div>
       ))}
     </dl>

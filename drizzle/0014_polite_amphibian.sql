@@ -1,0 +1,1 @@
+CREATE INDEX `cards_user_completed_idx` ON `cards` (`user_id`,`completed_at`);

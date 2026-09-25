@@ -18,18 +18,22 @@ import {
 } from "@/config/dashboard-widgets";
 import { dayKeyInTimeZone } from "@/lib/timezone";
 import { getDashboardKpis, KPI_DEFINITIONS } from "@/server/dashboard";
+import { completedDailySeries } from "@/server/dashboard/completion";
 import { constellationRows, habitConsistencySeries } from "@/server/dashboard/habits";
 import { getLayout } from "@/server/dashboard/widgets";
 import { focusDailySeries } from "@/server/focus";
 import { listHabits } from "@/server/habits";
 import { listReviews } from "@/server/reviews";
+import { reviewStreak } from "@/server/reviews/streak";
 import { getRegionalSettings } from "@/server/settings";
 
 import { LayoutControls } from "./_components/layout-controls";
 import { DashboardTabs } from "./_components/dashboard-tabs";
+import { FunnelChart } from "./_components/funnel-chart";
 import { HabitConstellation } from "./_components/habit-constellation";
 import { partitionQueue, QueueSplit } from "./_components/queue-split";
 import { SignalTiles } from "./_components/signal-tiles";
+import { StaleApplications } from "./_components/stale-applications";
 import { TrendChart } from "./_components/trend-chart";
 
 export const metadata = { title: "Dashboard" };
@@ -58,6 +62,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   const t = await getTranslations("Pages.Dashboard");
   const tw = await getTranslations("Widgets");
+  // Career vocabulary (stage / in stage / mean days / no jobs) is the analytics page's own copy, so
+  // it is reused rather than duplicated — a second copy is a second thing to keep in sync.
+  const tc = await getTranslations("Pages.Career");
 
   const { variant: requested } = await searchParams;
   const variant: DashboardVariant = DASHBOARD_VARIANTS.includes(requested as DashboardVariant)
@@ -78,31 +85,40 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const wantsHabits =
     variant === "overview" ||
     visible.some((id) => id === "today.pulse" || id === "today.habits" || id === "overview.wins");
-  const [brief, kpis, habits, focusSeries, career, reviews] = await Promise.all([
+  const wantsFocus = visible.includes("today.focus") || visible.includes("productivity.focus");
+  const wantsKpis =
+    visible.some((id) => id.startsWith("overview.") || id.startsWith("productivity.")) ||
+    visible.includes("career.open");
+  const [brief, kpis, habits, focusSeries, career, reviews, doneSeries] = await Promise.all([
     visible.some((id) => id.startsWith("today."))
       ? getDailyBrief(session.user.id, now, timeZone)
       : Promise.resolve(null),
-    visible.some((id) => id.startsWith("overview.") || id.startsWith("productivity."))
-      ? getDashboardKpis(session.user.id, now, timeZone, weekStart)
-      : Promise.resolve(null),
+    // `career.open` needs this too: without it the widget used to render a placeholder (ADR-104).
+    wantsKpis ? getDashboardKpis(session.user.id, now, timeZone, weekStart) : Promise.resolve(null),
     // The day key is passed in so the habits read does not re-resolve the timezone (ADR-099).
     wantsHabits
       ? listHabits(session.user.id, dayKeyInTimeZone(now, timeZone))
       : Promise.resolve([]),
-    visible.includes("today.focus")
-      ? focusDailySeries(session.user.id, 14, now, timeZone)
-      : Promise.resolve([]),
+    wantsFocus ? focusDailySeries(session.user.id, 14, now, timeZone) : Promise.resolve([]),
     visible.some((id) => id.startsWith("career."))
       ? getCareerAnalytics(session.user.id, now, 21, timeZone, weekStart)
       : Promise.resolve(null),
-    visible.includes("productivity.reviews") ? listReviews(session.user.id) : Promise.resolve([]),
+    // 52 rows is a year of weeks, which is the window a streak can actually reach.
+    visible.includes("productivity.reviews")
+      ? listReviews(session.user.id, 52)
+      : Promise.resolve([]),
+    visible.includes("productivity.done")
+      ? completedDailySeries(session.user.id, 14, now, timeZone)
+      : Promise.resolve([]),
   ]);
   const kpiById = new Map((kpis?.values ?? []).map((kpi) => [kpi.id, kpi]));
 
-  // Chart series, each derived from the module that owns the rows behind it (ADR-101).
+  // Chart series, each derived from the module that owns the rows behind it (ADR-101/ADR-104).
   const chartData = habitConsistencySeries(habits, 28);
   const pulseData = habitConsistencySeries(habits, 14);
   const focusData = focusSeries.map((row) => ({ day: row.day, value: row.minutes }));
+  const doneData = doneSeries.map((row) => ({ day: row.day, value: row.count }));
+  const reviewWeeks = reviewStreak(reviews, now, timeZone, weekStart);
   const constellation = constellationRows(
     habits.map((row) => ({
       id: row.habit.id,
@@ -123,6 +139,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     due.filter((card) => (card.estimate_min ?? 0) > 0).length;
   const estimatedShare = (due: readonly { estimate_min: number | null }[]): number =>
     due.length > 0 ? estimatedToday(due) / due.length : 0;
+  // Open applications as a share of everything the pipeline has ever held.
+  const shareOpen = (total: number, open: number): number => (total > 0 ? open / total : 0);
 
   const widgets: Record<string, React.ReactNode> = {
     "today.pulse": (
@@ -320,59 +338,182 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       </ul>
     ),
     "career.funnel": career ? (
-      <ul className="flex flex-col gap-1 font-mono text-xs">
-        {career.funnel.stages.map((stage) => (
-          <li key={stage.stage} data-slot="funnel-widget-row" className="flex items-center gap-2">
-            <span className="min-w-0 flex-1 truncate">{stage.stage}</span>
-            <span className="tabular-nums">{stage.count}</span>
-            <span className="text-muted-foreground tabular-nums">
-              {stage.averageDaysInStage === null ? "—" : `${stage.averageDaysInStage}d`}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <FunnelChart
+        data={career.funnel.stages.map((stage) => ({
+          stage: stage.stage,
+          count: stage.count,
+          meanDays: stage.averageDaysInStage,
+        }))}
+        title={t("funnelTitle")}
+        description={t("funnelHint2", { total: career.funnel.total })}
+        stageLabel={tc("stage")}
+        countLabel={tc("inStage")}
+        meanLabel={tc("meanDays")}
+        tableToggle={t("tableView")}
+        emptyLabel={tc("noJobs")}
+        emptyAction={{ href: "/career/jobs", label: t("addJobLink") }}
+        caption={t("funnelMoved", { rate: Math.round(career.funnel.responseRate * 100) })}
+      />
     ) : null,
-    "career.open": kpis ? (
-      <p className="font-mono text-xs tabular-nums">
-        {t("openCount", { count: kpiById.get("openApplications")?.value ?? 0 })}
-      </p>
+    "career.velocity": career ? (
+      <TrendChart
+        data={career.perWeek.map((week) => ({ day: week.weekStart, value: week.count }))}
+        series="bar"
+        title={t("velocityTitle")}
+        description={t("velocityHint", { weeks: career.perWeek.length })}
+        showTitle={false}
+        caption={t("velocityCaption", { total: career.funnel.total })}
+        dayLabel={t("week")}
+        valueLabel={t("applications")}
+        tableToggle={t("tableView")}
+        emptyLabel={t("noApplications")}
+        isEmpty={career.funnel.total === 0}
+      />
     ) : null,
+    "career.stale": career ? (
+      <StaleApplications
+        rows={career.ghosted.slice(0, 6).map((row) => ({
+          cardId: row.cardId,
+          title: row.title,
+          stage: row.stage,
+          days: row.days,
+        }))}
+        thresholdDays={career.ghostThresholdDays}
+        daysLabel={(count) => t("daysInStage", { count })}
+        meterLabel={({ title, days }) => t("staleMeter", { name: title, count: days })}
+        emptyLabel={t("nothingStale")}
+      />
+    ) : null,
+    "career.open": (
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <p className="font-mono text-2xl leading-none font-semibold tabular-nums">
+          {kpiById.get("openApplications")?.value ?? 0}
+        </p>
+        <div className="flex flex-col gap-0.5">
+          <AsciiMeter
+            value={shareOpen(
+              career?.funnel.total ?? 0,
+              kpiById.get("openApplications")?.value ?? 0,
+            )}
+            label={t("openShareLabel")}
+            cells={14}
+            showValue={false}
+            className="text-[10px]"
+          />
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {t("openShareHint", { total: career?.funnel.total ?? 0 })}
+          </span>
+        </div>
+        <Link href="/career/jobs" className="font-mono text-[10px] text-primary hover:underline">
+          {t("openList")}
+        </Link>
+      </div>
+    ),
     "career.analytics": career ? (
-      <ul className="flex flex-col gap-1 font-mono text-xs">
-        {career.bySource.map((row) => (
-          <li key={row.source} className="flex items-center gap-2">
-            <span className="min-w-0 flex-1 truncate">{row.source}</span>
-            <span className="tabular-nums">{row.total}</span>
-            <span className="text-muted-foreground tabular-nums">
-              {Math.round(row.rate * 100)}%
-            </span>
-          </li>
-        ))}
+      <ul className="flex min-w-0 flex-col gap-1.5" data-slot="source-list">
+        {career.bySource.map((row) => {
+          const busiest = Math.max(1, ...career.bySource.map((entry) => entry.total));
+          return (
+            <li key={row.source} data-slot="source-row" className="flex items-center gap-2">
+              <span className="min-w-0 w-28 shrink-0 truncate font-mono text-xs">{row.source}</span>
+              <AsciiMeter
+                value={row.total / busiest}
+                label={t("sourceMeter", { name: row.source })}
+                cells={10}
+                showValue={false}
+                className="text-[10px]"
+              />
+              <span className="font-mono text-xs tabular-nums">{row.total}</span>
+              <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
+                {Math.round(row.rate * 100)}%
+              </span>
+            </li>
+          );
+        })}
       </ul>
     ) : null,
     "productivity.kpis": kpis ? (
-      <dl className="flex flex-wrap gap-4 font-mono text-xs">
-        <div className="flex items-center gap-1">
-          <dt className="text-muted-foreground">{t("tasksDone")}</dt>
-          <dd className="tabular-nums">{kpiById.get("tasksDoneThisWeek")?.value ?? 0}</dd>
-        </div>
-        <div className="flex items-center gap-1">
-          <dt className="text-muted-foreground">{t("focus")}</dt>
-          <dd className="tabular-nums">
-            {kpiById.get("focusMinutesThisWeek")?.value ?? 0} {t("min")}
-          </dd>
-        </div>
-      </dl>
+      <SignalTiles
+        items={[
+          {
+            id: "tasksDone",
+            label: t("tasksDone"),
+            value: kpiById.get("tasksDoneThisWeek")?.value ?? 0,
+            tone: "muted",
+          },
+          {
+            id: "focus",
+            label: t("focus"),
+            value: kpiById.get("focusMinutesThisWeek")?.value ?? 0,
+            tone: "muted",
+            suffix: t("min"),
+          },
+          {
+            id: "habitConsistency",
+            label: t("kpi_habitConsistency"),
+            value: kpiById.get("habitConsistency")?.value ?? 0,
+            tone: "muted",
+            suffix: "%",
+          },
+          {
+            id: "activeGoals",
+            label: t("kpi_activeGoals"),
+            value: kpiById.get("activeGoals")?.value ?? 0,
+            tone: "muted",
+          },
+        ]}
+        meterLabel={(label) => t("kpiValue", { name: label })}
+      />
     ) : null,
-    "productivity.focus": kpis ? (
-      <p className="font-mono text-xs tabular-nums">
-        {renderValue(kpiById.get("focusMinutesThisWeek")?.value ?? 0, t("min"))} {t("thisWeek")}
-      </p>
-    ) : null,
+    "productivity.done": (
+      <TrendChart
+        data={doneData}
+        series="bar"
+        title={t("doneTitle")}
+        description={t("doneHint")}
+        showTitle={false}
+        caption={t("doneCaption", {
+          minutes: doneSeries.reduce((sum, row) => sum + row.minutes, 0),
+        })}
+        dayLabel={t("day")}
+        valueLabel={t("cards")}
+        tableToggle={t("tableView")}
+        emptyLabel={t("noDone")}
+        isEmpty={doneSeries.every((row) => row.count === 0)}
+      />
+    ),
+    "productivity.focus": (
+      <TrendChart
+        data={focusData}
+        series="area"
+        color="var(--chart-2)"
+        title={t("focusTitle")}
+        description={t("focusHint")}
+        showTitle={false}
+        caption={t("focusCaption")}
+        dayLabel={t("day")}
+        valueLabel={t("minutes")}
+        unit={t("min")}
+        tableToggle={t("tableView")}
+        emptyLabel={t("noFocus")}
+        isEmpty={focusSeries.every((row) => row.sessions === 0)}
+      />
+    ),
     "productivity.reviews": (
-      <p className="font-mono text-xs tabular-nums">
-        {t("reviewsLogged", { count: reviews.length })}
-      </p>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <p className="font-mono text-2xl leading-none font-semibold tabular-nums">
+          {reviewWeeks}
+          <span className="ml-1 text-[10px] font-normal text-muted-foreground uppercase">
+            {t("weekStreakShort")}
+          </span>
+        </p>
+        <p className="font-mono text-[10px] text-muted-foreground">
+          {t("reviewsLogged", { count: reviews.length })}
+        </p>
+        <Link href="/reviews" className="font-mono text-[10px] text-primary hover:underline">
+          {t("openList")}
+        </Link>
+      </div>
     ),
   };
 

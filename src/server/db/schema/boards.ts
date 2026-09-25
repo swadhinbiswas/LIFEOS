@@ -139,6 +139,9 @@ export const cards = sqliteTable(
     index("cards_board_column_position_idx").on(t.board_id, t.column_id, t.position),
     index("cards_user_due_idx").on(t.user_id, t.due_at),
     index("cards_user_updated_idx").on(t.user_id, t.updated_at),
+    // The dashboard's "tasks done per day" series buckets by completion instant (ADR-104); without
+    // this the read scans the whole shared cards table instead of one user's slice.
+    index("cards_user_completed_idx").on(t.user_id, t.completed_at),
     uniqueIndex("cards_column_position_unq")
       .on(t.column_id, t.position)
       .where(sql`deleted_at IS NULL`),
