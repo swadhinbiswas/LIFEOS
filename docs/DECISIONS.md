@@ -2058,6 +2058,25 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-091 — Landing page: a full marketing page, and the demo is unlisted
+
+- **Status:** accepted (2026-09-25)
+- **Context:** The first landing was a thin TUI hero with two buttons ("try the demo", "sign in").
+  The product needed a page that explains what LifeOS is, who it is for and how to start, without
+  advertising the demo account on the front door.
+- **Decision:** `/` is a server-rendered marketing page: a sticky nav, a hero with a readable
+  terminal, a module grid, the AI and open-data story (the same services behind the web app, REST and
+  MCP), the keyboard model and three start steps, with one primary call to action (`create your
+workspace`) and `read the docs`. **The "try the demo" button is removed**; `/demo` still exists and
+  is reachable by URL (it remains the deterministic preview and the axe target), but the landing page
+  no longer links to it. Every string lives in `Pages.Landing` (en + bn), the page uses only tokens,
+  and it passes the axe sweep.
+- **Consequences:** a first-time visitor gets the product pitch and one clear action. Cost: the
+  landing is a maintained surface with copy in two locales, and `/demo` is discoverable only by URL
+  or docs.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
