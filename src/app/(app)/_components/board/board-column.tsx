@@ -88,7 +88,7 @@ export function BoardColumn({
       data-slot="board-column"
       data-column-id={column.id}
       data-column-name={column.name}
-      className="flex w-64 shrink-0 flex-col rounded-[var(--radius)] border border-border bg-card"
+      className="flex min-w-64 max-w-[24rem] shrink-0 grow basis-64 snap-start flex-col rounded-[var(--radius)] border border-border bg-card"
       aria-label={column.name}
     >
       <header className="flex items-center gap-2 rounded-t-[var(--radius)] border-b border-border bg-background/60 px-2 py-1.5">
@@ -129,9 +129,8 @@ export function BoardColumn({
             }}
             data-virtualized={virtualize ? "true" : undefined}
             className={cn(
-              "flex min-h-16 flex-col gap-1 p-1",
+              "board-scroll flex max-h-[68vh] min-h-16 flex-col gap-1 overflow-y-auto p-1",
               isOver && "bg-accent",
-              virtualize && "max-h-[70vh] overflow-y-auto",
             )}
           >
             <SortableContext

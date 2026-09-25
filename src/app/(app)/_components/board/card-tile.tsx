@@ -77,7 +77,7 @@ export function CardTile({
           ⠿
         </button>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-mono text-xs">{card.title}</p>
+          <p className="line-clamp-2 font-mono text-xs">{card.title}</p>
           <p className="mt-1 flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
             {card.priority ? (
               <span

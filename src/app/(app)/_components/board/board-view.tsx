@@ -266,7 +266,7 @@ export function BoardView({
   }, [focusedId]);
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-2">
       <BoardToolbar
         view={view}
         onView={(next) => void setViewParam(next === "kanban" ? null : next)}
@@ -281,36 +281,37 @@ export function BoardView({
         showGroup={view === "table"}
       />
 
-      <SavedViews
-        scope={payload.board.is_system ? "tasks" : "board"}
-        current={currentQuery}
-        onApply={applyView}
-      />
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <SavedViews
+          scope={payload.board.is_system ? "tasks" : "board"}
+          current={currentQuery}
+          onApply={applyView}
+        />
+        <div className="flex flex-wrap items-center gap-1 font-mono text-[10px]">
+          <button
+            type="button"
+            data-slot="undo"
+            data-undo-count={undoCount}
+            disabled={!canUndo}
+            onClick={undo}
+            className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 text-foreground hover:bg-accent hover:text-accent-foreground disabled:text-muted-foreground"
+          >
+            {t("undoButton")}
+          </button>
+          <button
+            type="button"
+            data-slot="redo"
+            data-redo-count={redoCount}
+            disabled={!canRedo}
+            onClick={redo}
+            className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 text-foreground hover:bg-accent hover:text-accent-foreground disabled:text-muted-foreground"
+          >
+            {t("redoButton")}
+          </button>
+        </div>
+      </div>
 
       <BoardUtils boardId={boardId} />
-
-      <div className="flex flex-wrap items-center gap-1 font-mono text-[10px]">
-        <button
-          type="button"
-          data-slot="undo"
-          data-undo-count={undoCount}
-          disabled={!canUndo}
-          onClick={undo}
-          className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 text-foreground hover:bg-accent hover:text-accent-foreground disabled:text-muted-foreground"
-        >
-          {t("undoButton")}
-        </button>
-        <button
-          type="button"
-          data-slot="redo"
-          data-redo-count={redoCount}
-          disabled={!canRedo}
-          onClick={redo}
-          className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 text-foreground hover:bg-accent hover:text-accent-foreground disabled:text-muted-foreground"
-        >
-          {t("redoButton")}
-        </button>
-      </div>
 
       {selectedIds.length > 0 ? (
         <div
@@ -366,6 +367,7 @@ export function BoardView({
         />
       ) : (
         <DndContext
+          id={`board-${boardId}`}
           sensors={sensors}
           collisionDetection={closestCorners}
           accessibility={{
@@ -398,7 +400,10 @@ export function BoardView({
           onDragEnd={handleDragEnd}
           onDragCancel={() => setActiveCardId(null)}
         >
-          <div className="flex gap-3 overflow-x-auto pb-2" data-slot="board">
+          <div
+            className="board-scroll relative flex min-w-0 max-w-full snap-x gap-3 overflow-x-auto pb-2"
+            data-slot="board"
+          >
             {columns.map((column) => (
               <BoardColumn
                 key={column.id}

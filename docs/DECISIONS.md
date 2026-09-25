@@ -2104,6 +2104,26 @@ is an uncluttered dashboard.
 
 ---
 
+## ADR-093 — Kanban canvas: responsive columns, contained scrolling, stable drag ids
+
+- **Status:** accepted (2026-09-25)
+- **Context:** The board showed the OS horizontal scrollbar, cut columns off, and pushed a second,
+  page-level scrollbar because absolutely-positioned descendants escaped the board's scroll
+  container. The stacked chrome (filters, saved views, export, undo/redo) ate four rows before the
+  canvas, and dnd-kit's auto-generated `DndDescribedBy-N` id differed between server and client,
+  producing a hydration mismatch.
+- **Decision:** columns are `basis-16rem grow max-w-24rem` — they share the width when they fit and
+  scroll sideways when they do not; short card titles wrap to two lines instead of truncating. The
+  board is `relative` so it is the containing block for absolutely-positioned descendants and its
+  `overflow-x-auto` actually clips them (this removed the page-level scrollbar). Both scroll areas use
+  a new `.board-scroll` utility: a slim, token-coloured bar rather than the OS one. Saved views and
+  undo/redo share one row. `DndContext` gets `id={`board-${boardId}`}` so the screen-reader
+  description id is deterministic across SSR and hydration.
+- **Consequences:** the board scrolls cleanly inside its own region, no page overflows horizontally,
+  and the hydration warning is gone. Cost: none measurable; the scrollbar is styled per browser.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
