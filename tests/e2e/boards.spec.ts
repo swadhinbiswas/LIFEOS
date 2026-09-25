@@ -139,25 +139,29 @@ test("table view: sorting, quick filters and grouping", async ({ page }) => {
   // Switch to the table view; the choice lands in the URL.
   await page.getByRole("button", { name: "table" }).click();
   const table = page.locator('[data-slot="board-table"]');
-  await expect(table.locator('[data-slot="table-row"]')).toHaveCount(2);
+  await expect(table.locator('[data-slot="table-row"][data-card-id]')).toHaveCount(2);
   await expect(page).toHaveURL(/view=table/u);
 
   // Quick filter: P0–P1 keeps only alpha, and the URL carries it.
   await page.getByRole("button", { name: "P0–P1" }).click();
-  await expect(table.locator('[data-slot="table-row"]')).toHaveCount(1);
-  await expect(table.locator('[data-slot="table-row"]')).toContainText("alpha task");
+  await expect(table.locator('[data-slot="table-row"][data-card-id]')).toHaveCount(1);
+  await expect(table.locator('[data-slot="table-row"][data-card-id]')).toContainText("alpha task");
   await expect(page).toHaveURL(/filter=p0-p1/u);
 
   // Clearing the chip brings both rows back.
   await page.getByRole("button", { name: "P0–P1" }).click();
-  await expect(table.locator('[data-slot="table-row"]')).toHaveCount(2);
+  await expect(table.locator('[data-slot="table-row"][data-card-id]')).toHaveCount(2);
 
   // Sort by the card column: ascending then descending flips the first row.
   const cardHeader = table.getByRole("button", { name: "card" }).first();
   await cardHeader.click();
-  await expect(table.locator('[data-slot="table-row"]').first()).toContainText("alpha task");
+  await expect(table.locator('[data-slot="table-row"][data-card-id]').first()).toContainText(
+    "alpha task",
+  );
   await cardHeader.click();
-  await expect(table.locator('[data-slot="table-row"]').first()).toContainText("beta task");
+  await expect(table.locator('[data-slot="table-row"][data-card-id]').first()).toContainText(
+    "beta task",
+  );
 
   // Grouping splits the table into per-group sections.
   await page.getByLabel("group").selectOption("priority");
