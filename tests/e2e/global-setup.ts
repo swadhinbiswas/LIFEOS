@@ -47,4 +47,10 @@ export default function globalSetup(): void {
     env: { ...process.env, DATABASE_URL: E2E_DB_URL },
     stdio: "inherit",
   });
+
+  // Seed the public demo workspace so /demo shows real sample data (spec §12, ADR-084).
+  execSync("pnpm db:seed -- --reset", {
+    env: { ...process.env, DATABASE_URL: E2E_DB_URL },
+    stdio: "inherit",
+  });
 }

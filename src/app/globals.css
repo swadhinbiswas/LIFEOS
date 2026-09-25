@@ -319,3 +319,21 @@ html[data-sidebar-mode="full"] .app-sidebar {
 html[data-sidebar-mode="full"] .app-shell[data-overlay="open"] .app-sidebar {
   transform: none;
 }
+
+/* Landing hero (ADR-086): the terminal demo types itself in, one line at a time. */
+@keyframes term-line-in {
+  from {
+    transform: translateY(2px);
+  }
+  to {
+    transform: none;
+  }
+}
+.term-line {
+  animation: term-line-in 0.35s ease both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .term-line {
+    animation: none;
+  }
+}

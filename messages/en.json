@@ -977,6 +977,32 @@
       "auditEmpty": "nothing logged yet",
       "auditActor": "actor"
     },
+    "Landing": {
+      "tagline": "A free, open, AI-connected personal operating system.",
+      "heroTitle": "Your whole life, in one terminal-shaped place",
+      "heroBody": "Tasks, boards, career, habits, notes and money — keyboard-first, with an AI copilot that asks before it writes.",
+      "tryDemo": "try the demo",
+      "signIn": "sign in",
+      "featuresTitle": "What is inside",
+      "featureTasks": "Kanban boards, tasks and natural-language capture",
+      "featureCareer": "A job pipeline, portfolio and interview prep",
+      "featureLife": "Habits, goals, notes, focus, finance, health, learning",
+      "featureAi": "An AI copilot and an MCP server for your own agents"
+    },
+    "Demo": {
+      "title": "Demo",
+      "banner": "This is sample data from the research-based seed. Everything is labelled and reversible — sign up to make it your own.",
+      "notSeeded": "The demo has not been seeded yet. Run: pnpm db:seed",
+      "createAccount": "create an account",
+      "briefTitle": "Today",
+      "boardTitle": "Tasks",
+      "jobsTitle": "Job pipeline",
+      "habitsTitle": "Habits",
+      "projectsTitle": "Projects",
+      "goalsTitle": "Goals",
+      "overdue": "overdue",
+      "open": "open"
+    },
     "Capture": {
       "label": "capture a task",
       "placeholder": "buy milk tomorrow 5pm #home !2",

@@ -50,6 +50,8 @@ const PRESETS = [
 ] as const;
 
 const AUTH_ROUTES = [
+  "/",
+  "/demo",
   "/sign-in",
   "/sign-up",
   "/forgot-password",

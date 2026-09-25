@@ -1932,6 +1932,64 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-084 — Seed and demo: derived from research, always labelled, resettable
+
+- **Status:** accepted (2026-09-25)
+- **Context:** Spec §12: `pnpm db:seed` plus a "Try the demo" workspace flagged `is_demo=true`, built
+  from `docs/research/github-swadhinbiswas.json`; sample data must be visibly labelled and
+  one-click removable, and nothing may be invented (no employers, dates, degrees or metrics we
+  cannot source).
+- **Decision:** `src/server/seed` owns seeding. `seedUser(userId)` populates a user from the research
+  file (real repositories and languages via the existing `importSamplePortfolio`, which already
+  labels rows `is_demo`), plus clearly sample content: habits + generated logs, focus sessions,
+  goals, a projects board, notes and interview-prep entries. Fictional employers are named with a
+  `(sample)` suffix. `seedDemo()` creates or refreshes one `users` row with `is_demo=true` and runs
+  `seedUser` for it; everything is idempotent, so re-running is safe and the demo can be reset.
+- **Consequences:** the seed is reproducible from committed research and cannot silently become a
+  fiction. Cost: the sample content is a maintenance surface kept in one module.
+
+## ADR-085 — Onboarding: a 60-second setup that ends on a populated dashboard
+
+- **Status:** accepted (2026-09-25)
+- **Context:** Spec §14 Phase 8: "a new user reaches a populated dashboard in ≤ 60 s"; MVP #50 wants
+  a 60-second setup and a template gallery; #54 wants the Student/Freelancer/Blank template seeds.
+- **Decision:** a focused `/onboarding` flow (name confirmation, optional sample-data import, board
+  template choice) whose final step calls `seedUser` for the choices made and drops the user on
+  `/dashboard`; `users.onboarded_at` records completion and the shell routes new users there once.
+  The template gallery renders `config/board-templates.ts` (no schema change).
+- **Consequences:** a fresh account is useful in under a minute and the sample rows remain removable.
+  Cost: onboarding state is one nullable column, not a state machine.
+
+## ADR-086 — Landing and demo entry: a public TUI hero and a demo without an account
+
+- **Status:** accepted (2026-09-25)
+- **Context:** Spec §14 Phase 8: a public landing page with an animated terminal demo
+  (quick-capture → kanban), and "a fresh visitor can try the demo without an account" (§16).
+- **Decision:** `/` becomes the public landing page (replacing the session redirect) with a
+  CSS-animated terminal hero and CTAs to `/demo` and sign-in. `/demo` is a **public read-only**
+  preview that reads the seeded demo user's data through the same services and renders a board, the
+  brief, the pipeline and habits with a "sample" banner and a "create an account to edit" CTA — no
+  session, no writes. Signed-in visitors get a "load sample into my account" action instead.
+- **Consequences:** the demo cannot be abused to write and needs no credentials; its data is shared
+  by design and resettable by re-running the seed. Cost: `/demo` is a preview renderer, not the full
+  app — a deliberate boundary.
+
+## ADR-087 — Docs: the repository documents are the source, `/docs` renders them
+
+- **Status:** accepted (2026-09-25)
+- **Context:** Spec §13 wants README + `docs/ARCHITECTURE.md`, `docs/API.md`, `docs/MCP.md`,
+  `docs/THEMING.md`, `docs/SELF_HOSTING.md`, `docs/CONTRIBUTING.md`, `docs/SECURITY.md`, with an
+  in-app `/docs` that mirrors them; `/docs/api` already renders the OpenAPI reference.
+- **Decision:** the Markdown files stay the single source; `/docs` lists them and renders each into
+  the app shell, reading the file server-side (no duplicated copy, no build step). Files that do not
+  exist yet render a short "not written yet" placeholder that names the phase that will write them,
+  rather than lorem ipsum.
+- **Consequences:** docs cannot drift from the repo and are reachable in the product. Cost: a page
+  reads Markdown at request time; content is trusted repo text, so it is rendered as preformatted
+  text, never as HTML.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
