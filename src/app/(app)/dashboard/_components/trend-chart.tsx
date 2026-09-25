@@ -41,9 +41,22 @@ export interface TrendPoint {
   value: number;
 }
 
+/**
+ * An optional second bar beside the first, for a two-part comparison such as AI-authored lines
+ * against human-authored ones (ADR-110). Absent, the chart is exactly what it was before.
+ */
+export interface TrendSecondary {
+  /** The key on each data point. */
+  dataKey: string;
+  label: string;
+  /** A `--chart-*` token. */
+  color: string;
+}
+
 export function TrendChart({
   data,
   series,
+  secondary,
   color = "var(--chart-1)",
   title,
   description,
@@ -60,6 +73,11 @@ export function TrendChart({
 }: {
   data: TrendPoint[];
   series: TrendSeries;
+  /**
+   * A second bar in the same plot. Only meaningful for `bar`: a comparison of two parts is a
+   * grouping, and overlaying an area over an area would read as a trend, which it is not.
+   */
+  secondary?: TrendSecondary;
   /** The series token, e.g. `var(--chart-2)`. */
   color?: string;
   title: string;
@@ -86,7 +104,12 @@ export function TrendChart({
   className?: string;
 }) {
   // One data key, one config key, one series: a mismatch here is what silently draws an empty plot.
-  const config = { value: { label: title, color } } satisfies ChartConfig;
+  const config = {
+    value: { label: title, color },
+    ...(secondary && series === "bar"
+      ? { [secondary.dataKey]: { label: secondary.label, color: secondary.color } }
+      : {}),
+  } satisfies ChartConfig;
   const fill = "var(--color-value)";
 
   if (isEmpty) {
@@ -112,8 +135,17 @@ export function TrendChart({
   const average = Math.round(data.reduce((sum, point) => sum + point.value, 0) / data.length);
   // A window whose values are all zero still needs a range, or Recharts draws an invisible plot and
   // the widget looks broken. The floor changes the axis, never a value.
-  const ceiling = Math.max(1, ...data.map((point) => point.value));
-  const domain: [number, number] = [0, ceiling];
+  const secondaryValues = secondary
+    ? data.map((point) =>
+        Number((point as unknown as Record<string, unknown>)[secondary.dataKey] ?? 0),
+      )
+    : [];
+  const ceiling = Math.max(1, ...data.map((point) => point.value), ...secondaryValues);
+  // A net-change series can go below zero (more deleted than added), so the floor follows the data
+  // rather than being pinned at 0 — a clipped bar would misstate the value.
+  const floor = Math.min(0, ...data.map((point) => point.value), ...secondaryValues);
+  const domain: [number, number] = [floor, ceiling];
+  const withSecondary = secondary !== undefined && series === "bar";
 
   return (
     <div data-slot="trend-chart" className={cn("flex min-w-0 flex-col gap-2", className)}>
@@ -142,8 +174,19 @@ export function TrendChart({
             />
             <YAxis hide domain={domain} width={0} />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-            <ReferenceLine y={average} stroke="var(--muted-foreground)" strokeDasharray="2 4" />
+            {/* One series has a meaningful average line; two grouped bars do not — a line at the
+                first series' mean would be read as a threshold for the pair. */}
+            {secondary && series === "bar" ? null : (
+              <ReferenceLine y={average} stroke="var(--muted-foreground)" strokeDasharray="2 4" />
+            )}
             <Bar dataKey="value" fill={fill} radius={2} />
+            {secondary && series === "bar" ? (
+              <Bar
+                dataKey={secondary.dataKey}
+                fill={`var(--color-${secondary.dataKey})`}
+                radius={2}
+              />
+            ) : null}
           </BarChart>
         ) : (
           <AreaChart accessibilityLayer data={data} margin={{ top: 4 }}>
@@ -171,6 +214,26 @@ export function TrendChart({
         )}
       </ChartContainer>
 
+      {secondary && series === "bar" ? (
+        // Named, not just coloured: two theme-token hues alone would fail anyone who cannot tell
+        // them apart, and the table below is not visible until it is opened.
+        <ul className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-[10px] text-muted-foreground">
+          {[title, secondary.label].map((label) => (
+            <li key={label} className="flex items-center gap-1">
+              <span
+                aria-hidden="true"
+                className="size-2 shrink-0 rounded-[1px]"
+                style={{
+                  backgroundColor:
+                    label === title ? `var(--color-value)` : `var(--color-${secondary.dataKey})`,
+                }}
+              />
+              {label}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
       {caption ? <p className="font-mono text-[10px] text-muted-foreground">{caption}</p> : null}
 
       <details className="group" data-slot="trend-chart-table">
@@ -188,6 +251,11 @@ export function TrendChart({
                 <th scope="col" className="py-1 text-right font-normal">
                   {valueLabel}
                 </th>
+                {withSecondary ? (
+                  <th scope="col" className="py-1 pl-2 text-right font-normal">
+                    {secondary.label}
+                  </th>
+                ) : null}
               </tr>
             </thead>
             <tbody>
@@ -200,6 +268,13 @@ export function TrendChart({
                     {point.value}
                     {unit ? ` ${unit}` : ""}
                   </td>
+                  {withSecondary ? (
+                    <td className="py-1 pl-2 text-right">
+                      {Number(
+                        (point as unknown as Record<string, unknown>)[secondary.dataKey] ?? 0,
+                      )}
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>

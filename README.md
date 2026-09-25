@@ -56,6 +56,7 @@ unless enabled and keyed), and cron secrets that guard the scheduled routes.
 - `docs/MVP-SCOPE.md` — what ships and what is deferred
 - `docs/RESEARCH.md` — Phase-0 research, library verification, open risks
 - `docs/ERD.md` — the data model
+- `docs/ACTIVITY.md` — WakaTime setup: CLI, OpenCode plugin, phone, and what is stored
 - `/docs` — the same documents, rendered in the app
 - `/docs/api` — the generated OpenAPI reference
 

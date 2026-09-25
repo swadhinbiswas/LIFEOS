@@ -21,15 +21,15 @@ limits and audit logging are enforced.
 
 ## Layers
 
-| Layer           | Location                                                   | Notes                                                          |
-| --------------- | ---------------------------------------------------------- | -------------------------------------------------------------- |
-| Routes          | `src/app/**`                                               | Thin: fetch, stream, render. No business logic.                |
-| Adapters        | `src/app/api/**`, `src/server/api/**`                      | REST envelope, MCP transport, ingest, OpenAPI, cron.           |
-| Domain services | `src/server/<module>`                                      | The writers. Every query filters `user_id` (tenant rule).      |
-| Data            | `src/server/db`                                            | Drizzle schema + committed migrations in `drizzle/`.           |
-| Cross-cutting   | `src/server/{auth,ai,billing,data,notifications,webhooks}` | Sessions, copilot, plans, export/delete, crons.                |
-| UI primitives   | `src/components/{ui,tui}`                                  | shadcn primitives re-skinned; TUI Panel/StatusLine/Kbd.        |
-| Configuration   | `src/config`                                               | nav, shortcuts, themes, board templates, plans, seed profiles. |
+| Layer           | Location                                                            | Notes                                                                                                                                                                                                        |
+| --------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Routes          | `src/app/**`                                                        | Thin: fetch, stream, render. No business logic.                                                                                                                                                              |
+| Adapters        | `src/app/api/**`, `src/server/api/**`                               | REST envelope, MCP transport, ingest, OpenAPI, cron.                                                                                                                                                         |
+| Domain services | `src/server/<module>`                                               | The writers. Every query filters `user_id` (tenant rule).                                                                                                                                                    |
+| Data            | `src/server/db`                                                     | Drizzle schema + committed migrations in `drizzle/`.                                                                                                                                                         |
+| Cross-cutting   | `src/server/{auth,ai,activity,billing,data,notifications,webhooks}` | Sessions, copilot, plans, export/delete, crons. WakaTime activity is a _read-only_ integration: it caches a remote source, so it is the one module allowed a denormalised row (ADR-110, `docs/ACTIVITY.md`). |
+| UI primitives   | `src/components/{ui,tui}`                                           | shadcn primitives re-skinned; TUI Panel/StatusLine/Kbd.                                                                                                                                                      |
+| Configuration   | `src/config`                                                        | nav, shortcuts, themes, board templates, plans, seed profiles.                                                                                                                                               |
 
 ## Cross-cutting invariants
 

@@ -17,6 +17,7 @@ import {
   type DashboardVariant,
 } from "@/config/dashboard-widgets";
 import { dayKeyInTimeZone } from "@/lib/timezone";
+import { activitySeries, getConnection, topAcross } from "@/server/activity/wakatime";
 import { briefEnabled, latestBrief } from "@/server/ai/brief";
 import { getDashboardKpis, KPI_DEFINITIONS } from "@/server/dashboard";
 import { completedDailySeries } from "@/server/dashboard/completion";
@@ -42,6 +43,12 @@ import { TrendChart } from "./_components/trend-chart";
 
 export const metadata = { title: "Dashboard" };
 
+/**
+ * How many days the code variant charts. Matches the window the sync action pulls, so the chart and
+ * the cache cannot disagree about what exists (ADR-110).
+ */
+const ACTIVITY_WINDOW_DAYS = 30;
+
 const money = (minor: number, unit: string | null): string => {
   const whole = (minor / 100).toLocaleString(undefined, { maximumFractionDigits: 2 });
   return unit ? `${whole} ${unit}` : whole;
@@ -52,6 +59,64 @@ const renderValue = (value: number | null, unit: string | null): string => {
   if (unit && /^[A-Z]{3}$/u.test(unit)) return money(value, unit);
   return unit ? `${value} ${unit}` : String(value);
 };
+
+/** Hours from seconds, at the precision a glance needs — `1.5h`, not `1:30:00`. */
+const hours = (seconds: number): string => `${Math.round((seconds / 3600) * 10) / 10}h`;
+
+/**
+ * A provider's own top-N breakdown as meters (ADR-110). Zero rows render the caller's empty state
+ * rather than a stack of empty meters — a breakdown with nothing in it is a fact, not a chart.
+ */
+function BreakdownList({
+  rows,
+  format,
+  meterLabel,
+  emptyLabel,
+  emptyAction,
+}: {
+  rows: Array<{ name: string; seconds: number }>;
+  format: (seconds: number) => string;
+  meterLabel: (name: string) => string;
+  emptyLabel: string;
+  emptyAction?: { href: string; label: string };
+}) {
+  if (rows.length === 0) {
+    return (
+      <div className="grid gap-1">
+        <p className="font-mono text-xs text-muted-foreground">{emptyLabel}</p>
+        {emptyAction ? (
+          <Link
+            href={emptyAction.href}
+            className="w-fit font-mono text-[10px] text-primary hover:underline"
+          >
+            {emptyAction.label}
+          </Link>
+        ) : null}
+      </div>
+    );
+  }
+
+  const busiest = Math.max(1, ...rows.map((row) => row.seconds));
+  return (
+    <ul className="flex min-w-0 flex-col gap-1.5" data-slot="breakdown-list">
+      {rows.map((row) => (
+        <li key={row.name} data-slot="breakdown-row" className="flex items-center gap-2">
+          <span className="w-28 shrink-0 truncate font-mono text-xs" title={row.name}>
+            {row.name}
+          </span>
+          <AsciiMeter
+            value={row.seconds / busiest}
+            label={meterLabel(row.name)}
+            cells={10}
+            showValue={false}
+            className="text-[10px]"
+          />
+          <span className="font-mono text-xs tabular-nums">{format(row.seconds)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 type PageProps = { searchParams: Promise<{ variant?: string }> };
 
@@ -94,33 +159,48 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const wantsKpis =
     visible.some((id) => id.startsWith("overview.") || id.startsWith("productivity.")) ||
     visible.includes("career.open");
-  const [brief, kpis, habits, focusSeries, career, reviews, doneSeries, aiBrief, aiBriefOn] =
-    await Promise.all([
-      visible.some((id) => id.startsWith("today."))
-        ? getDailyBrief(session.user.id, now, timeZone)
-        : Promise.resolve(null),
-      // `career.open` needs this too: without it the widget used to render a placeholder (ADR-104).
-      wantsKpis
-        ? getDashboardKpis(session.user.id, now, timeZone, weekStart)
-        : Promise.resolve(null),
-      // The day key is passed in so the habits read does not re-resolve the timezone (ADR-099).
-      wantsHabits
-        ? listHabits(session.user.id, dayKeyInTimeZone(now, timeZone))
-        : Promise.resolve([]),
-      wantsFocus ? focusDailySeries(session.user.id, 14, now, timeZone) : Promise.resolve([]),
-      visible.some((id) => id.startsWith("career."))
-        ? getCareerAnalytics(session.user.id, now, 21, timeZone, weekStart)
-        : Promise.resolve(null),
-      // 52 rows is a year of weeks, which is the window a streak can actually reach.
-      visible.includes("productivity.reviews")
-        ? listReviews(session.user.id, 52)
-        : Promise.resolve([]),
-      visible.includes("productivity.done")
-        ? completedDailySeries(session.user.id, 14, now, timeZone)
-        : Promise.resolve([]),
-      visible.includes("today.brief") ? latestBrief(session.user.id, now) : Promise.resolve(null),
-      visible.includes("today.brief") ? briefEnabled(session.user.id) : Promise.resolve(false),
-    ]);
+  const [
+    brief,
+    kpis,
+    habits,
+    focusSeries,
+    career,
+    reviews,
+    doneSeries,
+    aiBrief,
+    aiBriefOn,
+    activity,
+    activityConnection,
+  ] = await Promise.all([
+    visible.some((id) => id.startsWith("today."))
+      ? getDailyBrief(session.user.id, now, timeZone)
+      : Promise.resolve(null),
+    // `career.open` needs this too: without it the widget used to render a placeholder (ADR-104).
+    wantsKpis ? getDashboardKpis(session.user.id, now, timeZone, weekStart) : Promise.resolve(null),
+    // The day key is passed in so the habits read does not re-resolve the timezone (ADR-099).
+    wantsHabits
+      ? listHabits(session.user.id, dayKeyInTimeZone(now, timeZone))
+      : Promise.resolve([]),
+    wantsFocus ? focusDailySeries(session.user.id, 14, now, timeZone) : Promise.resolve([]),
+    visible.some((id) => id.startsWith("career."))
+      ? getCareerAnalytics(session.user.id, now, 21, timeZone, weekStart)
+      : Promise.resolve(null),
+    // 52 rows is a year of weeks, which is the window a streak can actually reach.
+    visible.includes("productivity.reviews")
+      ? listReviews(session.user.id, 52)
+      : Promise.resolve([]),
+    visible.includes("productivity.done")
+      ? completedDailySeries(session.user.id, 14, now, timeZone)
+      : Promise.resolve([]),
+    visible.includes("today.brief") ? latestBrief(session.user.id, now) : Promise.resolve(null),
+    visible.includes("today.brief") ? briefEnabled(session.user.id) : Promise.resolve(false),
+    // Coding activity is a cache of a remote provider (ADR-110), so this is a plain local read
+    // and the page never waits on the network to draw a chart.
+    visible.some((id) => id.startsWith("code."))
+      ? activitySeries(session.user.id, ACTIVITY_WINDOW_DAYS, now, timeZone)
+      : Promise.resolve([]),
+    visible.includes("code.connection") ? getConnection(session.user.id) : Promise.resolve(null),
+  ]);
   const kpiById = new Map((kpis?.values ?? []).map((kpi) => [kpi.id, kpi]));
 
   // Chart series, each derived from the module that owns the rows behind it (ADR-101/ADR-104).
@@ -143,6 +223,27 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     inbox: brief?.inbox ?? [],
     openCards: brief?.openCards ?? 0,
   });
+
+  // Coding activity (ADR-110). Every figure is WakaTime's own number, passed through; the only
+  // thing computed here is the unit change (seconds to minutes) and the net line change.
+  const codingData = activity.map((row) => ({ day: row.day, value: Math.round(row.seconds / 60) }));
+  const aiLinesData = activity.map((row) => ({
+    day: row.day,
+    value: row.aiAdditions - row.aiDeletions,
+    human: row.humanAdditions - row.humanDeletions,
+  }));
+  const codingMinutes = activity.reduce((sum, row) => sum + row.seconds, 0) / 60;
+  const activeDays = activity.filter((row) => row.seconds > 0).length;
+  const bestDay = activity.reduce((max, row) => Math.max(max, row.seconds), 0);
+  const aiLines = activity.reduce((sum, row) => sum + (row.aiAdditions - row.aiDeletions), 0);
+  const humanLines = activity.reduce(
+    (sum, row) => sum + (row.humanAdditions - row.humanDeletions),
+    0,
+  );
+  const aiCost = activity.reduce((sum, row) => sum + row.aiCostUsd, 0);
+  const languageTotals = topAcross(activity, "languages", 6);
+  const editorTotals = topAcross(activity, "editors", 5);
+  const projectTotals = topAcross(activity, "projects", 5);
   const share = (count: number): number => (queue.total > 0 ? count / queue.total : 0);
   // How much of today's due work actually carries an estimate — a real ratio, not a capacity.
   const estimatedToday = (due: readonly { estimate_min: number | null }[]): number =>
@@ -551,6 +652,160 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </p>
         <Link href="/reviews" className="font-mono text-[10px] text-primary hover:underline">
           {t("openList")}
+        </Link>
+      </div>
+    ),
+
+    // Coding activity (ADR-110). Every value below is the number WakaTime reported for the day;
+    // nothing is estimated, and an unconnected account gets a way in rather than an empty chart.
+    "code.kpis": (
+      <SignalTiles
+        items={[
+          {
+            id: "codingTime",
+            label: t("kpi_codingTime"),
+            value: Math.round(codingMinutes),
+            tone: "muted",
+            suffix: t("min"),
+          },
+          {
+            id: "activeDays",
+            label: t("kpi_activeDays"),
+            value: activeDays,
+            tone: "muted",
+            suffix: t("days_short"),
+          },
+          {
+            id: "bestDay",
+            label: t("kpi_bestDay"),
+            value: Math.round(bestDay / 60),
+            tone: "muted",
+            suffix: t("hours_short"),
+          },
+          {
+            id: "aiCost",
+            label: t("kpi_aiCost"),
+            value: Math.round(aiCost * 100) / 100,
+            tone: "muted",
+            suffix: t("usd"),
+          },
+        ]}
+        meterLabel={(label) => t("kpiMeter", { name: label })}
+      />
+    ),
+    "code.time": (
+      <TrendChart
+        data={codingData}
+        series="bar"
+        color="var(--chart-1)"
+        title={t("codingTimeTitle")}
+        description={t("codingTimeHint", { days: ACTIVITY_WINDOW_DAYS })}
+        showTitle={false}
+        caption={t("codingTimeCaption", {
+          days: activeDays,
+          hours: Math.round(codingMinutes / 6) / 10,
+        })}
+        dayLabel={t("day")}
+        valueLabel={t("minutes")}
+        unit={t("min")}
+        tableToggle={t("tableView")}
+        emptyLabel={activityConnection ? t("noCodingYet") : t("notConnected")}
+        emptyAction={
+          activityConnection
+            ? { href: "/settings/activity", label: t("syncNow") }
+            : { href: "/settings/activity", label: t("connect") }
+        }
+        isEmpty={codingData.length === 0}
+      />
+    ),
+    "code.ai": (
+      <TrendChart
+        data={aiLinesData}
+        series="bar"
+        color="var(--chart-2)"
+        secondary={{ dataKey: "human", label: t("humanLines"), color: "var(--chart-3)" }}
+        title={t("aiLinesTitle")}
+        description={t("aiLinesHint")}
+        showTitle={false}
+        caption={t("aiLinesCaption", { ai: aiLines, human: humanLines })}
+        dayLabel={t("day")}
+        valueLabel={t("aiLines")}
+        unit={t("lines")}
+        tableToggle={t("tableView")}
+        emptyLabel={activityConnection ? t("noAiLines") : t("notConnected")}
+        emptyAction={{
+          href: "/settings/activity",
+          label: activityConnection ? t("syncNow") : t("connect"),
+        }}
+        isEmpty={aiLinesData.length === 0}
+      />
+    ),
+    "code.languages": (
+      <BreakdownList
+        rows={languageTotals}
+        format={hours}
+        meterLabel={(name) => t("languageMeter", { name })}
+        emptyLabel={activityConnection ? t("noLanguages") : t("notConnected")}
+        emptyAction={{
+          href: "/settings/activity",
+          label: activityConnection ? t("syncNow") : t("connect"),
+        }}
+      />
+    ),
+    "code.harnesses": (
+      <div className="grid gap-3">
+        <div>
+          <p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+            {t("editorsLabel")}
+          </p>
+          <div className="mt-1.5">
+            <BreakdownList
+              rows={editorTotals}
+              format={hours}
+              meterLabel={(name) => t("editorMeter", { name })}
+              emptyLabel={t("noEditors")}
+            />
+          </div>
+        </div>
+        <div>
+          <p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+            {t("projectsLabel")}
+          </p>
+          <div className="mt-1.5">
+            <BreakdownList
+              rows={projectTotals}
+              format={hours}
+              meterLabel={(name) => t("projectMeter", { name })}
+              emptyLabel={t("noProjects")}
+            />
+          </div>
+        </div>
+      </div>
+    ),
+    "code.connection": (
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <p className="font-mono text-[10px] text-muted-foreground">
+          {activityConnection
+            ? t("connectedAs", { hint: activityConnection.hint })
+            : t("notConnectedShort")}
+        </p>
+        <p className="font-mono text-[10px] text-muted-foreground">
+          {activityConnection?.lastSyncedAt
+            ? t("syncedAt", {
+                when: activityConnection.lastSyncedAt.toLocaleString(),
+              })
+            : t("neverSynced")}
+        </p>
+        {activityConnection?.lastError ? (
+          <p role="status" className="font-mono text-[10px] text-destructive">
+            {activityConnection.lastError}
+          </p>
+        ) : null}
+        <Link
+          href="/settings/activity"
+          className="font-mono text-[10px] text-primary hover:underline"
+        >
+          {t("connectionSettings")}
         </Link>
       </div>
     ),

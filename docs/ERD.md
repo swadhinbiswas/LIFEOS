@@ -195,6 +195,13 @@ Funnel metrics (research (d) §5) are **derived queries** over `job_applications
   research (g) §g3), `ai_conversations` + `ai_messages` (`role`, `content`, `tool_calls` JSON,
   `tokens_in`/`tokens_out`), `ai_usage` (`period`, `messages`, `tokens` — for the AI budget cap,
   spec §8).
+- **Activity (ADR-110, post-spec):** `activity_connections` (`user_id`, `provider` — `wakatime`
+  today, `secret_encrypted`, `hint`, `last_synced_at`, `last_error` — UNIQUE(`user_id`,`provider`),
+  key encrypted with the ADR-074 helper) and `code_activity_daily` (`day`, `total_seconds`,
+  `ai_additions`/`ai_deletions`, `human_additions`/`human_deletions`, `ai_cost_usd`,
+  `languages`/`editors`/`projects` JSON — UNIQUE(`user_id`,`day`)). This is the one denormalised
+  row in the schema by design: a **cache of a remote source**, so a chart needs no network round
+  trip, every field is the provider's own number, and re-syncing a day overwrites rather than adds.
 - **Billing:** `plans` is **config-driven** (spec §11: `config/plans.ts`, not rows),
   `subscriptions` (`user_id`, `provider` (`dodo`), `external_id`, `plan`, `status`
   (`active`|`on_hold`|`cancelled`|`failed`), `renews_at`, `cancelled_at`),

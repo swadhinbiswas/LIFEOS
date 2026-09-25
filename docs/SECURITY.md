@@ -42,6 +42,10 @@ implied.
 - **Webhook signing secrets** are AES-256-GCM encrypted at rest with the same helper; rows written
   before this change still verify (a plaintext read fallback) and are re-encrypted on their next
   write.
+- **The WakaTime API key** is encrypted with the same helper and only ever surfaces as a `••••1234`
+  hint; a service test and an e2e test both assert the plaintext is absent from the response
+  (ADR-110). The stored activity is durations and labels — never file paths, source or keystrokes
+  (see `docs/ACTIVITY.md`).
 - `.env` is never committed; `.env.example` documents keys without values; `env.ts` validates the
   whole contract at boot and enforces paired variables.
 
@@ -75,6 +79,9 @@ implied.
   a 7-day grace plus a `CRON_SECRET`-guarded purge; the audit log is user-visible (ADR-083).
 - Provider calls disclose what is sent: the user's message plus a small context (goals, boards,
   habits, and memories only when the user enabled them).
+- **WakaTime is the one outbound integration that reads rather than writes**, and it is opt-in per
+  user: no key, no request. LifeOS sends it nothing — it fetches that account's own summaries — so
+  connecting it does not disclose anything about the user's LifeOS data (ADR-110).
 
 ## Supply chain
 

@@ -101,6 +101,27 @@ export const DASHBOARD_TEMPLATES: DashboardTemplate[] = [
       "productivity.reviews",
     ],
   },
+  {
+    id: "hours",
+    variant: "code",
+    key: "hours",
+    hintKey: "hoursHint",
+    widgets: ["code.kpis", "code.time", "code.languages", "code.harnesses", "code.connection"],
+  },
+  {
+    id: "ai",
+    variant: "code",
+    key: "ai",
+    hintKey: "aiHint",
+    widgets: ["code.ai", "code.time", "code.kpis", "code.languages", "code.connection"],
+  },
+  {
+    id: "everything",
+    variant: "code",
+    key: "everything",
+    hintKey: "everythingHint",
+    widgets: DASHBOARD_WIDGETS.filter((widget) => widget.variant === "code").map((w) => w.id),
+  },
 ];
 
 export function findDashboardTemplate(

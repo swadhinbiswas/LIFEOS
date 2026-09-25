@@ -5,7 +5,7 @@ import { z } from "zod";
  * for a user is validated against these ids, so a stale or forged widget id can never be written.
  */
 
-export const DASHBOARD_VARIANTS = ["today", "overview", "career", "productivity"] as const;
+export const DASHBOARD_VARIANTS = ["today", "overview", "career", "productivity", "code"] as const;
 export type DashboardVariant = (typeof DASHBOARD_VARIANTS)[number];
 
 export const WIDGET_SIZES = ["s", "m", "l"] as const;
@@ -148,6 +148,48 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     variant: "productivity",
     label: "review streak",
     key: "productivityReviews",
+    defaultSize: "s",
+  },
+  {
+    id: "code.kpis",
+    variant: "code",
+    label: "coding KPIs",
+    key: "codeKpis",
+    defaultSize: "m",
+  },
+  {
+    id: "code.time",
+    variant: "code",
+    label: "coding time per day",
+    key: "codeTime",
+    defaultSize: "l",
+  },
+  {
+    id: "code.ai",
+    variant: "code",
+    label: "ai vs human lines",
+    key: "codeAi",
+    defaultSize: "l",
+  },
+  {
+    id: "code.languages",
+    variant: "code",
+    label: "languages",
+    key: "codeLanguages",
+    defaultSize: "m",
+  },
+  {
+    id: "code.harnesses",
+    variant: "code",
+    label: "editors and projects",
+    key: "codeHarnesses",
+    defaultSize: "m",
+  },
+  {
+    id: "code.connection",
+    variant: "code",
+    label: "connection",
+    key: "codeConnection",
     defaultSize: "s",
   },
 ];

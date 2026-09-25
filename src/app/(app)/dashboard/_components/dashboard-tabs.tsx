@@ -15,6 +15,7 @@ const KEYS: Record<string, string> = {
   overview: "variantOverview",
   career: "variantCareer",
   productivity: "variantProductivity",
+  code: "variantCode",
 };
 
 export function DashboardTabs({
