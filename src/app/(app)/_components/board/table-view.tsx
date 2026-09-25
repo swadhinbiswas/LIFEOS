@@ -11,6 +11,14 @@ import {
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { BoardPayload, Card } from "@/server/boards";
 
 import type { GroupBy } from "./board-toolbar";
@@ -101,15 +109,15 @@ function GroupTable({
       <h2 className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
         {label} <span className="tabular-nums">{rows.length}</span>
       </h2>
-      <table className="w-full border-collapse font-mono text-xs">
-        <thead>
+      <Table className="font-mono text-xs">
+        <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
+            <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <th
+                <TableHead
                   key={header.id}
                   scope="col"
-                  className="border-b border-border px-2 py-1 text-left font-medium tracking-wider text-muted-foreground uppercase"
+                  className="font-medium tracking-wider text-muted-foreground uppercase"
                 >
                   {header.isPlaceholder ? null : (
                     <button
@@ -126,16 +134,16 @@ function GroupTable({
                           : ""}
                     </button>
                   )}
-                </th>
+                </TableHead>
               ))}
-            </tr>
+            </TableRow>
           ))}
-        </thead>
-        <tbody>
+        </TableHeader>
+        <TableBody>
           {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} data-slot="table-row" data-card-id={row.original.id}>
+            <TableRow key={row.id} data-slot="table-row" data-card-id={row.original.id}>
               {row.getAllCells().map((cell) => (
-                <td key={cell.id} className="border-b border-border px-2 py-1">
+                <TableCell key={cell.id}>
                   {cell.column.id === "title" ? (
                     <button
                       type="button"
@@ -147,12 +155,12 @@ function GroupTable({
                   ) : (
                     <table.FlexRender cell={cell} />
                   )}
-                </td>
+                </TableCell>
               ))}
-            </tr>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </section>
   );
 }

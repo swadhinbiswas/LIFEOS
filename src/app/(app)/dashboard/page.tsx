@@ -23,15 +23,9 @@ import { getRegionalSettings } from "@/server/settings";
 
 import { LayoutControls } from "./_components/layout-controls";
 import { HabitChart } from "./_components/habit-chart";
+import { DashboardTabs } from "./_components/dashboard-tabs";
 
 export const metadata = { title: "Dashboard" };
-
-const VARIANT_KEY: Record<DashboardVariant, string> = {
-  today: "variantToday",
-  overview: "variantOverview",
-  career: "variantCareer",
-  productivity: "variantProductivity",
-};
 
 const money = (minor: number, unit: string | null): string => {
   const whole = (minor / 100).toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -246,22 +240,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   return (
     <>
       <PageHeader title={t("title")}>
-        <nav aria-label={t("title")} className="flex flex-wrap gap-1 font-mono text-[10px]">
-          {DASHBOARD_VARIANTS.map((option) => (
-            <Link
-              key={option}
-              href={`/dashboard?variant=${option}`}
-              aria-current={option === variant ? "page" : undefined}
-              className={
-                option === variant
-                  ? "rounded-[var(--radius)] border border-primary bg-primary px-2 py-0.5 text-primary-foreground"
-                  : "rounded-[var(--radius)] border border-border px-2 py-0.5 hover:bg-accent hover:text-accent-foreground"
-              }
-            >
-              {t(VARIANT_KEY[option])}
-            </Link>
-          ))}
-        </nav>
+        <DashboardTabs variant={variant} variants={DASHBOARD_VARIANTS} />
       </PageHeader>
 
       <div className="grid gap-4">

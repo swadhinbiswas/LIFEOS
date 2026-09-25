@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { PageHeader } from "@/components/tui/page-header";
+import { Progress } from "@/components/ui/progress";
 import { getServerSession } from "@/server/auth/session";
 import { listGoals } from "@/server/goals";
 
@@ -59,9 +60,11 @@ export default async function GoalsPage() {
             >
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                  <span aria-hidden="true" className="font-mono text-[10px] text-primary">
-                    {"▇".repeat(Math.round(goal.progress / 10))}
-                  </span>
+                  <Progress
+                    value={goal.progress}
+                    aria-label={goal.goal.title}
+                    className="h-2 w-32"
+                  />
                   <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
                     {goal.progress}%
                   </span>
@@ -87,6 +90,11 @@ export default async function GoalsPage() {
                         className="flex flex-wrap items-center gap-3 border border-border px-2 py-1 font-mono text-xs"
                       >
                         <span className="min-w-0 flex-1 truncate">{entry.row.title}</span>
+                        <Progress
+                          value={entry.progress}
+                          aria-label={entry.row.title}
+                          className="h-1.5 w-24"
+                        />
                         <span className="text-muted-foreground">{entry.row.kind}</span>
                         <KeyResultControls
                           keyResultId={entry.row.id}

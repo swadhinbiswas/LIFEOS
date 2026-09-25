@@ -2,6 +2,14 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { PageHeader } from "@/components/tui/page-header";
 import { getServerSession } from "@/server/auth/session";
 import { getCareerAnalytics } from "@/server/career/analytics";
@@ -43,32 +51,34 @@ export default async function CareerAnalyticsPage() {
           {funnel.total === 0 ? (
             <p className="font-mono text-xs text-muted-foreground">{t("noJobs")}</p>
           ) : (
-            <table className="w-full border-collapse font-mono text-xs">
-              <thead>
-                <tr>
-                  <th scope="col" className={head}>
+            <Table className="font-mono text-xs">
+              <TableHeader>
+                <TableRow>
+                  <TableHead scope="col" className={head}>
                     {t("stage")}
-                  </th>
-                  <th scope="col" className={`${head} text-right`}>
+                  </TableHead>
+                  <TableHead scope="col" className={`${head} text-right`}>
                     {t("inStage")}
-                  </th>
-                  <th scope="col" className={`${head} text-right`}>
+                  </TableHead>
+                  <TableHead scope="col" className={`${head} text-right`}>
                     {t("meanDays")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {funnel.stages.map((stage) => (
-                  <tr key={stage.stage} data-slot="funnel-row">
-                    <td className={cell}>{stage.stage}</td>
-                    <td className={`${cell} text-right tabular-nums`}>{stage.count}</td>
-                    <td className={`${cell} text-right tabular-nums text-muted-foreground`}>
+                  <TableRow key={stage.stage} data-slot="funnel-row">
+                    <TableCell className={cell}>{stage.stage}</TableCell>
+                    <TableCell className={`${cell} text-right tabular-nums`}>
+                      {stage.count}
+                    </TableCell>
+                    <TableCell className={`${cell} text-right tabular-nums text-muted-foreground`}>
                       {stage.averageDaysInStage === null ? "—" : stage.averageDaysInStage}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </Panel>
 
@@ -76,36 +86,38 @@ export default async function CareerAnalyticsPage() {
           {bySource.length === 0 ? (
             <p className="font-mono text-xs text-muted-foreground">{t("noSources")}</p>
           ) : (
-            <table className="w-full border-collapse font-mono text-xs">
-              <thead>
-                <tr>
-                  <th scope="col" className={head}>
+            <Table className="font-mono text-xs">
+              <TableHeader>
+                <TableRow>
+                  <TableHead scope="col" className={head}>
                     {t("source")}
-                  </th>
-                  <th scope="col" className={`${head} text-right`}>
+                  </TableHead>
+                  <TableHead scope="col" className={`${head} text-right`}>
                     {t("jobs")}
-                  </th>
-                  <th scope="col" className={`${head} text-right`}>
+                  </TableHead>
+                  <TableHead scope="col" className={`${head} text-right`}>
                     {t("progressed")}
-                  </th>
-                  <th scope="col" className={`${head} text-right`}>
+                  </TableHead>
+                  <TableHead scope="col" className={`${head} text-right`}>
                     {t("rate")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {bySource.map((row) => (
-                  <tr key={row.source} data-slot="source-row">
-                    <td className={cell}>{row.source}</td>
-                    <td className={`${cell} text-right tabular-nums`}>{row.total}</td>
-                    <td className={`${cell} text-right tabular-nums`}>{row.progressed}</td>
-                    <td className={`${cell} text-right tabular-nums text-muted-foreground`}>
+                  <TableRow key={row.source} data-slot="source-row">
+                    <TableCell className={cell}>{row.source}</TableCell>
+                    <TableCell className={`${cell} text-right tabular-nums`}>{row.total}</TableCell>
+                    <TableCell className={`${cell} text-right tabular-nums`}>
+                      {row.progressed}
+                    </TableCell>
+                    <TableCell className={`${cell} text-right tabular-nums text-muted-foreground`}>
                       {Math.round(row.rate * 100)}%
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </Panel>
 
