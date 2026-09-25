@@ -11,16 +11,24 @@ export function EmptyState({
   hint,
   children,
   className,
+  testId,
 }: {
   title: string;
   hint?: string;
   /** An action, e.g. a link to create the first item. */
   children?: React.ReactNode;
   className?: string;
+  /**
+   * A `data-testid` for the case where several empty states are on one screen and a test needs to
+   * name which one it means. Preferred over a new test-only slot: the visible `data-slot` is shared
+   * by every empty state in the app, so it cannot distinguish them.
+   */
+  testId?: string;
 }) {
   return (
     <div
       data-slot="empty-state"
+      data-testid={testId}
       className={cn(
         "flex flex-col items-start gap-1 rounded-[var(--radius)] border border-dashed border-border px-3 py-4",
         className,

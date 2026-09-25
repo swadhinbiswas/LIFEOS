@@ -2435,6 +2435,53 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   shape and a live run stays a manual step. A push endpoint for harnesses with no WakaTime plugin is
   left for later, recorded as a manual source rather than pretended for now.
 
+## ADR-111 — Today gains a greeting, a time-blocked strip, an inline timer and quick capture
+
+- **Status:** accepted (2026-09-26)
+- **Context:** spec §6.8 lists what the Today variant must carry: — greeting and date,
+  top-3 priorities, schedule/time blocks, due & overdue, habits checklist with streak meters, focus
+  timer, quick capture, AI daily brief. Four of those shipped; the greeting, the schedule, the timer
+  and capture existed elsewhere in the product but not on Today, so the variant that is supposed to
+  answer "what do I do now" was the one that could not say what time it was or start anything.
+- **Decision:** Today gains three widgets and a header, all composed from services that already own
+  the data rather than new ones:
+  - the **schedule** reads `getCalendar` for today, the same read the calendar page makes, so the
+    strip and the calendar cannot disagree. `buildSchedule` is a pure function in
+    `src/server/dashboard/schedule.ts`, unit-tested against the event shape with no database, which is
+    what makes the past/now/next rules cheap to state and cheap to verify.
+  - the **greeting** is resolved in the _user's_ timezone, not the server's, because a server in UTC
+    telling someone in Dhaka it is afternoon is the sort of small wrongness that makes a dashboard
+    feel unowned. It is server-rendered: no client JS, and the date is right in the first paint.
+  - the **timer** and **capture** are the _same components_ the focus page and the inbox already
+    use. A second focus timer would be a second place for the running session to be wrong.
+- **Consequences:** a block is only as good as the time it carries, so each block's accessible name is
+  "HH:MM — title (state)" and state is a rule plus a strike-through, never colour alone
+  (spec §4.4). An empty day says so and links to the calendar rather than drawing an empty axis. The
+  strip deliberately does not lay blocks out on a proportional axis: at 05:00 a full-day axis is 97%
+  empty space, and the useful information — what is over, what is now, what is next — is
+  carried by order and labels. Wiring this up surfaced a real bug in the calendar itself (ADR-112),
+  because the strip was the first consumer to compare a block's clock time against the user's wall
+  clock.
+
+## ADR-112 — A calendar event reports its day and its clock in the same timezone
+
+- **Status:** accepted (2026-09-26)
+- **Context:** `instantOf` in `src/server/calendar/index.ts` resolved the _day_ of a timed value with
+  `dayKeyInTimeZone` — the user's zone, correctly — but then read the clock time straight off the UTC
+  string with `iso.slice(11, 16)`. One row therefore disagreed with itself: a task stored at 09:00Z
+  rendered as day `2026-09-24` beside the time `09:00` for a user in Dhaka, whose actual clock read
+  15:00. Nothing failed and no test caught it, because the existing calendar test ran entirely in
+  UTC, where the two halves coincidentally agree.
+- **Decision:** a timed value is a real instant, so both halves of it are resolved in the user's zone,
+  through a shared `localClock` helper. Date-only values are untouched: the date inputs store UTC
+  midnight precisely so that a chosen day does not drift into the previous evening in an eastern zone,
+  and a test now pins that across four zones including `Pacific/Kiritimati` (UTC+14).
+- **Consequences:** the calendar page, the agenda and ICS-free views, and the dashboard strip all now
+  show the time the user would read off a wall clock. The bug was invisible until a second consumer
+  compared a rendered time against `now` — which is the general lesson: a rendering that only
+  ever gets checked in one timezone will disagree in every other one. Worth noting that the timezone
+  e2e exists and passes; it saved a _preference_ but never asserted a _rendered time_.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

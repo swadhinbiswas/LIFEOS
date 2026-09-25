@@ -203,7 +203,10 @@
     "codeAi": "ai vs human lines",
     "codeLanguages": "languages",
     "codeHarnesses": "editors and projects",
-    "codeConnection": "connection"
+    "codeConnection": "connection",
+    "todaySchedule": "schedule",
+    "todayCapture": "quick capture",
+    "todayTimer": "focus timer"
   },
   "Pages": {
     "Dashboard": {
@@ -335,7 +338,23 @@
       "connectionSettings": "connection settings",
       "days_short": "d",
       "hours_short": "h",
-      "usd": "usd"
+      "usd": "usd",
+      "greeting": "good {daypart}",
+      "greetingNamed": "good {daypart}, {name}",
+      "greeting_morning": "morning",
+      "greeting_afternoon": "afternoon",
+      "greeting_evening": "evening",
+      "scheduleEmpty": "nothing scheduled today",
+      "scheduleEmptyHint": "no cards, interviews or renewals land on today",
+      "openCalendar": "open the calendar",
+      "scheduleNow": "now",
+      "scheduleNext": "next",
+      "scheduleUntimed": "no fixed time",
+      "scheduleUntimedEmpty": "everything today has an hour",
+      "scheduleBlockLabel": "{time} — {title} ({state})",
+      "scheduleStatePast": "done",
+      "scheduleStateNow": "happening now",
+      "scheduleStateNext": "still to come"
     },
     "Trash": {
       "title": "Trash",

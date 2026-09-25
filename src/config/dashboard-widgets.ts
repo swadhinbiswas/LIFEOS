@@ -74,6 +74,27 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: "s",
   },
   {
+    id: "today.schedule",
+    variant: "today",
+    label: "schedule",
+    key: "todaySchedule",
+    defaultSize: "m",
+  },
+  {
+    id: "today.capture",
+    variant: "today",
+    label: "quick capture",
+    key: "todayCapture",
+    defaultSize: "s",
+  },
+  {
+    id: "today.timer",
+    variant: "today",
+    label: "focus timer",
+    key: "todayTimer",
+    defaultSize: "s",
+  },
+  {
     id: "overview.kpis",
     variant: "overview",
     label: "KPIs",

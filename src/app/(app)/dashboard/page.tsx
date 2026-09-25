@@ -29,8 +29,15 @@ import { listHabits } from "@/server/habits";
 import { listReviews } from "@/server/reviews";
 import { reviewStreak } from "@/server/reviews/streak";
 import { getRegionalSettings } from "@/server/settings";
+import { getCalendar } from "@/server/calendar";
+import { buildSchedule } from "@/server/dashboard/schedule";
+import { getRunningSession } from "@/server/focus";
+import { CaptureBox } from "../_components/board/capture-box";
+import { FocusTimer } from "../focus/_components/focus-timer";
 
 import { AiBriefPanel } from "./_components/ai-brief";
+import { DayHeader } from "./_components/day-header";
+import { ScheduleStripView } from "./_components/schedule-strip";
 import { LayoutControls } from "./_components/layout-controls";
 import { DashboardTabs } from "./_components/dashboard-tabs";
 import { FunnelChart } from "./_components/funnel-chart";
@@ -146,9 +153,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     : "overview";
 
   const now = new Date();
-  // The board must exist before the brief reads it; the rest of the page's reads are independent
-  // of each other, so they go out together (ADR-101).
-  await ensureSystemTasksBoard(session.user.id);
+  // The board must exist before the brief reads it, and quick capture needs its id. One call either
+  // way: `ensureSystemTasksBoard` is idempotent, and the rest of the page's reads are independent of
+  // it, so they go out together (ADR-101).
+  const tasksBoard = await ensureSystemTasksBoard(session.user.id);
   const [layout, { timeZone, weekStart }] = await Promise.all([
     getLayout(session.user.id, variant),
     getRegionalSettings(session.user.id),
@@ -160,14 +168,20 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     variant === "overview" ||
     visible.some((id) => id === "today.pulse" || id === "today.habits" || id === "overview.wins");
   const wantsFocus = visible.includes("today.focus") || visible.includes("productivity.focus");
+  const wantsSchedule = visible.includes("today.schedule");
+  const wantsTimer = visible.includes("today.timer");
   const wantsKpis =
     visible.some((id) => id.startsWith("overview.") || id.startsWith("productivity.")) ||
     visible.includes("career.open");
+  // The user's day key, resolved once and passed to every read that buckets by day (ADR-099).
+  const todayKey = dayKeyInTimeZone(now, timeZone);
   const [
     brief,
     kpis,
     habits,
     focusSeries,
+    todayEvents,
+    runningSession,
     career,
     reviews,
     doneSeries,
@@ -186,6 +200,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       ? listHabits(session.user.id, dayKeyInTimeZone(now, timeZone))
       : Promise.resolve([]),
     wantsFocus ? focusDailySeries(session.user.id, 14, now, timeZone) : Promise.resolve([]),
+    // The day itself: the same calendar read the calendar page makes, narrowed to today, so the
+    // strip and the calendar can never disagree about what is scheduled.
+    wantsSchedule
+      ? getCalendar(session.user.id, { from: todayKey, to: todayKey }, timeZone)
+      : Promise.resolve([]),
+    // Only the running session, not the series: the timer needs an id and a start, nothing else.
+    wantsTimer ? getRunningSession(session.user.id) : Promise.resolve(null),
     visible.some((id) => id.startsWith("career."))
       ? getCareerAnalytics(session.user.id, now, 21, timeZone, weekStart)
       : Promise.resolve(null),
@@ -227,6 +248,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     inbox: brief?.inbox ?? [],
     openCards: brief?.openCards ?? 0,
   });
+
+  // The day laid out in time (spec §6.8), derived from the same events the calendar page reads.
+  const schedule = buildSchedule(todayEvents, now, timeZone);
 
   // Coding activity (ADR-110). Every figure is WakaTime's own number, passed through; the only
   // thing computed here is the unit change (seconds to minutes) and the net line change.
@@ -643,6 +667,33 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         isEmpty={focusSeries.every((row) => row.sessions === 0)}
       />
     ),
+    "today.schedule": (
+      <ScheduleStripView
+        strip={schedule}
+        labels={{
+          emptyLabel: t("scheduleEmpty"),
+          emptyHint: t("scheduleEmptyHint"),
+          emptyActionLabel: t("openCalendar"),
+          now: t("scheduleNow"),
+          next: t("scheduleNext"),
+          untimed: t("scheduleUntimed"),
+          untimedEmpty: t("scheduleUntimedEmpty"),
+          openCalendar: t("openCalendar"),
+          blockLabel: (time, title, state) => t("scheduleBlockLabel", { time, title, state }),
+          statePast: t("scheduleStatePast"),
+          stateNow: t("scheduleStateNow"),
+          stateNext: t("scheduleStateNext"),
+        }}
+      />
+    ),
+    "today.capture": tasksBoard ? <CaptureBox boardId={tasksBoard.id} /> : null,
+    "today.timer": (
+      <FocusTimer
+        sessionId={runningSession?.id ?? null}
+        startedAt={runningSession ? runningSession.started_at.toISOString() : null}
+        plannedMin={runningSession?.planned_min ?? null}
+      />
+    ),
     "productivity.reviews": (
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <p className="font-mono text-2xl leading-none font-semibold tabular-nums">
@@ -822,6 +873,18 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       </PageHeader>
 
       <div className="grid gap-4">
+        {/* Spec §6.8 asks Today for a greeting and a date. It is the variant's own heading, so it
+            sits above the widgets rather than inside a Panel — a chip around a greeting would be
+            a frame around a sentence. */}
+        {variant === "today" ? (
+          <DayHeader
+            name={session.user.name ?? null}
+            day={todayKey}
+            timeZone={timeZone}
+            now={now}
+          />
+        ) : null}
+
         {variant === "overview" && chartData.length > 0 ? (
           <Panel title={t("chartTitle")}>
             <TrendChart

@@ -203,7 +203,10 @@
     "codeAi": "এআই বনাম মানুষের লাইন",
     "codeLanguages": "ভাষা",
     "codeHarnesses": "এডিটর ও প্রজেক্ট",
-    "codeConnection": "সংযোগ"
+    "codeConnection": "সংযোগ",
+    "todaySchedule": "সময়সূচি",
+    "todayCapture": "দ্রুত ধরা",
+    "todayTimer": "ফোকাস টাইমার"
   },
   "Pages": {
     "Dashboard": {
@@ -335,7 +338,23 @@
       "connectionSettings": "সংযোগের সেটিংস",
       "days_short": "দিন",
       "hours_short": "ঘণ্টা",
-      "usd": "মার্কিন ডলার"
+      "usd": "মার্কিন ডলার",
+      "greeting": "শুভ {daypart}",
+      "greetingNamed": "শুভ {daypart}, {name}",
+      "greeting_morning": "সকাল",
+      "greeting_afternoon": "দুপুর",
+      "greeting_evening": "সন্ধ্যা",
+      "scheduleEmpty": "আজ কিছু নির্ধারিত নেই",
+      "scheduleEmptyHint": "আজ কোনো কার্ড, ইন্টারভিউ বা নবায়ন পড়ে নেই",
+      "openCalendar": "ক্যালেন্ডার খোলো",
+      "scheduleNow": "এখন",
+      "scheduleNext": "পরবর্তী",
+      "scheduleUntimed": "নির্দিষ্ট সময় নেই",
+      "scheduleUntimedEmpty": "আজের সবকিছুর একটি নির্দিষ্ট সময় আছে",
+      "scheduleBlockLabel": "{time} — {title} ({state})",
+      "scheduleStatePast": "শেষ",
+      "scheduleStateNow": "এখন চলছে",
+      "scheduleStateNext": "এখনও হয়নি"
     },
     "Trash": {
       "title": "ট্র্যাশ",

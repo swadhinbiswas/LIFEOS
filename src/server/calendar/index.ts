@@ -37,9 +37,28 @@ export interface CalendarRange {
   to: string;
 }
 
+/** `HH:MM` on the clock in `timeZone`. */
+const localClock = (value: Date, timeZone: string): string => {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(value);
+  const hour = parts.find((part) => part.type === "hour")?.value ?? "00";
+  const minute = parts.find((part) => part.type === "minute")?.value ?? "00";
+  return `${hour}:${minute}`;
+};
+
 /**
- * An event's calendar day. Date-only values (stored at UTC midnight by the date inputs) keep their
- * UTC day — that is the day the user picked — while a timed value lands on the user's local day.
+ * An event's calendar day and clock time, both in the user's zone (ADR-057).
+ *
+ * Date-only values are stored at UTC midnight by the date inputs and keep their UTC day: that is
+ * the day the user picked, and shifting it into a local zone would move a renewal to the previous
+ * evening. A timed value is a real instant, so both halves of it — the day *and* the clock — are
+ * resolved in the user's zone. Reading the clock off the UTC string while resolving the day
+ * locally made one row disagree with itself: a 09:00Z task showed the right day next to "09:00"
+ * for a user whose afternoon it was.
  */
 const instantOf = (
   value: Date,
@@ -47,7 +66,7 @@ const instantOf = (
 ): { at: string; date: string; time: string | null } => {
   const iso = value.toISOString();
   if (iso.endsWith("T00:00:00.000Z")) return { at: iso, date: iso.slice(0, 10), time: null };
-  return { at: iso, date: dayKeyInTimeZone(value, timeZone), time: iso.slice(11, 16) };
+  return { at: iso, date: dayKeyInTimeZone(value, timeZone), time: localClock(value, timeZone) };
 };
 
 /** Every dated item in the inclusive day range, bucketed in the user's timezone (ADR-057). */
