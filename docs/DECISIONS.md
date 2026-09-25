@@ -2021,6 +2021,26 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-089 — Agent docs, `/llms.txt` and the CLI
+
+- **Status:** accepted (2026-09-25)
+- **Context:** Spec §9.1/§9.2: the data must be reachable from scripts and AI agents, and agents need
+  a machine-readable map. §9.1 also asks for a small CLI; the spec asks for `/llms.txt` and
+  `/llms-full.txt` plus setup docs.
+- **Decision:** three thin layers over the same service API, none of which own logic.
+  `docs/API.md`, `docs/THEMING.md` and `docs/CONTRIBUTING.md` join the docs registry so `/docs`
+  renders them; `/llms.txt` is a short index and `/llms-full.txt` inlines the key documents, both
+  **composed at request time** from the docs registry and the live MCP tool catalogue so they cannot
+  drift (a test fails if a tool is undocumented). `lifeos` is a Node client over `/api/v1` with
+  `add` (server-side quick-add), `today` and `jobs move`; a new `POST /api/v1/jobs/[id]/stage`
+  resolves a stage by name and goes through `moveJobStage`, so stage history and events fire exactly
+  as in the UI.
+- **Consequences:** an agent can discover the product from one URL, and a terminal or Shortcut can
+  capture and read without the app. Cost: `/llms-full.txt` re-reads documents per request (cheap,
+  always current); the CLI ships as TypeScript run through `tsx` rather than a compiled binary.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

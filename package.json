@@ -2,6 +2,9 @@
   "name": "lifeos",
   "version": "0.0.1",
   "private": true,
+  "bin": {
+    "lifeos": "src/cli/index.ts"
+  },
   "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev": "next dev",
@@ -21,6 +24,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/server/seed/cli.ts",
+    "cli": "tsx src/cli/index.ts",
     "load": "node scripts/load.mjs",
     "lighthouse": "pnpm dlx @lhci/cli autorun",
     "prepare": "husky"

@@ -19,6 +19,14 @@ export interface DocEntry {
 export const DOCS: DocEntry[] = [
   { slug: "readme", title: "README", path: "README.md", phase: "Phase 0" },
   { slug: "architecture", title: "Architecture", path: "docs/ARCHITECTURE.md", phase: "Phase 9" },
+  { slug: "api", title: "API", path: "docs/API.md", phase: "Phase 9" },
+  { slug: "theming", title: "Theming", path: "docs/THEMING.md", phase: "Phase 9" },
+  {
+    slug: "contributing",
+    title: "Contributing",
+    path: "docs/CONTRIBUTING.md",
+    phase: "Phase 9",
+  },
   { slug: "security", title: "Security", path: "docs/SECURITY.md", phase: "Phase 9" },
   { slug: "self-hosting", title: "Self-hosting", path: "docs/SELF_HOSTING.md", phase: "Phase 9" },
   { slug: "release", title: "Release", path: "docs/RELEASE.md", phase: "Phase 9" },
