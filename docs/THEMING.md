@@ -24,15 +24,23 @@ warning, danger, info and accent.
 
 The customizer composes independent axes (all in `themes.ts`):
 
-| Axis    | Values                                                     |
-| ------- | ---------------------------------------------------------- |
-| Mode    | light, dark                                                |
-| Font    | the spec's font list                                       |
-| Radius  | none → pill                                                |
-| Layout  | the TUI-density layout options                             |
-| Scale   | UI density                                                 |
-| Sidebar | variant and mode                                           |
-| Accent  | a named accent that overrides the preset's accent variable |
+| Axis            | Values                                                                           |
+| --------------- | -------------------------------------------------------------------------------- |
+| Mode            | light, dark                                                                      |
+| Font            | the spec's font list                                                             |
+| **Text weight** | **Regular (400/600), Medium (450/650), Bold (500/700) — default Bold** (ADR-095) |
+| Radius          | none → pill                                                                      |
+| Layout          | the TUI-density layout options                                                   |
+| Scale           | UI density                                                                       |
+| Sidebar         | variant and mode                                                                 |
+| Accent          | a named accent that overrides the preset's accent variable                       |
+
+**OpenCode palettes (ADR-096).** All 33 themes OpenCode ships
+(`packages/tui/src/theme/assets/*.json`, the list behind <https://opencode.ai/docs/themes/>) are
+imported as `oc-*` presets by `scripts/import-opencode-themes.mjs` — colours are **read from those
+files, never guessed**. Where a source token cannot clear WCAG AA it is corrected by shifting its
+lightness, with the original hex kept in a comment. The customizer lists the 6 LifeOS palettes and
+the 33 imported ones as two groups, so 39 chips stay scannable; re-run the script to refresh them.
 
 Settings persist in the cookie and in the `user_settings` row, so a theme follows the account.
 

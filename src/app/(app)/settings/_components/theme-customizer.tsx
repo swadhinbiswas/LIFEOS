@@ -15,6 +15,7 @@ import {
   SCALES,
   SIDEBAR_MODES,
   SIDEBAR_VARIANTS,
+  TEXT_WEIGHTS,
   THEME_PRESET_IDS,
   themes,
   type ThemeOverrides,
@@ -32,7 +33,8 @@ type StringAxis =
   | "layout"
   | "scale"
   | "sidebarVariant"
-  | "sidebarMode";
+  | "sidebarMode"
+  | "textWeight";
 
 function Segmented<K extends StringAxis>({
   axis,
@@ -86,36 +88,55 @@ function PresetControl() {
   const preset = useThemeStore((state) => state.overrides.preset);
   const setOverride = useThemeStore((state) => state.set);
 
+  // Imported OpenCode palettes are prefixed `oc-`; keeping them in their own group means 39
+  // palettes stay scannable instead of one wall of chips (ADR-096).
+  const own = THEME_PRESET_IDS.filter((id) => !id.startsWith("oc-"));
+  const imported = THEME_PRESET_IDS.filter((id) => id.startsWith("oc-"));
+
+  const renderButton = (id: (typeof THEME_PRESET_IDS)[number]) => {
+    const checked = preset === id;
+    return (
+      <button
+        key={id}
+        type="button"
+        role="radio"
+        aria-checked={checked}
+        onClick={() => {
+          // ADR-024: choosing a preset switches to that preset's native colour mode.
+          setOverride("preset", id);
+          setOverride("colorMode", themes[id].nativeMode);
+        }}
+        className={cn(
+          "rounded-[var(--radius)] border px-2 py-1 font-mono text-xs",
+          checked
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-border bg-background text-foreground",
+        )}
+      >
+        {themes[id].label}
+      </button>
+    );
+  };
+
   return (
-    <fieldset className="flex flex-col gap-1">
+    <fieldset className="flex flex-col gap-2">
       <legend className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
         {t("preset")}
       </legend>
       <div role="radiogroup" aria-label={t("preset")} className="flex flex-wrap gap-1">
-        {THEME_PRESET_IDS.map((id) => {
-          const checked = preset === id;
-          return (
-            <button
-              key={id}
-              type="button"
-              role="radio"
-              aria-checked={checked}
-              onClick={() => {
-                // ADR-024: choosing a preset switches to that preset's native colour mode.
-                setOverride("preset", id);
-                setOverride("colorMode", themes[id].nativeMode);
-              }}
-              className={cn(
-                "rounded-[var(--radius)] border px-2 py-1 font-mono text-xs",
-                checked
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-background text-foreground",
-              )}
-            >
-              {themes[id].label}
-            </button>
-          );
-        })}
+        {own.map(renderButton)}
+      </div>
+      <div className="mt-2 flex flex-col gap-1">
+        <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+          {t("presetImported")}
+        </span>
+        <div
+          role="radiogroup"
+          aria-label={t("presetImported")}
+          className="flex max-h-64 flex-wrap gap-1 overflow-y-auto"
+        >
+          {imported.map(renderButton)}
+        </div>
       </div>
     </fieldset>
   );
@@ -210,6 +231,16 @@ export function ThemeCustomizer() {
       option.id === "expanded" ? "modeExpanded" : option.id === "icon" ? "modeIcon" : "modeFull",
     ),
   }));
+  const textWeightOptions = TEXT_WEIGHTS.map((option) => ({
+    ...option,
+    label: t(
+      option.id === "regular"
+        ? "weightRegular"
+        : option.id === "medium"
+          ? "weightMedium"
+          : "weightBold",
+    ),
+  }));
 
   return (
     <div className="grid gap-4">
@@ -221,6 +252,7 @@ export function ThemeCustomizer() {
       <Panel title={t("typography")}>
         <Segmented axis="font" legend={t("font")} options={FONTS} />
         <Segmented axis="ligatures" legend={t("ligatures")} options={ligatureOptions} />
+        <Segmented axis="textWeight" legend={t("textWeight")} options={textWeightOptions} />
       </Panel>
 
       <Panel title={t("geometry")}>

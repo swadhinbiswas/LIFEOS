@@ -584,7 +584,12 @@
       "accent": "accent",
       "presetDefault": "preset default",
       "clear": "clear",
-      "reset": "reset to defaults"
+      "reset": "reset to defaults",
+      "textWeight": "Text weight",
+      "weightRegular": "Regular",
+      "weightMedium": "Medium",
+      "weightBold": "Bold",
+      "presetImported": "Imported from OpenCode"
     },
     "Integrations": {
       "title": "Integrations",

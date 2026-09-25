@@ -108,7 +108,21 @@ const envSchema = z
     }
   });
 
-const parsed = envSchema.safeParse(process.env);
+/**
+ * `.env.example` ships every optional key with an empty value, and a self-hoster may well leave
+ * them empty. An empty string means **not configured** for every key — without this, copying the
+ * example file verbatim fails validation ("Invalid URL", "Too small") for keys nobody set.
+ */
+const configuredEnv = (source: NodeJS.ProcessEnv): Record<string, string> => {
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (typeof value === "string" && value.trim() === "") continue;
+    if (value !== undefined) out[key] = value;
+  }
+  return out;
+};
+
+const parsed = envSchema.safeParse(configuredEnv(process.env));
 
 if (!parsed.success) {
   const issues = parsed.error.issues

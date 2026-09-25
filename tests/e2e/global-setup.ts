@@ -16,6 +16,10 @@ export function e2eEnv(): Record<string, string> {
     if (value !== undefined) env[key] = value;
   }
   env.DATABASE_URL = E2E_DB_URL;
+  // Hermetic like the DB: force the in-memory Redis stub (ADR-021) so an acceptance run never
+  // reads or writes a real Upstash database, whatever a developer has in .env.
+  env.UPSTASH_REDIS_REST_URL = "";
+  env.UPSTASH_REDIS_REST_TOKEN = "";
   // ADR-039: raise the auth rate-limit ceiling — the suite signs in several times within one
   // window from a single localhost IP, which Better Auth's per-IP defaults treat as abuse.
   env.AUTH_RATE_LIMIT_MAX = "100";

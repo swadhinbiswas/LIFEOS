@@ -584,7 +584,12 @@
       "accent": "অ্যাকসেন্ট",
       "presetDefault": "প্রিসেট ডিফল্ট",
       "clear": "মুছো",
-      "reset": "ডিফল্টে ফিরুন"
+      "reset": "ডিফল্টে ফিরুন",
+      "textWeight": "টেক্সট ওজন",
+      "weightRegular": "সাধারণ",
+      "weightMedium": "মাঝারি",
+      "weightBold": "গাঢ়",
+      "presetImported": "OpenCode থেকে আনা"
     },
     "Integrations": {
       "title": "ইন্টিগ্রেশন",

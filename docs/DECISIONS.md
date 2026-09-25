@@ -2124,6 +2124,57 @@ is an uncluttered dashboard.
 
 ---
 
+## ADR-095 — Text weight is a user setting, and it defaults to bold
+
+- **Status:** accepted (2026-09-25)
+- **Context:** A mono UI is thin by default, and long stretches of it (boards, tables, notes) are hard
+  to read. Users asked for bolder text — and for a choice, because "bold enough" is personal.
+- **Decision:** `textWeight` is a new customizer axis (`regular` 400/600, `medium` 450/650, `bold`
+  500/700) defaulting to **bold**. One setting emits `data-text-weight` on `<html>` and two CSS
+  variables; `html[data-text-weight] :is(h1…h6, strong, b, th)` sets the strong weight and `body`
+  the body weight. The selector is deliberately (0-1-1) so it outranks a component's `font-semibold`
+  (0-1-0) — the reader's preference wins over a component's default. Persisted with every other axis
+  in the cookie and `user_settings.theme_overrides`.
+- **Consequences:** a legibility setting in one place, no per-component weight decisions, and existing
+  users get the new default the next time their theme is written. Cost: a theme's typographic
+  character is now user-controlled, not baked in.
+
+## ADR-096 — OpenCode's built-in themes, imported with their real colours
+
+- **Status:** accepted (2026-09-25)
+- **Context:** OpenCode ships 33 built-in themes (`packages/tui/src/theme/assets/*.json`, the list
+  behind <https://opencode.ai/docs/themes/>) and LifeOS had 6. Users asked for all of them, imported
+  properly.
+- **Decision:** `scripts/import-opencode-themes.mjs` reads those JSON files and generates the
+  presets — **colours are read, never guessed**. Ids are prefixed `oc-` to stay distinct from the
+  hand-written presets; each gets a `[data-theme=…]` block in `globals.css`. The variant is the
+  theme's dark palette unless its dark background is itself light. Gaps (OpenCode marks some values
+  `transparent` or omits a token) are derived from the theme's own foreground/background mix.
+  Because LifeOS enforces WCAG AA on every token pair, a palette that is authentic but low-contrast
+  is corrected by **shifting its lightness away from the background** — the original hex is kept in a
+  comment, exactly as ADR-033 does for the hand-written presets. The customizer shows the 6 LifeOS
+  palettes and the 33 imported ones as two groups, so 39 chips stay scannable.
+- **Consequences:** 39 palettes, all contrast-verified by the existing test (236 checks, up from 48),
+  reproducible from a committed script. Trade-offs: a token corrected for text contrast is also the
+  chart colour, so charts in some imported themes read lighter than the source theme; and OpenCode's
+  transparent-background themes get a documented solid base.
+
+## ADR-097 — Empty environment values mean "not configured"
+
+- **Status:** accepted (2026-09-25)
+- **Context:** `.env.example` documents every optional key with an **empty value**. Copying it
+  verbatim made the validator fail with "Invalid URL" / "Too small" for keys nobody set — and the
+  same happened in CI, which deliberately blanks `UPSTASH_REDIS_REST_*` to force the in-memory
+  stub (ADR-021). Adding real Upstash credentials to a developer's `.env` also made unit and
+  end-to-end tests read and write their real database.
+- **Decision:** `src/env.ts` drops empty/whitespace-only variables before validation, so an empty
+  value is `undefined`. `vitest.setup.ts` and `e2eEnv()` explicitly blank the Upstash pair, keeping
+  both suites on the in-memory stub and hermetic regardless of a developer's `.env`.
+- **Consequences:** a stock `.env` boots, and tests never touch real infrastructure. Cost: one more
+  rule to remember when adding an optional variable (an empty string is always "unset").
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
