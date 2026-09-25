@@ -14,6 +14,7 @@ import {
   deleteCredentialAction,
   saveAiPrefsAction,
   saveCredentialAction,
+  testAiConnectionAction,
 } from "@/server/ai/actions";
 
 const PROVIDER_LABELS: Record<AiProvider, string> = {
@@ -48,6 +49,7 @@ export function AiSettingsForm({
   const [fridayReview, setFridayReview] = useState(prefs.fridayReview);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+  const [testStatus, setTestStatus] = useState("");
   const [busy, setBusy] = useState(false);
 
   const stored = credentials.find((credential) => credential.provider === provider);
@@ -248,6 +250,30 @@ export function AiSettingsForm({
         {error ? (
           <span role="alert" className="font-mono text-[10px] text-destructive">
             {error}
+          </span>
+        ) : null}
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            setTestStatus("");
+            const result = await testAiConnectionAction();
+            setBusy(false);
+            setTestStatus(
+              result.ok
+                ? t("testOk", { provider: result.provider ?? "", model: result.model ?? "" })
+                : t("testFailed", { message: result.message ?? "" }),
+            );
+          }}
+        >
+          {busy ? t("testing") : t("testConnection")}
+        </Button>
+        {testStatus ? (
+          <span role="status" className="font-mono text-[10px] text-muted-foreground">
+            {testStatus}
           </span>
         ) : null}
       </div>

@@ -910,7 +910,18 @@
       "saving": "সেভ হচ্ছে…",
       "couldNotSave": "সেভ করা যায়নি",
       "usage": "এ মাসে: {runs} রান · {input} ইন / {output} আউট টোকেন",
-      "usageNone": "এ মাসে এখনো কোনো এআই ব্যবহার নেই।"
+      "usageNone": "এ মাসে এখনো কোনো এআই ব্যবহার নেই।",
+      "memoryTitle": "স্মৃতি",
+      "memoryEmpty": "এখনো কোনো স্মৃতি নেই — কোপাইলটের মনে রাখার মতো একটি তথ্য যোগ করুন।",
+      "memoryPlaceholder": "যেমন আমি ছোট উত্তর আর ২৫ মিনিটের ফোকাস ব্লক পছন্দ করি",
+      "memoryAdd": "যোগ করো",
+      "edit": "সম্পাদনা",
+      "memoryDelete": "মুছো",
+      "memoryDeleteAria": "স্মৃতি মুছো",
+      "testConnection": "সংযোগ পরীক্ষা করো",
+      "testing": "পরীক্ষা হচ্ছে…",
+      "testOk": "সংযুক্ত: {provider} / {model}",
+      "testFailed": "সংযোগ ব্যর্থ: {message}"
     },
     "Capture": {
       "label": "একটি কাজ ক্যাপচার করুন",

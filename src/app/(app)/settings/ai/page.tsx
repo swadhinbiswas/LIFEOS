@@ -4,10 +4,12 @@ import { getTranslations } from "next-intl/server";
 import { Panel } from "@/components/tui/panel";
 import { listCredentials } from "@/server/ai/credentials";
 import { isEncryptionConfigured } from "@/server/ai/crypto";
+import { listMemories } from "@/server/ai/memory";
 import { usageThisMonth } from "@/server/ai/usage";
 import { getServerSession } from "@/server/auth/session";
 import { getAiPrefs } from "@/server/settings";
 
+import { AiMemory } from "./_components/ai-memory";
 import { AiSettingsForm } from "./_components/ai-settings-form";
 
 export const metadata = { title: "AI" };
@@ -21,10 +23,11 @@ export default async function AiSettingsPage() {
   if (!session) redirect("/sign-in");
 
   const t = await getTranslations("Pages.AiSettings");
-  const [prefs, credentials, usage] = await Promise.all([
+  const [prefs, credentials, usage, memories] = await Promise.all([
     getAiPrefs(session.user.id),
     listCredentials(session.user.id),
     usageThisMonth(session.user.id),
+    listMemories(session.user.id),
   ]);
 
   return (
@@ -41,6 +44,10 @@ export default async function AiSettingsPage() {
             encryptionOn={isEncryptionConfigured()}
             usage={usage}
           />
+        </Panel>
+
+        <Panel title={t("memoryTitle")} hint={`${memories.length}`}>
+          <AiMemory items={memories} />
         </Panel>
       </div>
     </>

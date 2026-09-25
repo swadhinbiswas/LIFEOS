@@ -910,7 +910,18 @@
       "saving": "saving…",
       "couldNotSave": "could not save",
       "usage": "This month: {runs} runs · {input} in / {output} out tokens",
-      "usageNone": "No AI usage yet this month."
+      "usageNone": "No AI usage yet this month.",
+      "memoryTitle": "Memory",
+      "memoryEmpty": "No memories yet — add a fact the copilot should keep.",
+      "memoryPlaceholder": "e.g. I prefer short answers and 25-minute focus blocks",
+      "memoryAdd": "add",
+      "edit": "edit",
+      "memoryDelete": "delete",
+      "memoryDeleteAria": "delete memory",
+      "testConnection": "test connection",
+      "testing": "testing…",
+      "testOk": "connected: {provider} / {model}",
+      "testFailed": "connection failed: {message}"
     },
     "Capture": {
       "label": "capture a task",

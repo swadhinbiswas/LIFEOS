@@ -1842,6 +1842,26 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-079 — Proactive brief and review: opt-in, cron-scheduled, deduped per day
+
+- **Status:** accepted (2026-09-25)
+- **Context:** Spec §8 asks for an optional morning brief and Friday review draft "generated on a
+  schedule (QStash/Vercel Cron), delivered in-app and optionally by email. Off by default; opt-in at
+  onboarding." The repo already has a `CRON_SECRET`-guarded cron pattern (ADR-069) and a
+  read-time notification sweep with a `user_id + dedupe_key` uniqueness rule (ADR-047).
+- **Decision:** add a `proactive` cron (`GET /api/cron/proactive`, `CRON_SECRET`-guarded, 404 when
+  unset) that calls `runProactive`: for every user whose `ai_prefs` opt in, generate a short brief
+  (any day) and/or a review draft (Fridays only) with the resolved model and the ADR-077 context,
+  then deliver as an in-app `system` notification. Delivery is deduped by `ai:<kind>:<UTC day>` so a
+  retried cron is a no-op. Email delivery rides the existing ADR-022 `sendEmail` port (extended with
+  `brief`/`review` kinds and an optional URL); the model is injectable so the pass is testable with
+  no provider key.
+- **Consequences:** proactive messages are quiet and never duplicated, and turning them on/off is
+  the two prefs already in `/settings/ai`. Cost: day dedupe is UTC, not per-user timezone — an
+  acceptable v1 simplification noted here rather than hidden.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

@@ -14,9 +14,10 @@ career/CV, habits, notes, finance) rendered as a keyboard-first, TUI-skinned web
    given to the user. The user asked to stop at each phase boundary and report.
    - Current phase: **6 → complete** (AI copilot: provider-agnostic model resolution with a BYO /
      platform / scripted fallback, approval-gated tools over the shared service layer, signed
-     approvals, injection defense, `/ai` + Ctrl/Cmd+J slide-over + `/settings/ai`, and `pnpm eval`;
-     ADR-073…078; gate green: 252 unit + 9 evals, 48 e2e twice, build, typecheck, lint). Next:
-     **Phase 7 (billing scaffold, settings, data ownership), awaiting go-ahead**.
+     approvals, injection defense, memory, the proactive brief/review cron, `/ai` + Ctrl/Cmd+J
+     slide-over + `/settings/ai`, and `pnpm eval`; ADR-073…079; gate green: 258 unit + 9 evals,
+     50 e2e twice, build, typecheck, lint). Next: **Phase 7 (billing scaffold, settings, data
+     ownership), awaiting go-ahead**.
 
 ## Repository map
 

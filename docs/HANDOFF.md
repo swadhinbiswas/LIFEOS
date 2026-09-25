@@ -8,9 +8,9 @@ not decisions (those are in `docs/DECISIONS.md`).
 - Phases 0–5 complete and reported. **Phase 6 complete** (AI copilot); awaiting the user's go-ahead
   for Phase 7 (billing scaffold, settings, data ownership).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **252 passed** ✓ · `pnpm eval` **9 passed, thresholds 100 %** ✓ ·
-  `pnpm e2e` **48 passed, twice** ✓.
-- ADR-044 … ADR-078 record the decisions. Nothing is pushed; all work is on local `master`.
+  `pnpm test` **258 passed** ✓ · `pnpm eval` **9 passed, thresholds 100 %** ✓ ·
+  `pnpm e2e` **50 passed, twice** ✓.
+- ADR-044 … ADR-079 record the decisions. Nothing is pushed; all work is on local `master`.
 
 ## Phase 6 — AI copilot (complete)
 
@@ -28,9 +28,13 @@ not decisions (those are in `docs/DECISIONS.md`).
   (`TOOL_APPROVAL_SECRET`), conversation persistence (upsert, approval-safe).
 - UI: `/ai` full page, Ctrl/Cmd+J slide-over, palette “Ask AI…”, contextual buttons (Plan my day,
   Summarize board), one-key approve (y) / reject (n); `/settings/ai` for provider, model, key,
-  auto-approve allowlist, memory and usage. All translated (en/bn), 878/878 keys.
+  auto-approve allowlist, memory items (add/edit/delete), a live “test connection”, and usage. All
+  translated (en/bn).
+- Proactive: `/api/cron/proactive` (ADR-079) delivers an opt-in morning brief and Friday review as
+  in-app notifications (and email for the brief), deduped per day.
 - Evals: `pnpm eval` — 32 tool-selection prompts, 3 injection fixtures, CV no-invention checker.
-- e2e: `tests/e2e/copilot.spec.ts` exercises propose → approve → reject against the scripted model.
+- e2e: `tests/e2e/copilot.spec.ts` (propose → approve → reject) and `tests/e2e/ai-settings.spec.ts`
+  (memory add/delete, cron guard); the tamper and live-request-shape paths are unit tests.
 - Gotcha: the E2E harness sets `AI_SCRIPTED=true` plus a fixed `AI_ENCRYPTION_KEY` and
   `TOOL_APPROVAL_SECRET` in `tests/e2e/global-setup.ts`; a production build without a provider key
   shows the honest “configure a provider” state instead of a dead chat box.

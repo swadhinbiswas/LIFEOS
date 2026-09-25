@@ -59,7 +59,8 @@ export function platformKey(provider: AiProvider): string | undefined {
   }
 }
 
-function buildModel(provider: AiProvider, apiKey: string, modelId: string): LanguageModel {
+/** Exported so a test can prove the live request shape without a provider key. */
+export function buildModel(provider: AiProvider, apiKey: string, modelId: string): LanguageModel {
   switch (provider) {
     case "openai":
       return createOpenAI({ apiKey })(modelId);

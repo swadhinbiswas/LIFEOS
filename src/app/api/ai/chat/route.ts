@@ -48,7 +48,7 @@ export async function POST(request: Request): Promise<Response> {
 
   const conversationId = await ensureConversation(session.user.id, body?.id ?? null);
   const [context, modelMessages] = await Promise.all([
-    buildUserContext(session.user.id),
+    buildUserContext(session.user.id, prefs),
     convertToModelMessages(messages),
   ]);
 

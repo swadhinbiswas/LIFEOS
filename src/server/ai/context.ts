@@ -4,6 +4,8 @@ import { listGoals } from "@/server/goals";
 import { listHabits } from "@/server/habits";
 import { getRegionalSettings } from "@/server/settings";
 
+import { listMemories } from "./memory";
+import type { AiPrefs } from "./prefs";
 import { untrusted } from "./prompt";
 
 /**
@@ -11,12 +13,13 @@ import { untrusted } from "./prompt";
  * design — a handful of names and numbers, never whole documents — and it is wrapped as untrusted
  * data so the model treats it as facts about the user, not as instructions.
  */
-export async function buildUserContext(userId: string): Promise<string> {
-  const [{ timeZone, weekStart }, boards, goals, habits] = await Promise.all([
+export async function buildUserContext(userId: string, prefs: AiPrefs): Promise<string> {
+  const [{ timeZone, weekStart }, boards, goals, habits, memories] = await Promise.all([
     getRegionalSettings(userId),
     listBoards(userId),
     listGoals(userId),
     listHabits(userId),
+    prefs.memoryEnabled ? listMemories(userId, 20) : Promise.resolve([]),
   ]);
 
   const activeGoals = goals.filter((goal) => goal.goal.status === "active");
@@ -36,6 +39,10 @@ export async function buildUserContext(userId: string): Promise<string> {
       .map((row) => `${row.habit.name}${row.value > 0 ? " done today" : ""}`)
       .join("; ")}`,
   ];
+
+  if (memories.length > 0) {
+    lines.push(`things to remember: ${memories.map((memory) => memory.content).join("; ")}`);
+  }
 
   return untrusted("user_context", lines.join("\n"));
 }

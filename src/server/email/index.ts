@@ -17,8 +17,7 @@ import { env, hasResend } from "@/env";
  * user recovers by signing in again (ADR-037 `sendOnSignIn` re-send) and the URL stays in
  * the server log.
  *
- * Only two mails ship in the MVP (verify + reset); React Email templates wait for a
- * transport that actually needs them (ADR-022).
+ * Only the auth mails are transactional; the AI brief/review are opt-in digests sent by the cron.
  */
 
 const OUTBOX_DIR = join(process.cwd(), ".data", "outbox");
@@ -29,20 +28,23 @@ export interface OutboundEmail {
   to: string;
   subject: string;
   text: string;
-  /** The single action URL (verify/reset) — recorded for the E2E outbox reader. */
-  url: string;
-  /** File-name discriminator only: "verify" | "reset". */
-  kind: "verify" | "reset";
+  /** The single action URL when the mail has one (verify/reset) — recorded for the E2E reader. */
+  url?: string;
+  kind: "verify" | "reset" | "brief" | "review";
 }
 
 export async function sendEmail({ to, subject, text, url, kind }: OutboundEmail): Promise<void> {
   if (!resend) {
     mkdirSync(OUTBOX_DIR, { recursive: true });
     const file = join(OUTBOX_DIR, `${Date.now()}-${kind}.json`);
-    // ADR-022 record shape: { to, subject, url, at } — nothing else (no bodies, no PII
+    // ADR-022 record shape: { to, subject, url?, at } — nothing else (no bodies, no PII
     // beyond the recipient the flow already addresses).
-    writeFileSync(file, JSON.stringify({ to, subject, url, at: new Date().toISOString() }), "utf8");
-    console.info(`[email:${kind}] outbox → ${file}\n  ${url}`);
+    writeFileSync(
+      file,
+      JSON.stringify({ to, subject, ...(url ? { url } : {}), at: new Date().toISOString() }),
+      "utf8",
+    );
+    console.info(`[email:${kind}] outbox → ${file}`);
     return;
   }
 

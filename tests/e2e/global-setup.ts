@@ -24,6 +24,8 @@ export function e2eEnv(): Record<string, string> {
   env.AI_ENCRYPTION_KEY = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff";
   env.TOOL_APPROVAL_SECRET = "e2e-tool-approval-secret-0000000000";
   env.AI_SCRIPTED = "true";
+  // Guards the cron routes; set so the proactive cron can be exercised end to end.
+  env.CRON_SECRET = "e2e-cron-secret-000000000000";
   return env;
 }
 

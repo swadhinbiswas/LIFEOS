@@ -237,6 +237,31 @@ export async function sweepNotifications(
   return inserted.length;
 }
 
+/**
+ * Insert one notification outside the read-time sweep (used by the proactive AI cron, ADR-078's
+ * sibling in Phase 6). Idempotent on the same `user_id + dedupe_key`, so re-running a day's brief is
+ * a no-op. Returns true when a row was actually created.
+ */
+export async function createNotification(
+  userId: string,
+  draft: { kind: NotificationKind; title: string; body?: string; href?: string; dedupeKey: string },
+): Promise<boolean> {
+  const inserted = await db
+    .insert(notifications)
+    .values({
+      id: newId(),
+      user_id: userId,
+      kind: draft.kind,
+      title: draft.title,
+      body: draft.body ?? null,
+      href: draft.href ?? null,
+      dedupe_key: draft.dedupeKey,
+    })
+    .onConflictDoNothing({ target: [notifications.user_id, notifications.dedupe_key] })
+    .returning({ id: notifications.id });
+  return inserted.length > 0;
+}
+
 async function countUnread(userId: string): Promise<number> {
   const [row] = await db
     .select({ value: sql<number>`count(*)` })
