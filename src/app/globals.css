@@ -320,6 +320,57 @@ html[data-sidebar-mode="full"] .app-shell[data-overlay="open"] .app-sidebar {
   transform: none;
 }
 
+/* --- Mobile (ADR-103): the sidebar is an off-canvas drawer, whatever the chosen mode ---
+   Below the breakpoint the three ADR-028 widths are all wrong: a 16rem bar leaves a phone ~100px
+   of content, and a 48px rail still steals space the chart needs. So the bar leaves the flow
+   entirely and slides in over a scrim, driven by `data-drawer` from the shell. */
+@media (max-width: 47.999rem) {
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    width: min(17rem, 82vw) !important;
+    margin: 0 !important;
+    transform: translateX(-102%);
+    transition: transform 150ms ease-out;
+  }
+  .app-shell[data-drawer="open"] .app-sidebar {
+    transform: none;
+    box-shadow: 0 0 0 100vmax rgb(0 0 0 / 0.55);
+  }
+  /* Icon mode would hide every label in a drawer that exists to be read. */
+  html[data-sidebar-mode="icon"] .app-sidebar .nav-label,
+  html[data-sidebar-mode="icon"] .app-sidebar .app-sidebar-brand {
+    display: revert;
+  }
+  html[data-sidebar-mode="icon"] .app-sidebar nav a {
+    justify-content: flex-start;
+  }
+  .app-shell[data-overlay="open"] .app-sidebar {
+    transform: translateX(-102%);
+  }
+
+  /* Keyboard hints are a desktop affordance: a phone has no Ctrl key, and the row starves the
+     path and the focus timer. The `?` help overlay still lists every shortcut. */
+  .app-shell [data-slot="status-hints"] {
+    display: none;
+  }
+  .app-shell [data-slot="status-line"] {
+    gap: 0.5rem;
+  }
+  .app-shell [data-slot="status-line"] .truncate {
+    max-width: 9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar {
+    transition: none;
+  }
+}
+
 /* --- Text weight (ADR-095): one user setting, two variables, every heading/strong follows. --- */
 html[data-text-weight="regular"] {
   --font-body-weight: 400;

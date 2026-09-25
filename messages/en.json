@@ -10,6 +10,8 @@
     "notifications": "notifications",
     "notificationsUnread": "notifications, {count} unread",
     "sidebar": "sidebar",
+    "openNav": "open navigation",
+    "closeNav": "close navigation",
     "signOut": "sign out",
     "signingOut": "signing out…",
     "synced": "synced",

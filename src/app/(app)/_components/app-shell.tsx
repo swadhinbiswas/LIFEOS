@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, Search } from "lucide-react";
+import { Bell, LogOut, Menu, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
@@ -15,6 +15,7 @@ import { SHELL_HINTS } from "@/config/shortcuts";
 import { stopFocusAction } from "@/server/focus/actions";
 import { authClient } from "@/lib/auth-client";
 import { useThemeStore } from "@/lib/theme-store";
+import { MOBILE_QUERY, useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
 
 import { CommandPalette } from "./command-palette";
@@ -62,6 +63,10 @@ export function AppShell({
   const [helpOpen, setHelpOpen] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [stoppingFocus, setStoppingFocus] = useState(false);
+  // ADR-103: below the breakpoint the sidebar is an off-canvas drawer, so the header button and
+  // the `[` shortcut drive this instead of the ADR-028 width cycle.
+  const isMobile = useMediaQuery(MOBILE_QUERY);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // The ambient timer ticks locally from the session row's start, so it survives navigation.
   useEffect(() => {
@@ -94,12 +99,35 @@ export function AppShell({
   // Derived, not synced: entering `full` reveals the bar; Esc/`[` dismiss it (ADR-028).
   const overlayOpen = sidebarMode === "full" && !overlayDismissed;
 
+  // A drawer that survives a navigation is a drawer covering the page you just asked for, and one
+  // that survives a rotation into the desktop layout is a sidebar stuck open. Both are state
+  // derived from a value that already changed, so they are adjusted during render (React's
+  // documented pattern) rather than in an effect that would flash the stale frame.
+  const [drawerPath, setDrawerPath] = useState(pathname);
+  if (pathname !== drawerPath) {
+    setDrawerPath(pathname);
+    if (drawerOpen) setDrawerOpen(false);
+  }
+  if (!isMobile && drawerOpen) setDrawerOpen(false);
+
   const cycleSidebar = useCallback(() => {
     const index = SIDEBAR_MODES.indexOf(sidebarMode);
     const next = SIDEBAR_MODES[(index + 1) % SIDEBAR_MODES.length] ?? "expanded";
     setOverlayDismissed(false);
     setOverride("sidebarMode", next);
   }, [setOverride, sidebarMode]);
+
+  const toggleSidebar = useCallback(() => {
+    if (isMobile) {
+      setDrawerOpen((open) => !open);
+      return;
+    }
+    if (sidebarMode === "full") {
+      setOverlayDismissed((dismissed) => !dismissed);
+      return;
+    }
+    cycleSidebar();
+  }, [cycleSidebar, isMobile, sidebarMode]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -130,17 +158,18 @@ export function AppShell({
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.key === "[") {
         event.preventDefault();
-        cycleSidebar();
+        toggleSidebar();
       } else if (event.key === "?") {
         event.preventDefault();
         setHelpOpen(true);
-      } else if (event.key === "Escape" && overlayOpen) {
-        setOverlayDismissed(true);
+      } else if (event.key === "Escape" && (overlayOpen || drawerOpen)) {
+        if (drawerOpen) setDrawerOpen(false);
+        else setOverlayDismissed(true);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [cycleSidebar, overlayOpen]);
+  }, [drawerOpen, overlayOpen, toggleSidebar]);
 
   // Contextual buttons anywhere dispatch this event to open the copilot with a prompt (spec §8).
   useEffect(() => {
@@ -165,21 +194,33 @@ export function AppShell({
     router.refresh();
   }
 
-  const sidebarButton = () => {
-    if (sidebarMode === "full") {
-      setOverlayDismissed((dismissed) => !dismissed);
-      return;
-    }
-    cycleSidebar();
-  };
+  const sidebarButtonLabel = isMobile
+    ? drawerOpen
+      ? tShell("closeNav")
+      : tShell("openNav")
+    : tShell("sidebar");
 
   return (
     <div
       className="app-shell flex min-h-svh overflow-x-hidden bg-background"
       data-overlay={overlayOpen ? "open" : "closed"}
+      data-drawer={drawerOpen ? "open" : "closed"}
     >
+      {isMobile && drawerOpen ? (
+        <button
+          type="button"
+          aria-label={tShell("closeNav")}
+          data-slot="drawer-scrim"
+          onClick={() => setDrawerOpen(false)}
+          className="fixed inset-0 z-40 cursor-default bg-transparent"
+        />
+      ) : null}
       <aside
         className="app-sidebar"
+        id="primary-nav"
+        // Off-canvas is not hidden: without `inert` a phone user can still tab into (and a screen
+        // reader still reads) a navigation they cannot see.
+        inert={isMobile && !drawerOpen ? true : undefined}
         style={{ width: "var(--sidebar-width)", margin: "var(--sidebar-gap)" }}
       >
         <div
@@ -240,19 +281,20 @@ export function AppShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-border px-3 py-2">
-          <p className="min-w-0 truncate font-mono text-xs font-semibold tracking-wider uppercase">
+          <p className="min-w-0 flex-1 truncate font-mono text-xs font-semibold tracking-wider uppercase">
             {pageTitle}
           </p>
           <button
             type="button"
             onClick={() => setPaletteOpen(true)}
             data-slot="header-search"
-            className="nav-label ml-auto flex max-w-72 min-w-40 flex-1 items-center gap-2 rounded-[var(--radius)] border border-border bg-background px-2 py-1 font-mono text-[10px] text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            aria-label={tShell("search")}
+            className="nav-label ml-auto flex w-10 shrink-0 items-center justify-center gap-2 rounded-[var(--radius)] border border-border bg-background px-2 py-1 font-mono text-[10px] text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto sm:min-w-40 sm:flex-1 sm:justify-start"
           >
             <Search aria-hidden="true" className="size-3.5 shrink-0" />
-            <span className="truncate">{tShell("search")}</span>
-            <Kbd className="ml-auto">Ctrl</Kbd>
-            <Kbd>K</Kbd>
+            <span className="hidden truncate sm:inline">{tShell("search")}</span>
+            <Kbd className="ml-auto hidden sm:inline">Ctrl</Kbd>
+            <Kbd className="hidden sm:inline">K</Kbd>
           </button>
           {focus ? (
             <Button
@@ -278,7 +320,7 @@ export function AppShell({
             className="inline-flex items-center gap-1 rounded-[var(--radius)] px-2 py-1 font-mono text-xs hover:bg-accent hover:text-accent-foreground"
           >
             <Bell aria-hidden="true" className="size-4" />
-            <span className="nav-label">{tShell("notifications")}</span>
+            <span className="nav-label hidden sm:inline">{tShell("notifications")}</span>
             {unread > 0 ? (
               <span
                 data-slot="notification-count"
@@ -289,11 +331,38 @@ export function AppShell({
               </span>
             ) : null}
           </Link>
-          <Button type="button" variant="outline" size="sm" onClick={sidebarButton}>
-            {tShell("sidebar")}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={toggleSidebar}
+            aria-controls="primary-nav"
+            aria-expanded={isMobile ? drawerOpen : sidebarMode === "full" ? overlayOpen : undefined}
+            aria-label={sidebarButtonLabel}
+            data-slot="sidebar-toggle"
+          >
+            {isMobile ? (
+              drawerOpen ? (
+                <X aria-hidden="true" className="size-4" />
+              ) : (
+                <Menu aria-hidden="true" className="size-4" />
+              )
+            ) : (
+              tShell("sidebar")
+            )}
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={signOut} disabled={signingOut}>
-            {signingOut ? tShell("signingOut") : tShell("signOut")}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={signOut}
+            disabled={signingOut}
+            aria-label={signingOut ? tShell("signingOut") : tShell("signOut")}
+          >
+            <LogOut aria-hidden="true" className="size-4 sm:hidden" />
+            <span className={cn(signingOut ? "" : "hidden sm:inline")}>
+              {signingOut ? tShell("signingOut") : tShell("signOut")}
+            </span>
           </Button>
         </header>
 

@@ -2291,6 +2291,66 @@ users` that had nothing to do with the feature under test. libSQL surfaces a loc
   a filesystem with working shared-memory support, which rules out some network mounts (noted in
   `docs/SELF_HOSTING.md`). Readers no longer block a writer, so a long read stops stalling writes.
 
+## ADR-103 — Below 768 px the sidebar is an off-canvas drawer, not a column
+
+- **Status:** accepted (2026-09-26)
+- **Context:** prompt.md L41 and L77 ask for a proper responsive layout down to 360 px. There was
+  none. The shell rendered a fixed `--sidebar-width` column at every viewport, so on a 390 px phone
+  the 16rem bar left the content column about 100 px wide: panel titles truncated to `HABI…`, charts
+  compressed to slivers, one word per line. A scripted audit reported **no horizontal overflow** on
+  ten routes at 390 px and 768 px, because `.app-shell` sets `overflow-x-hidden` — the page was not
+  overflowing, it was being silently starved. The three ADR-028 sidebar modes are all wrong below
+  the breakpoint, and nothing in the app consulted the viewport at all.
+- **Decision:** under `max-width: 47.999rem` the sidebar leaves the flow entirely — `position:
+fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and the header button and
+  the `[` shortcut drive a `data-drawer` attribute instead of the ADR-028 width cycle. Icon mode's
+  label hiding is cancelled inside the drawer, because a drawer that hides its labels defeats the
+  purpose of opening it. `useMediaQuery` decides which behaviour applies; it returns `false` for
+  the first paint so the markup is identical on both sides and hydration cannot mismatch. The drawer
+  closes on navigation and on leaving the breakpoint, both as render-time adjustments rather than
+  effects, because a state that lags a frame behind a route change is a drawer covering the page the
+  user just asked for. The header sheds its labels below `sm` (search, bell and sign-out become
+  icons) and the status line hides its keyboard hints, which a phone cannot press; `?` still lists
+  every shortcut.
+- **Consequences:** a phone gets the whole viewport for content instead of a tenth of it, and the
+  desktop keeps the three-mode keyboard ergonomics untouched. The breakpoint is a CSS constant
+  duplicated in one media query and one `MOBILE_QUERY` constant, the smallest coupling that keeps the
+  geometry in CSS where ADR-028 put it. `overflow-x-hidden` remains, so a genuine overflow on a new
+  surface would still be invisible to a naive audit — an audit has to measure the content column,
+  not the document.
+
+## ADR-104 — Career and productivity become signal boards, and the data they needed existed
+
+- **Status:** accepted (2026-09-26)
+- **Context:** after ADR-101 the `today` variant was a signal board while `career` and
+  `productivity` were still three text panels each. The career variant also had a real bug:
+  `career.open` reads `openApplications` out of the KPI set, but the page only loads KPIs for the
+  `overview` and `productivity` variants, so on `career` the widget rendered the `nothingToShow`
+  fallback — a placeholder, in a repo that forbids placeholders — while seven open applications sat
+  in the database. `productivity.reviews` was labelled "review streak" and computed no streak at
+  all: a capped `listReviews(userId, 12).length`. Meanwhile `getCareerAnalytics` already returned
+  `perWeek` (8 weeks of applications) and `ghosted` (applications quiet for 21 days), and the
+  dashboard used neither.
+- **Decision:** both variants gain registry widgets and every number comes from the module that owns
+  it. `career.funnel` becomes a real horizontal bar chart with a table alternative (a funnel is
+  categorical, so the day-axis `TrendChart` cannot express it and gets its own `FunnelChart`), plus
+  `career.velocity` (applications per week), `career.stale` (the ghosted list, each row an
+  `AsciiMeter` against the threshold and a link into the application), `career.open` (now correctly
+  loaded, with open-as-share-of-pipeline) and `career.analytics` (sources as meters). `productivity`
+  gets `productivity.done` (cards completed per day), `productivity.focus` (reusing the focus series
+  the Today variant already loads), `productivity.kpis` as signal tiles, and a `productivity.reviews`
+  that reports a **real** weekly streak: a new pure `reviewStreak` in the reviews module, over 52
+  rows, with the current week as grace so a Monday morning cannot read as a broken streak. The
+  completion series is a new service read (`completedDailySeries`) backed by a new
+  `(user_id, completed_at)` index, because the series and the existing `tasksDoneThisWeek` count must
+  be one definition rather than two.
+- **Consequences:** the placeholder is gone and the variant shows what the data already knew. One
+  migration is added, and it is a single `CREATE INDEX`. The completion read is bounded like every
+  other series read (ADR-099) and bucketed by the user's day key, so a quiet day is an explicit zero
+  rather than a missing point. `career.analytics` was renamed "sources" because the weeks it used to
+  advertise now have their own widget. `?variant=career` is already inside the axe sweep;
+  `?variant=productivity` should join it.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

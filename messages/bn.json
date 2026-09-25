@@ -10,6 +10,8 @@
     "notifications": "বিজ্ঞপ্তি",
     "notificationsUnread": "বিজ্ঞপ্তি, {count}টি অপঠিত",
     "sidebar": "সাইডবার",
+    "openNav": "নেভিগেশন খুলুন",
+    "closeNav": "নেভিগেশন বন্ধ করুন",
     "signOut": "সাইন আউট",
     "signingOut": "সাইন আউট হচ্ছে…",
     "synced": "সিঙ্ক হয়েছে",
