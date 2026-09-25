@@ -39,7 +39,7 @@ export function CreateBoardForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-2 text-xs">
+    <form method="post" onSubmit={onSubmit} className="flex flex-wrap items-end gap-2 text-xs">
       <div className="flex flex-col gap-1">
         <Label htmlFor="new-board-name">{t("name")}</Label>
         <Input

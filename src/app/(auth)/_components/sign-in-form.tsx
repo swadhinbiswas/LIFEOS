@@ -39,7 +39,12 @@ export function SignInForm({ next, notice }: { next?: string | null; notice?: st
   });
 
   return (
-    <form onSubmit={(event) => void onSubmit(event)} noValidate className="flex flex-col gap-3">
+    <form
+      method="post"
+      onSubmit={(event) => void onSubmit(event)}
+      noValidate
+      className="flex flex-col gap-3"
+    >
       {notice === "reset" ? (
         <p role="status" className="text-xs text-success">
           {t("resetNotice")}

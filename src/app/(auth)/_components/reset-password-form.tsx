@@ -55,7 +55,12 @@ export function ResetPasswordForm({ token }: { token: string }) {
   }
 
   return (
-    <form onSubmit={(event) => void onSubmit(event)} noValidate className="flex flex-col gap-3">
+    <form
+      method="post"
+      onSubmit={(event) => void onSubmit(event)}
+      noValidate
+      className="flex flex-col gap-3"
+    >
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="reset-password">{t("newPassword")}</Label>
         <Input

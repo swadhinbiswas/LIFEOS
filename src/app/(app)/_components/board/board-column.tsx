@@ -188,6 +188,7 @@ export function BoardColumn({
           </ul>
 
           <form
+            method="post"
             className="border-t border-border p-1"
             onSubmit={(event) => {
               event.preventDefault();

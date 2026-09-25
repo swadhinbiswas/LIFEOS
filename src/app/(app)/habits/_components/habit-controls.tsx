@@ -89,6 +89,7 @@ export function AddHabitForm() {
 
   return (
     <form
+      method="post"
       data-slot="add-habit"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={async (event) => {

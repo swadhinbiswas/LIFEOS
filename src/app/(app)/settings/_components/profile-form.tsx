@@ -51,7 +51,7 @@ export function ProfileForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-3 text-xs">
+    <form method="post" onSubmit={onSubmit} className="flex flex-col gap-3 text-xs">
       <div className="flex flex-col gap-1">
         <Label htmlFor="profile-name">{t("name")}</Label>
         <Input

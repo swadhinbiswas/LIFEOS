@@ -97,6 +97,7 @@ export function AiSettingsForm({
 
   return (
     <form
+      method="post"
       className="flex flex-col gap-4 text-xs"
       data-slot="ai-settings"
       onSubmit={(event) => {

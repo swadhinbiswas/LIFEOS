@@ -54,6 +54,7 @@ export function AddAccountForm() {
 
   return (
     <form
+      method="post"
       data-slot="add-account"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={(event) => {
@@ -140,6 +141,7 @@ export function AddTransactionForm({
 
   return (
     <form
+      method="post"
       data-slot="add-transaction"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={(event) => {
@@ -228,6 +230,7 @@ export function AddBudgetForm() {
 
   return (
     <form
+      method="post"
       data-slot="add-budget"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={(event) => {
@@ -301,6 +304,7 @@ export function AddSubscriptionForm() {
 
   return (
     <form
+      method="post"
       data-slot="add-subscription"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={(event) => {

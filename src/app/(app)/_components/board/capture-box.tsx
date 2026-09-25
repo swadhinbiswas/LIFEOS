@@ -95,7 +95,7 @@ export function CaptureBox({
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-1" data-slot="capture-box">
+    <form method="post" onSubmit={onSubmit} className="flex flex-col gap-1" data-slot="capture-box">
       <label className="sr-only" htmlFor="capture-input">
         {t("label")}
       </label>

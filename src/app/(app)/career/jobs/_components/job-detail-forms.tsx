@@ -22,6 +22,7 @@ export function AddInterviewForm({ applicationId }: { applicationId: string }) {
 
   return (
     <form
+      method="post"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={async (event) => {
         event.preventDefault();
@@ -109,6 +110,7 @@ export function AddOfferForm({ applicationId }: { applicationId: string }) {
 
   return (
     <form
+      method="post"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={async (event) => {
         event.preventDefault();

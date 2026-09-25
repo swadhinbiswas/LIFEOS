@@ -47,6 +47,7 @@ export function AddGoalForm() {
 
   return (
     <form
+      method="post"
       data-slot="add-goal"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={(event) => {
@@ -99,6 +100,7 @@ export function AddKeyResultForm({ goalId }: { goalId: string }) {
 
   return (
     <form
+      method="post"
       data-slot="add-key-result"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={(event) => {

@@ -43,6 +43,7 @@ export function NewJobForm({ boardId }: { boardId: string }) {
 
   return (
     <form
+      method="post"
       data-slot="new-job"
       className="flex flex-wrap items-center gap-2 text-xs"
       onSubmit={(event) => {

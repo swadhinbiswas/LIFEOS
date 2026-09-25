@@ -47,6 +47,7 @@ export function AddCourseForm() {
 
   return (
     <form
+      method="post"
       data-slot="add-course"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={(event) => {
@@ -141,6 +142,7 @@ export function AddBookForm() {
 
   return (
     <form
+      method="post"
       data-slot="add-book"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={(event) => {

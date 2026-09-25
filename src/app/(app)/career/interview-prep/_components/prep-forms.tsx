@@ -22,6 +22,7 @@ export function AddQuestionForm() {
 
   return (
     <form
+      method="post"
       data-slot="add-question"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={async (event) => {
@@ -101,6 +102,7 @@ export function AddStoryForm() {
 
   return (
     <form
+      method="post"
       data-slot="add-story"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={async (event) => {

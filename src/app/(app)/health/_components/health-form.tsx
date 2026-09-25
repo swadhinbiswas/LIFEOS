@@ -24,6 +24,7 @@ export function HealthForm({ defaultDate }: { defaultDate: string }) {
 
   return (
     <form
+      method="post"
       data-slot="add-health"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={async (event) => {

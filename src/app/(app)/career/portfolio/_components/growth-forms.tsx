@@ -47,6 +47,7 @@ export function AddProjectForm() {
 
   return (
     <form
+      method="post"
       data-slot="add-project"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={(event) => {
@@ -117,6 +118,7 @@ export function AddSkillForm() {
 
   return (
     <form
+      method="post"
       data-slot="add-skill"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={(event) => {
@@ -177,6 +179,7 @@ export function AddAchievementForm() {
 
   return (
     <form
+      method="post"
       data-slot="add-achievement"
       className="flex flex-wrap items-end gap-2 text-xs"
       onSubmit={(event) => {
