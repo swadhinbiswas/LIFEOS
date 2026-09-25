@@ -7,10 +7,12 @@ import { parseThemeOverrides } from "@/config/themes";
 import { billingReady } from "@/env";
 import { auth } from "@/server/auth";
 import { getRunningSession } from "@/server/focus";
+import { isOnboarded } from "@/server/onboarding";
 import { unreadCount } from "@/server/notifications";
 import { getThemeOverrides, getTimeZone } from "@/server/settings";
 
 import { AppShell } from "./_components/app-shell";
+import { OnboardingGate } from "./_components/onboarding-gate";
 import { ThemeSync } from "./_components/theme-sync";
 import { AppProviders } from "./_providers/app-providers";
 
@@ -32,10 +34,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   // (ADR-057), so its number is always current.
   const timeZone = await getTimeZone(session.user.id);
   const unread = await unreadCount(session.user.id, new Date(), timeZone);
+  const onboarded = await isOnboarded(session.user.id);
 
   return (
     <AppProviders>
       <ThemeSync initial={initial} fromDb={fromDb} />
+      <OnboardingGate onboarded={onboarded} />
       <AppShell
         user={{ name: session.user.name }}
         focus={focus ? { id: focus.id, startedAt: new Date(focus.started_at).toISOString() } : null}

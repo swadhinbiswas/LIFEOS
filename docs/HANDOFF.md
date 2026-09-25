@@ -1,16 +1,35 @@
-# Handoff — LifeOS in Phase 7
+# Handoff — LifeOS in Phase 8
 
 Read `AGENTS.md` and `prompt.md` first; this file records **state, outstanding gaps and gotchas**,
 not decisions (those are in `docs/DECISIONS.md`).
 
 ## Status
 
-- Phases 0–6 complete and reported. **Phase 7 complete** (billing scaffold, data ownership);
-  awaiting the user's go-ahead for Phase 8 (onboarding, templates, seed, landing).
+- Phases 0–7 complete and reported. **Phase 8 complete** (onboarding, templates, seed, landing);
+  awaiting the user's go-ahead for Phase 9 (hardening and release).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
   `pnpm test` **271 passed** ✓ · `pnpm eval` **9 passed, thresholds 100 %** ✓ ·
-  `pnpm e2e` **52 passed, twice** ✓.
-- ADR-044 … ADR-083 record the decisions. Nothing is pushed; all work is on local `master`.
+  `pnpm e2e` **57 passed, twice** ✓.
+- ADR-044 … ADR-087 record the decisions. Nothing is pushed; all work is on local `master`.
+
+## Phase 8 — onboarding, templates, seed, landing (complete)
+
+- Seed (ADR-084): `pnpm db:seed [--reset]` builds a demo workspace from the committed research file —
+  real repositories/languages (labelled `sample`), fictional employers suffixed `(sample)`, habits
+  with 30 days of generated logs, tasks, a goal, notes and interview prep. `seedUser(userId, profile)`
+  varies the content by profile.
+- Profiles and templates (ADR-085): `config/seed-profiles.ts` (Developer, Student, Freelancer, Blank)
+  compose with `config/board-templates.ts`; the public `/templates` gallery lists both.
+- Onboarding (ADR-085): the three-step `/onboarding` wizard (name → profile → starter board) ends on
+  a populated `/dashboard`; `users.onboarded_at` records completion and the shell gate redirects an
+  un-onboarded account from `/dashboard` exactly once.
+- Landing and demo (ADR-086): `/` is the public TUI-hero landing (signed-in visitors go to the
+  dashboard); `/demo` is a read-only preview of the seeded account through the same services.
+- Docs (ADR-087): `/docs` lists and renders the repository Markdown (README + HANDOFF, DECISIONS,
+  MVP-SCOPE, RESEARCH, ERD, INGEST; the Phase-9 documents show their phase until written); `/docs/api`
+  remains the OpenAPI reference.
+- e2e: onboarding reaches a populated dashboard in < 60 s, the templates gallery and the docs page
+  render; `/`, `/templates` and `/demo` are in the axe sweep.
 
 ## Phase 7 — billing scaffold and data ownership (complete)
 

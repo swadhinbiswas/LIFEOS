@@ -52,6 +52,7 @@ const PRESETS = [
 const AUTH_ROUTES = [
   "/",
   "/demo",
+  "/templates",
   "/sign-in",
   "/sign-up",
   "/forgot-password",
@@ -67,6 +68,8 @@ const SHELL_ROUTES = [
   "/settings/billing",
   "/settings/data",
   "/ai",
+  "/onboarding",
+  "/docs",
   "/docs/api",
   "/about",
   "/tasks",

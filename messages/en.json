@@ -67,6 +67,7 @@
     "billing": "Billing",
     "integrations": "Integrations",
     "api": "API docs",
+    "docs": "Docs",
     "appearance": "Appearance",
     "aiSettings": "AI settings",
     "data": "Data",
@@ -1002,6 +1003,35 @@
       "goalsTitle": "Goals",
       "overdue": "overdue",
       "open": "open"
+    },
+    "Onboarding": {
+      "title": "Welcome",
+      "hint": "This takes about a minute.",
+      "step1Title": "What should we call you?",
+      "name": "display name",
+      "step2Title": "Start from a profile",
+      "step2Body": "Pick what fits you. Everything it adds is sample data you can edit or delete.",
+      "step3Title": "Choose a starter board",
+      "none": "no extra board",
+      "back": "back",
+      "next": "next",
+      "finish": "finish setup",
+      "finishing": "setting up…"
+    },
+    "Templates": {
+      "title": "Templates",
+      "intro": "Board templates and starter profiles. Create an account to use them.",
+      "boardsTitle": "Board templates",
+      "profilesTitle": "Starter profiles",
+      "columns": "{count} columns",
+      "createAccount": "create an account"
+    },
+    "Docs": {
+      "title": "Docs",
+      "intro": "The repository documents, rendered here.",
+      "missing": "Not written yet — it lands in {phase}.",
+      "api": "OpenAPI reference",
+      "backToDocs": "← all docs"
     },
     "Capture": {
       "label": "capture a task",

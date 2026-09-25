@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  BookOpen,
   Bot,
   Briefcase,
   CalendarDays,
@@ -68,6 +69,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/settings/ai", key: "aiSettings", icon: Bot },
   { href: "/settings/data", key: "data", icon: Database },
   { href: "/docs/api", key: "api", icon: FileCode },
+  { href: "/docs", key: "docs", icon: BookOpen },
   { href: "/settings/appearance", key: "appearance", icon: Palette },
   { href: "/about", key: "about", icon: Info },
 ];

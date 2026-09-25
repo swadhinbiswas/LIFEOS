@@ -1,21 +1,23 @@
 import { eq } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
+import { DEFAULT_SEED_PROFILE, type SeedProfileId } from "@/config/seed-profiles";
 import { db } from "@/server/db";
 import { users } from "@/server/db/schema";
-import { createCard, ensureSystemTasksBoard, getBoard } from "@/server/boards";
+import { createBoard, createCard, ensureSystemTasksBoard, getBoard } from "@/server/boards";
 import { createJob } from "@/server/career";
 import { importSamplePortfolio } from "@/server/career/growth";
 import { addQuestion, addStory } from "@/server/career/prep";
 import { createGoal } from "@/server/goals";
 import { createHabit, setHabitLog } from "@/server/habits";
+import { createBook, createCourse } from "@/server/learning";
 import { createNote } from "@/server/notes";
 
 /**
  * Seeding (spec §12, ADR-084). Everything here is either derived from the committed research file
  * (`importSamplePortfolio`) or obviously sample content; fictional employers carry a `(sample)`
- * suffix, and generated logs are labelled by the fact that they are generated. `seedDemo` resets by
- * deleting the demo user (cascade) and rebuilding, so the demo is always reproducible.
+ * suffix. The profile decides which blocks run (ADR-085); `blank` only creates the tasks board.
+ * `seedDemo` resets by deleting the demo user (cascade) and rebuilding, so the demo is reproducible.
  */
 
 export const DEMO_USER = {
@@ -40,7 +42,7 @@ const SAMPLE_JOBS: Array<{
   { title: "Senior Data Engineer", company: "Signal Grid GmbH (sample)", workMode: "remote" },
 ];
 
-const SAMPLE_HABITS: Array<{
+const DEVELOPER_HABITS: Array<{
   name: string;
   kind: "binary" | "numeric";
   target?: number;
@@ -52,6 +54,19 @@ const SAMPLE_HABITS: Array<{
   { name: "Write", kind: "binary" },
 ];
 
+const STUDENT_HABITS = [
+  { name: "Study block", kind: "numeric" as const, target: 2, unit: "hours" },
+  { name: "Read 20 pages", kind: "numeric" as const, target: 20, unit: "pages" },
+  { name: "Practice problems", kind: "numeric" as const, target: 3, unit: "problems" },
+  { name: "In bed by 23:00", kind: "binary" as const },
+];
+
+const FREELANCER_HABITS = [
+  { name: "Deep work", kind: "numeric" as const, target: 2, unit: "blocks" },
+  { name: "Inbox to zero", kind: "binary" as const },
+  { name: "Invoice day", kind: "binary" as const },
+];
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const recentDays = (count: number): string[] =>
@@ -60,65 +75,44 @@ const recentDays = (count: number): string[] =>
   ).reverse();
 
 export interface SeedSummary {
+  profile: SeedProfileId;
   cards: number;
   jobs: number;
   habits: number;
   habitLogs: number;
   goals: number;
   notes: number;
+  courses: number;
+  books: number;
   projectsAdded: number;
   skillsAdded: number;
   questions: number;
   stories: number;
 }
 
-export async function seedUser(userId: string): Promise<SeedSummary> {
-  const summary: SeedSummary = {
-    cards: 0,
-    jobs: 0,
-    habits: 0,
-    habitLogs: 0,
-    goals: 0,
-    notes: 0,
-    projectsAdded: 0,
-    skillsAdded: 0,
-    questions: 0,
-    stories: 0,
-  };
+const emptySummary = (profile: SeedProfileId): SeedSummary => ({
+  profile,
+  cards: 0,
+  jobs: 0,
+  habits: 0,
+  habitLogs: 0,
+  goals: 0,
+  notes: 0,
+  courses: 0,
+  books: 0,
+  projectsAdded: 0,
+  skillsAdded: 0,
+  questions: 0,
+  stories: 0,
+});
 
-  // A usable task board with a few cards, so the dashboard has something to count.
-  const board = await ensureSystemTasksBoard(userId);
-  const payload = await getBoard(userId, board.id);
-  const inbox = payload.columns.find((column) => column.name === "Inbox") ?? payload.columns[0];
-  if (inbox) {
-    const titles = [
-      "Write the weekly update",
-      "Review the Q4 priorities",
-      "Follow up with the recruiter",
-      "Prep for the system-design round",
-    ];
-    for (const title of titles) {
-      await createCard(userId, { boardId: board.id, columnId: inbox.id, title });
-      summary.cards += 1;
-    }
-  }
-
-  // Real repositories and languages from the committed research file (labelled `sample`).
-  const growth = await importSamplePortfolio(userId);
-  summary.projectsAdded = growth.projectsAdded;
-  summary.skillsAdded = growth.skillsAdded;
-
-  for (const job of SAMPLE_JOBS) {
-    await createJob(userId, {
-      title: job.title,
-      companyName: job.company,
-      workMode: job.workMode,
-    });
-    summary.jobs += 1;
-  }
-
+async function addHabits(
+  userId: string,
+  summary: SeedSummary,
+  habits: Array<{ name: string; kind: "binary" | "numeric"; target?: number; unit?: string }>,
+): Promise<void> {
   const days = recentDays(30);
-  for (const habit of SAMPLE_HABITS) {
+  for (const habit of habits) {
     const row = await createHabit(userId, {
       name: habit.name,
       kind: habit.kind,
@@ -126,49 +120,131 @@ export async function seedUser(userId: string): Promise<SeedSummary> {
       unit: habit.unit ?? null,
     });
     summary.habits += 1;
-    // A generated history so the streak and chart views show real shapes (not a claim about anyone).
     for (const date of days) {
-      const value =
-        habit.kind === "binary" ? (date.charCodeAt(9) % 4 === 0 ? 0 : 1) : date.charCodeAt(9) % 5;
+      const digit = Number(date.slice(9));
+      const value = habit.kind === "binary" ? (digit % 4 === 0 ? 0 : 1) : digit % 5;
       if (value > 0) {
         await setHabitLog(userId, { habitId: row.id, date, value });
         summary.habitLogs += 1;
       }
     }
   }
+}
 
-  await createGoal(userId, { title: "Land an EU data or ML role", period: "2026-Q4" });
-  summary.goals += 1;
+async function addTasks(userId: string, summary: SeedSummary, titles: string[]): Promise<void> {
+  const board = await ensureSystemTasksBoard(userId);
+  const payload = await getBoard(userId, board.id);
+  const inbox = payload.columns.find((column) => column.name === "Inbox") ?? payload.columns[0];
+  if (!inbox) return;
+  for (const title of titles) {
+    await createCard(userId, { boardId: board.id, columnId: inbox.id, title });
+    summary.cards += 1;
+  }
+}
 
-  await createNote(userId, {
-    title: "Weekly review template",
-    body: [
-      "## What moved",
-      "- ",
-      "",
-      "## What got in the way",
-      "- ",
-      "",
-      "## Next week",
-      "- ",
-      "",
-      "_Sample content — edit or delete it._",
-    ].join("\n"),
-  });
-  summary.notes += 1;
+export async function seedUser(
+  userId: string,
+  profile: SeedProfileId = DEFAULT_SEED_PROFILE,
+): Promise<SeedSummary> {
+  const summary = emptySummary(profile);
 
-  await addQuestion(userId, {
-    question: "Tell me about a hard data migration",
-    category: "behavioural",
-    difficulty: "medium",
-  });
-  summary.questions += 1;
+  // Every profile gets a usable tasks board (blank included), so the dashboard is never empty.
+  const starterTasks =
+    profile === "blank"
+      ? []
+      : profile === "freelancer"
+        ? ["Send the weekly client update", "Review the proposal", "Log billable time"]
+        : [
+            "Write the weekly update",
+            "Review this week's priorities",
+            "Follow up with the recruiter",
+          ];
+  await addTasks(userId, summary, starterTasks);
 
-  await addStory(userId, {
-    title: "Cut pipeline latency",
-    result: "Rewrote the batch job and halved the runtime (sample).",
-  });
-  summary.stories += 1;
+  if (profile === "blank") return summary;
+
+  if (profile === "developer") {
+    const growth = await importSamplePortfolio(userId);
+    summary.projectsAdded = growth.projectsAdded;
+    summary.skillsAdded = growth.skillsAdded;
+
+    for (const job of SAMPLE_JOBS) {
+      await createJob(userId, {
+        title: job.title,
+        companyName: job.company,
+        workMode: job.workMode,
+      });
+      summary.jobs += 1;
+    }
+    await addHabits(userId, summary, DEVELOPER_HABITS);
+
+    await createGoal(userId, { title: "Land an EU data or ML role", period: "2026-Q4" });
+    summary.goals += 1;
+
+    await createNote(userId, {
+      title: "Weekly review template",
+      body: [
+        "## What moved",
+        "- ",
+        "",
+        "## What got in the way",
+        "- ",
+        "",
+        "## Next week",
+        "- ",
+        "",
+        "_Sample content — edit or delete it._",
+      ].join("\n"),
+    });
+    summary.notes += 1;
+
+    await addQuestion(userId, {
+      question: "Tell me about a hard data migration",
+      category: "behavioural",
+      difficulty: "medium",
+    });
+    summary.questions += 1;
+    await addStory(userId, {
+      title: "Cut pipeline latency",
+      result: "Rewrote the batch job and halved the runtime (sample).",
+    });
+    summary.stories += 1;
+  }
+
+  if (profile === "student") {
+    await addHabits(userId, summary, STUDENT_HABITS);
+    await createCourse(userId, { title: "Distributed systems", provider: "MIT OCW (sample)" });
+    await createCourse(userId, {
+      title: "Intro to statistics",
+      provider: "Open textbook (sample)",
+    });
+    summary.courses += 2;
+    await createBook(userId, {
+      title: "Designing Data-Intensive Applications",
+      author: "Martin Kleppmann",
+    });
+    await createBook(userId, { title: "How to Take Smart Notes", author: "Sönke Ahrens" });
+    summary.books += 2;
+    await createGoal(userId, { title: "Pass the algorithms exam", period: "2026-Q4" });
+    summary.goals += 1;
+    await createNote(userId, {
+      title: "Study plan",
+      body: "## This week\n- Two study blocks a day\n- One practice set\n\n_Sample content._",
+    });
+    summary.notes += 1;
+  }
+
+  if (profile === "freelancer") {
+    await addHabits(userId, summary, FREELANCER_HABITS);
+    await createBoard(userId, { name: "Clients", template: "daily-kanban" });
+    await createGoal(userId, { title: "Three retainer clients", period: "2026-Q4" });
+    summary.goals += 1;
+    await createNote(userId, {
+      title: "Client call notes",
+      body: "## Call 2026-09-25\n- Scope\n- Timeline\n\n_Sample content._",
+    });
+    summary.notes += 1;
+  }
 
   return summary;
 }
@@ -187,6 +263,7 @@ export async function ensureDemoUser(): Promise<string> {
     name: DEMO_USER.name,
     email_verified: true,
     is_demo: true,
+    onboarded_at: new Date(),
     created_at: new Date(),
     updated_at: new Date(),
   });
@@ -199,7 +276,7 @@ export async function seedDemo(options: { reset?: boolean } = {}): Promise<SeedS
     await db.delete(users).where(eq(users.email, DEMO_USER.email));
   }
   const userId = await ensureDemoUser();
-  return seedUser(userId);
+  return seedUser(userId, "developer");
 }
 
 /** The demo account id, if it exists — used by the public `/demo` preview. */

@@ -28,12 +28,32 @@ export async function createVerifiedUser(
 }
 
 /** Sign in and wait for the proxy/layout to land on the settings shell. */
-export async function signIn(page: Page, email: string, password = PASSWORD): Promise<void> {
+export async function signIn(
+  page: Page,
+  email: string,
+  password = PASSWORD,
+  options: { onboard?: boolean } = {},
+): Promise<void> {
   await page.goto("/sign-in");
   await page.getByLabel("email").fill(email);
   await page.getByLabel("password").fill(password);
   await page.getByRole("button", { name: "sign in" }).click();
   await page.waitForURL("**/settings");
+  if (options.onboard !== false) await completeOnboarding(page);
+}
+
+/**
+ * Finish onboarding without loading sample data (the Blank profile), so a test user is marked
+ * onboarded and nothing else about their account changes. The onboarding spec itself passes
+ * `{ onboard: false }` to exercise the real flow.
+ */
+export async function completeOnboarding(page: Page): Promise<void> {
+  await page.goto("/onboarding");
+  await page.getByRole("button", { name: "next" }).click();
+  await page.getByRole("radio", { name: /blank/i }).check();
+  await page.getByRole("button", { name: "next" }).click();
+  await page.getByRole("button", { name: "finish setup" }).click();
+  await page.waitForURL("**/dashboard");
 }
 
 /**

@@ -12,12 +12,11 @@ career/CV, habits, notes, finance) rendered as a keyboard-first, TUI-skinned web
    is not optional, never commit secrets, ask only when genuinely blocked.
 2. **Phase gate:** do not start phase N+1 until phase N's checks pass and a status report has been
    given to the user. The user asked to stop at each phase boundary and report.
-   - Current phase: **7 → complete** (billing scaffold behind `BILLING_ENABLED=false`:
-     config-driven plans, entitlements, subscriptions + idempotent Dodo webhooks, checkout/portal
-     routes, `/settings/billing`, `/pricing`; plus data ownership: export/import, delete-account with
-     a 7-day grace and purge cron, audit-log UI. ADR-080…083; gate green: 271 unit + 9 evals, 52 e2e
-     twice, build, typecheck, lint). Next: **Phase 8 (onboarding, templates, seed, landing),
-     awaiting go-ahead**.
+   - Current phase: **8 → complete** (seed generated from the research file with profiles, the
+     three-step `/onboarding` on `users.onboarded_at`, the template gallery, the public TUI-hero
+     landing and a no-account read-only `/demo`, and the in-app `/docs` site. ADR-080…087; gate
+     green: 271 unit + 9 evals, 57 e2e twice, build, typecheck, lint). Next: **Phase 9 (hardening
+     and release), awaiting go-ahead**.
 
 ## Repository map
 

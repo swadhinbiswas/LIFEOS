@@ -1987,6 +1987,10 @@ build` per run, cached by `.next` locally and cold in CI.
 - **Consequences:** docs cannot drift from the repo and are reachable in the product. Cost: a page
   reads Markdown at request time; content is trusted repo text, so it is rendered as preformatted
   text, never as HTML.
+- **Completion (2026-09-25):** `/docs` lists the repository documents (README plus HANDOFF,
+  DECISIONS, MVP-SCOPE, RESEARCH, ERD, INGEST) and renders each as preformatted text with a
+  back-link; the Phase-9 documents (ARCHITECTURE, SECURITY, SELF_HOSTING) show "not written yet —
+  it lands in Phase 9". A README was written as part of this so the index has a real entry.
 
 ---
 
