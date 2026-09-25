@@ -2041,6 +2041,23 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-090 — Calendar export: an authenticated `.ics` download, never a feed URL
+
+- **Status:** accepted (2026-09-25)
+- **Context:** Spec §9.3 asks for an ICS feed export/subscribe. Calendar clients subscribe by URL and
+  cannot send an `Authorization` header, so a live feed needs the secret in the query string — which
+  conflicts with the project's hard rule that credentials never appear in URLs or logs.
+- **Decision:** `/api/v1/export?format=ics` is an **authenticated download**: the API key travels in
+  the header (or the session cookie for the in-app link), and the response is a `text/calendar`
+  attachment. It renders the exact events `/calendar` shows, over −6 months to +12 months, via the
+  same `getCalendar` service. There is no subscription URL and therefore no secret in a URL. The
+  in-app "download .ics" link on `/calendar` uses the session cookie, so no key is needed there.
+- **Consequences:** a user can import every dated item into any calendar from a trusted client, with
+  no capability leak. Trade-off: it is a point-in-time import, not a live two-way sync; a live feed
+  (or Google Calendar sync) is v1.1 and would need an explicit decision on the URL-secret rule.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

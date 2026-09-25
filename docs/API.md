@@ -77,7 +77,7 @@ curl -s "https://your-host/api/v1/cards?limit=20&fields=id,title,due_at" \
 curl -s -X POST "https://your-host/api/v1/ingest" \
   -H "Authorization: Bearer $LIFEOS_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"type":"task","source":"cli","data":{"title":"Call the recruiter","priority":"p1"}}'
+  -d '{"text":"Call the recruiter tomorrow 3pm #career !p1"}'
 ```
 
 ```ts
@@ -101,14 +101,22 @@ r.raise_for_status()
 ## Ingest
 
 `POST /api/v1/ingest` is the fast path from a Shortcut, Zapier/n8n/Make, the CLI or an extension. It
-validates with the same Zod schemas as everything else and returns the created record.
+takes the same quick-add text the capture box does — dates, `#tags` and `!p1` are parsed server-side
+— and returns the created card plus what was parsed.
 
 ```json
-{ "type": "task", "data": { "title": "…", "priority": "p1" }, "source": "cli" }
+{ "text": "Call the recruiter tomorrow 3pm #career !p1", "columnName": "Inbox" }
 ```
 
-`type` is one of `task`, `job`, `note`, `habit_log`, `transaction`, `card`; `source` is one of
-`shortcut`, `zapier`, `cli`, `email`, `extension`. See [`docs/INGEST.md`](./INGEST.md) for recipes.
+`columnName` is optional (it defaults to the inbox). See [`docs/INGEST.md`](./INGEST.md) for recipes.
+
+## Export
+
+`GET /api/v1/export?format=ics` returns every dated item — task due dates, interviews and
+subscription renewals — as an iCalendar file (`text/calendar`, `attachment`). It is an
+**authenticated download**: the key travels in the header, never in the URL, so a calendar client is
+imported from a trusted place with no capability left in a query string (ADR-090). The in-app
+"download .ics" link on `/calendar` uses the session cookie and needs no key.
 
 ## CLI
 

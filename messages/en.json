@@ -286,6 +286,7 @@
     },
     "Calendar": {
       "title": "Calendar",
+      "exportIcs": "download .ics",
       "prev": "← prev",
       "today": "today",
       "next": "next →",

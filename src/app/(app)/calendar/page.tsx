@@ -56,7 +56,16 @@ export default async function CalendarPage({ searchParams }: PageProps) {
 
   return (
     <>
-      <PageHeader title={t("title")} count={events.length} />
+      <PageHeader title={t("title")} count={events.length}>
+        <a
+          href="/api/v1/export?format=ics"
+          download="lifeos.ics"
+          data-slot="calendar-export"
+          className={control}
+        >
+          {t("exportIcs")}
+        </a>
+      </PageHeader>
 
       <div className="grid gap-4">
         <div className="flex flex-wrap items-center gap-2 font-mono text-xs">

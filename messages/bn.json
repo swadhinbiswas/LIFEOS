@@ -286,6 +286,7 @@
     },
     "Calendar": {
       "title": "ক্যালেন্ডার",
+      "exportIcs": ".ics ডাউনলোড",
       "prev": "← আগের",
       "today": "আজ",
       "next": "পরের →",
