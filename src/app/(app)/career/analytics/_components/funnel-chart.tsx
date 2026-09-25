@@ -22,7 +22,7 @@ export function FunnelChart({
   data: Array<{ stage: string; count: number }>;
   title: string;
 }) {
-  const config = { count: { label: title, color: "var(--primary)" } } satisfies ChartConfig;
+  const config = { count: { label: title, color: "var(--chart-1)" } } satisfies ChartConfig;
 
   return (
     <Card data-slot="funnel-chart" className="gap-2">

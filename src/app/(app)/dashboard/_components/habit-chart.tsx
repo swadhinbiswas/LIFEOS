@@ -27,7 +27,7 @@ export function HabitChart({
   description: string;
 }) {
   const config = {
-    value: { label: title, color: "var(--primary)" },
+    value: { label: title, color: "var(--chart-1)" },
   } satisfies ChartConfig;
 
   return (

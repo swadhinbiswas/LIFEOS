@@ -7,7 +7,7 @@
  * derivedTokens() mirrors the color-mix formulas in app/globals.css exactly — the
  * contrast test asserts both (formula parity is checked against the CSS file itself).
  */
-import { bestForeground, mixSrgb } from "@/lib/color";
+import { bestForeground, contrastRatio, luminanceOfHex, mixSrgb } from "@/lib/color";
 import { z } from "zod";
 
 // ---------------------------------------------------------------------------
@@ -73,6 +73,12 @@ export interface ThemePreset {
   danger: string;
   info: string;
   accent: string;
+  /**
+   * Optional chart palette (ADR-098). Text tokens are adjusted to clear 4.5:1, which can wash a
+   * series out to near-white; charts only need 3:1, so imported themes keep their authentic hues
+   * here. Falls back to `[primary, success, warning, danger, info]`.
+   */
+  chart?: readonly [string, string, string, string, string];
 }
 
 export const themes: Record<ThemePresetId, ThemePreset> = {
@@ -190,44 +196,37 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #2d2d2d → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #6d6d6d → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #a277ff → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #61ffca → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #ffca85 → adjusted for WCAG AA (ADR-033)
-    // OpenCode danger #ff6767 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #a277ff → adjusted for WCAG AA (ADR-033)
     background: "#0f0f0f",
     card: "#15141b",
     border: "#636363",
     foreground: "#edecee",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#898989",
+    primary: "#a277ff",
+    success: "#61ffca",
+    warning: "#ffca85",
+    danger: "#ff6767",
+    info: "#a277ff",
     accent: "#a277ff",
+    chart: ["#a277ff", "#61ffca", "#ffca85", "#ff6767", "#e677ff"],
   },
   "oc-ayu": {
     id: "oc-ayu",
     label: "Ayu",
     nativeMode: "dark",
     // OpenCode mutedForeground #565b66 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #59c2ff → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #7fd962 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #e6b673 → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #d95757 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #39bae6 → adjusted for WCAG AA (ADR-033)
     background: "#0b0e14",
     card: "#0f131a",
     border: "#6c7380",
     foreground: "#bfbdb6",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#7f8693",
+    primary: "#59c2ff",
+    success: "#7fd962",
+    warning: "#e6b673",
+    danger: "#da5b5b",
+    info: "#39bae6",
     accent: "#e6b450",
+    chart: ["#59c2ff", "#7fd962", "#e6b673", "#d95757", "#39bae6"],
   },
   "oc-carbonfox": {
     id: "oc-carbonfox",
@@ -235,22 +234,19 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #303030 → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #7d848f → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #33b1ff → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #25be6a → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #f1c21b → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #ee5396 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #78a9ff → adjusted for WCAG AA (ADR-033)
     background: "#161616",
     card: "#1a1a1a",
     border: "#666666",
     foreground: "#f2f4f8",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#8b919b",
+    primary: "#33b1ff",
+    success: "#25be6a",
+    warning: "#f1c21b",
+    danger: "#ee5899",
+    info: "#78a9ff",
     accent: "#ff7eb6",
+    chart: ["#33b1ff", "#25be6a", "#f1c21b", "#ee5396", "#78a9ff"],
   },
   "oc-catppuccin-frappe": {
     id: "oc-catppuccin-frappe",
@@ -259,21 +255,19 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     // OpenCode border #414559 → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #949cb8 → adjusted for WCAG AA (ADR-033)
     // OpenCode primary #8da4e2 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #a6d189 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #e5c890 → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #e78284 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #81c8be → adjusted for WCAG AA (ADR-033)
     background: "#303446",
     card: "#292c3c",
     border: "#787e9c",
     foreground: "#c6d0f5",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#a6adc4",
+    primary: "#99aee5",
+    success: "#a6d189",
+    warning: "#e5c890",
+    danger: "#eb9799",
+    info: "#81c8be",
     accent: "#f4b8e4",
+    chart: ["#8da4e2", "#a6d189", "#e5c890", "#e78284", "#81c8be"],
   },
   "oc-catppuccin-macchiato": {
     id: "oc-catppuccin-macchiato",
@@ -281,68 +275,56 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #363a4f → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #939ab7 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #8aadf4 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #a6da95 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #eed49f → adjusted for WCAG AA (ADR-033)
-    // OpenCode danger #ed8796 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #8bd5ca → adjusted for WCAG AA (ADR-033)
     background: "#24273a",
     card: "#1e2030",
     border: "#686f98",
     foreground: "#cad3f5",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#969db9",
+    primary: "#8aadf4",
+    success: "#a6da95",
+    warning: "#eed49f",
+    danger: "#ed8796",
+    info: "#8bd5ca",
     accent: "#f5bde6",
+    chart: ["#8aadf4", "#a6da95", "#eed49f", "#ed8796", "#8bd5ca"],
   },
   "oc-catppuccin": {
     id: "oc-catppuccin",
     label: "Catppuccin",
     nativeMode: "dark",
     // OpenCode border #313244 → adjusted for WCAG AA (ADR-033)
-    // OpenCode mutedForeground #9399b2 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #89b4fa → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #a6e3a1 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #f9e2af → adjusted for WCAG AA (ADR-033)
-    // OpenCode danger #f38ba8 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #94e2d5 → adjusted for WCAG AA (ADR-033)
     background: "#1e1e2e",
     card: "#181825",
     border: "#66688e",
     foreground: "#cdd6f4",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#9399b2",
+    primary: "#89b4fa",
+    success: "#a6e3a1",
+    warning: "#f9e2af",
+    danger: "#f38ba8",
+    info: "#94e2d5",
     accent: "#f5c2e7",
+    chart: ["#89b4fa", "#a6e3a1", "#f9e2af", "#f38ba8", "#94e2d5"],
   },
   "oc-cobalt2": {
     id: "oc-cobalt2",
     label: "Cobalt2",
     nativeMode: "dark",
     // OpenCode border #1f4662 → adjusted for WCAG AA (ADR-033)
-    // OpenCode mutedForeground #adb7c9 → adjusted for WCAG AA (ADR-033)
     // OpenCode primary #0088ff → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #9eff80 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #ffc600 → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #ff0088 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #ff9d00 → adjusted for WCAG AA (ADR-033)
     background: "#193549",
     card: "#122738",
     border: "#3a83b7",
     foreground: "#ffffff",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#adb7c9",
+    primary: "#61b5ff",
+    success: "#9eff80",
+    warning: "#ffc600",
+    danger: "#ff8ac8",
+    info: "#ff9d00",
     accent: "#2affdf",
+    chart: ["#0088ff", "#9eff80", "#ffc600", "#ff0088", "#ff9d00"],
   },
   "oc-cursor": {
     id: "oc-cursor",
@@ -350,22 +332,19 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #272727 → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #636363 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #88c0d0 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #3fa266 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #f1b467 → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #e34671 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #81a1c1 → adjusted for WCAG AA (ADR-033)
     background: "#181818",
     card: "#141414",
     border: "#646464",
     foreground: "#e4e4e4",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#8e8e8e",
+    primary: "#88c0d0",
+    success: "#3fa266",
+    warning: "#f1b467",
+    danger: "#e76185",
+    info: "#81a1c1",
     accent: "#88c0d0",
+    chart: ["#88c0d0", "#3fa266", "#f1b467", "#e34671", "#81a1c1"],
   },
   "oc-dracula": {
     id: "oc-dracula",
@@ -373,44 +352,38 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #44475a → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #6272a4 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #bd93f9 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #50fa7b → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #f1fa8c → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #ff5555 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #ffb86c → adjusted for WCAG AA (ADR-033)
     background: "#282a36",
     card: "#21222c",
     border: "#6e7391",
     foreground: "#f8f8f2",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#9ca6c6",
+    primary: "#bd93f9",
+    success: "#50fa7b",
+    warning: "#f1fa8c",
+    danger: "#ff7e7e",
+    info: "#ffb86c",
     accent: "#8be9fd",
+    chart: ["#bd93f9", "#50fa7b", "#f1fa8c", "#ff5555", "#ffb86c"],
   },
   "oc-everforest": {
     id: "oc-everforest",
     label: "Everforest",
     nativeMode: "dark",
     // OpenCode mutedForeground #7a8478 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #a7c080 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #a7c080 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #e69875 → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #e67e80 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #83c092 → adjusted for WCAG AA (ADR-033)
     background: "#2d353b",
     card: "#333c43",
     border: "#859289",
     foreground: "#d3c6aa",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#a7ada5",
+    primary: "#a7c080",
+    success: "#a7c080",
+    warning: "#e69875",
+    danger: "#ea9395",
+    info: "#83c092",
     accent: "#d699b6",
+    chart: ["#a7c080", "#87c080", "#e69875", "#e67e80", "#83c092"],
   },
   "oc-flexoki": {
     id: "oc-flexoki",
@@ -418,68 +391,58 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #575653 → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #6f6e69 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #da702c → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #879a39 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #da702c → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #d14d41 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #3aa99f → adjusted for WCAG AA (ADR-033)
     background: "#100f0f",
     card: "#1c1b1a",
     border: "#696864",
     foreground: "#cecdc3",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#868580",
+    primary: "#da702c",
+    success: "#879a39",
+    warning: "#da702c",
+    danger: "#d7645a",
+    info: "#3aa99f",
     accent: "#8b7ec8",
+    chart: ["#da702c", "#879a39", "#dac72c", "#d14d41", "#3aa99f"],
   },
   "oc-github": {
     id: "oc-github",
     label: "GitHub",
     nativeMode: "dark",
     // OpenCode border #30363d → adjusted for WCAG AA (ADR-033)
-    // OpenCode mutedForeground #8b949e → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #58a6ff → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #3fb950 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #e3b341 → adjusted for WCAG AA (ADR-033)
-    // OpenCode danger #f85149 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #d29922 → adjusted for WCAG AA (ADR-033)
     background: "#0d1117",
     card: "#010409",
     border: "#56616e",
     foreground: "#c9d1d9",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#8b949e",
+    primary: "#58a6ff",
+    success: "#3fb950",
+    warning: "#e3b341",
+    danger: "#f85149",
+    info: "#d29922",
     accent: "#39c5cf",
+    chart: ["#58a6ff", "#3fb950", "#e3b341", "#f85149", "#d29922"],
   },
   "oc-gruvbox": {
     id: "oc-gruvbox",
-    label: "Gruvbox",
+    label: "Gruvbox (OpenCode)",
     nativeMode: "dark",
     // OpenCode border #665c54 → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #928374 → adjusted for WCAG AA (ADR-033)
     // OpenCode primary #83a598 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #b8bb26 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #fe8019 → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #fb4934 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #fabd2f → adjusted for WCAG AA (ADR-033)
     background: "#282828",
     card: "#3c3836",
     border: "#8f8277",
     foreground: "#ebdbb2",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#ada296",
+    primary: "#89a99d",
+    success: "#b8bb26",
+    warning: "#fe8019",
+    danger: "#fc7f70",
+    info: "#fabd2f",
     accent: "#8ec07c",
+    chart: ["#83a598", "#b8bb26", "#fe8019", "#fb4934", "#fabd2f"],
   },
   "oc-kanagawa": {
     id: "oc-kanagawa",
@@ -487,45 +450,39 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #54546d → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #727169 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #7e9cd8 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #98bb6c → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #d7a657 → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #e82424 → adjusted for WCAG AA (ADR-033)
     // OpenCode info #76946a → adjusted for WCAG AA (ADR-033)
     background: "#1f1f28",
     card: "#2a2a37",
     border: "#717192",
     foreground: "#dcd7ba",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#98978f",
+    primary: "#7e9cd8",
+    success: "#98bb6c",
+    warning: "#d7a657",
+    danger: "#f06e6e",
+    info: "#819d76",
     accent: "#d27e99",
+    chart: ["#7e9cd8", "#98bb6c", "#d7a657", "#e82424", "#76946a"],
   },
   "oc-lucent-orng": {
     id: "oc-lucent-orng",
     label: "Lucent Orng",
     nativeMode: "dark",
-    // OpenCode background is 'transparent' (terminal default) → a solid base (ADR-094)
+    // OpenCode background is 'transparent' (terminal default) → a solid base (ADR-096)
     // OpenCode mutedForeground #808080 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #ec5b2b → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #6ba1e6 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #ec5b2b → adjusted for WCAG AA (ADR-033)
-    // OpenCode danger #e06c75 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #56b6c2 → adjusted for WCAG AA (ADR-033)
     background: "#0a0a0a",
     card: "#0a0a0a",
     border: "#ec5b2b",
     foreground: "#eeeeee",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#858585",
+    primary: "#ec5b2b",
+    success: "#6ba1e6",
+    warning: "#ec5b2b",
+    danger: "#e06c75",
+    info: "#56b6c2",
     accent: "#fff7f1",
+    chart: ["#ec5b2b", "#6ba1e6", "#ecbc2b", "#e06c75", "#56b6c2"],
   },
   "oc-material": {
     id: "oc-material",
@@ -533,68 +490,55 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #37474f → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #546e7a → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #82aaff → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #c3e88d → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #ffcb6b → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #f07178 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #ffcb6b → adjusted for WCAG AA (ADR-033)
     background: "#263238",
     card: "#1e272c",
     border: "#617d8b",
     foreground: "#eeffff",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#99afb9",
+    primary: "#82aaff",
+    success: "#c3e88d",
+    warning: "#ffcb6b",
+    danger: "#f39197",
+    info: "#ffcb6b",
     accent: "#89ddff",
+    chart: ["#82aaff", "#c3e88d", "#ffcb6b", "#f07178", "#e9ff6b"],
   },
   "oc-matrix": {
     id: "oc-matrix",
     label: "Matrix",
     nativeMode: "dark",
     // OpenCode border #1e2a1b → adjusted for WCAG AA (ADR-033)
-    // OpenCode mutedForeground #8ca391 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #2eff6a → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #62ff94 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #e6ff57 → adjusted for WCAG AA (ADR-033)
-    // OpenCode danger #ff4b4b → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #30b3ff → adjusted for WCAG AA (ADR-033)
     background: "#0a0e0a",
     card: "#0e130d",
     border: "#4d6b45",
     foreground: "#62ff94",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#8ca391",
+    primary: "#2eff6a",
+    success: "#62ff94",
+    warning: "#e6ff57",
+    danger: "#ff4b4b",
+    info: "#30b3ff",
     accent: "#c770ff",
+    chart: ["#2eff6a", "#62ff94", "#e6ff57", "#ff4b4b", "#30b3ff"],
   },
   "oc-mercury": {
     id: "oc-mercury",
     label: "Mercury",
     nativeMode: "dark",
     // OpenCode border #2a2a35 → adjusted for WCAG AA (ADR-033)
-    // OpenCode mutedForeground #9d9da8 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #8da4f5 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #77c599 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #fc9b6f → adjusted for WCAG AA (ADR-033)
-    // OpenCode danger #fc92b4 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #77becf → adjusted for WCAG AA (ADR-033)
     background: "#171721",
     card: "#10101a",
     border: "#62627c",
     foreground: "#dddde5",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#9d9da8",
+    primary: "#8da4f5",
+    success: "#77c599",
+    warning: "#fc9b6f",
+    danger: "#fc92b4",
+    info: "#77becf",
     accent: "#8da4f5",
+    chart: ["#8da4f5", "#77c599", "#fc9b6f", "#fc92b4", "#77becf"],
   },
   "oc-monokai": {
     id: "oc-monokai",
@@ -602,44 +546,38 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #3e3d32 → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #75715e → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #66d9ef → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #a6e22e → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #e6db74 → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #f92672 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #fd971f → adjusted for WCAG AA (ADR-033)
     background: "#272822",
     card: "#1e1f1c",
     border: "#74725d",
     foreground: "#f8f8f2",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#a7a492",
+    primary: "#66d9ef",
+    success: "#a6e22e",
+    warning: "#e6db74",
+    danger: "#fb75a6",
+    info: "#fd971f",
     accent: "#a6e22e",
+    chart: ["#66d9ef", "#a6e22e", "#e6db74", "#f92672", "#fd971f"],
   },
   "oc-nightowl": {
     id: "oc-nightowl",
     label: "Night Owl",
     nativeMode: "dark",
     // OpenCode mutedForeground #5f7e97 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #82aaff → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #c5e478 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #ecc48d → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #ef5350 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #82aaff → adjusted for WCAG AA (ADR-033)
     background: "#011627",
     card: "#0b253a",
     border: "#5f7e97",
     foreground: "#d6deeb",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#7390a7",
+    primary: "#82aaff",
+    success: "#c5e478",
+    warning: "#ecc48d",
+    danger: "#ef5855",
+    info: "#82aaff",
     accent: "#c792ea",
+    chart: ["#82aaff", "#c5e478", "#ecc48d", "#ef5350", "#9982ff"],
   },
   "oc-nord": {
     id: "oc-nord",
@@ -647,22 +585,20 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #434c5e → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #8b95a7 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #88c0d0 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #a3be8c → adjusted for WCAG AA (ADR-033)
     // OpenCode warning #d08770 → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #bf616a → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #88c0d0 → adjusted for WCAG AA (ADR-033)
     background: "#2e3440",
     card: "#3b4252",
     border: "#818da5",
     foreground: "#eceff4",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#a8afbd",
+    primary: "#88c0d0",
+    success: "#a3be8c",
+    warning: "#dba493",
+    danger: "#d9a2a8",
+    info: "#88c0d0",
     accent: "#8fbcbb",
+    chart: ["#88c0d0", "#a3be8c", "#d08770", "#d9a2a8", "#889cd0"],
   },
   "oc-one-dark": {
     id: "oc-one-dark",
@@ -670,22 +606,19 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #393f4a → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #5c6370 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #61afef → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #98c379 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #e5c07b → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #e06c75 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #d19a66 → adjusted for WCAG AA (ADR-033)
     background: "#282c34",
     card: "#21252b",
     border: "#6a7589",
     foreground: "#abb2bf",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#9aa1ac",
+    primary: "#61afef",
+    success: "#98c379",
+    warning: "#e5c07b",
+    danger: "#e5858d",
+    info: "#d19a66",
     accent: "#56b6c2",
+    chart: ["#61afef", "#98c379", "#e5c07b", "#e06c75", "#d19a66"],
   },
   "oc-opencode": {
     id: "oc-opencode",
@@ -693,44 +626,36 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #484848 → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #808080 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #fab283 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #7fd88f → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #f5a742 → adjusted for WCAG AA (ADR-033)
-    // OpenCode danger #e06c75 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #56b6c2 → adjusted for WCAG AA (ADR-033)
     background: "#0a0a0a",
     card: "#141414",
     border: "#626262",
     foreground: "#eeeeee",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#858585",
+    primary: "#fab283",
+    success: "#7fd88f",
+    warning: "#f5a742",
+    danger: "#e06c75",
+    info: "#56b6c2",
     accent: "#9d7cd8",
+    chart: ["#fab283", "#7fd88f", "#f5a742", "#e06c75", "#56b6c2"],
   },
   "oc-orng": {
     id: "oc-orng",
     label: "Orng",
     nativeMode: "dark",
     // OpenCode mutedForeground #808080 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #ec5b2b → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #6ba1e6 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #ec5b2b → adjusted for WCAG AA (ADR-033)
-    // OpenCode danger #e06c75 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #56b6c2 → adjusted for WCAG AA (ADR-033)
     background: "#0a0a0a",
     card: "#141414",
     border: "#ec5b2b",
     foreground: "#eeeeee",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#858585",
+    primary: "#ec5b2b",
+    success: "#6ba1e6",
+    warning: "#ec5b2b",
+    danger: "#e06c75",
+    info: "#56b6c2",
     accent: "#fff7f1",
+    chart: ["#ec5b2b", "#6ba1e6", "#ecbc2b", "#e06c75", "#56b6c2"],
   },
   "oc-osaka-jade": {
     id: "oc-osaka-jade",
@@ -738,22 +663,18 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #3d4a44 → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #53685b → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #2dd5b7 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #549e6a → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #e5c736 → adjusted for WCAG AA (ADR-033)
-    // OpenCode danger #ff5345 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #2dd5b7 → adjusted for WCAG AA (ADR-033)
     background: "#111c18",
     card: "#1a2520",
     border: "#5d7168",
     foreground: "#c1c497",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#799483",
+    primary: "#2dd5b7",
+    success: "#549e6a",
+    warning: "#e5c736",
+    danger: "#ff5345",
+    info: "#2dd5b7",
     accent: "#549e6a",
+    chart: ["#2dd5b7", "#549e6a", "#e5c736", "#ff5345", "#2d9fd5"],
   },
   "oc-palenight": {
     id: "oc-palenight",
@@ -761,22 +682,19 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #3e435c → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #676e95 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #82aaff → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #c3e88d → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #ffcb6b → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #f07178 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #f78c6c → adjusted for WCAG AA (ADR-033)
     background: "#292d3e",
     card: "#1e2132",
     border: "#6d759d",
     foreground: "#a6accd",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#9da1bb",
+    primary: "#82aaff",
+    success: "#c3e88d",
+    warning: "#ffcb6b",
+    danger: "#f17f85",
+    info: "#f78c6c",
     accent: "#89ddff",
+    chart: ["#82aaff", "#c3e88d", "#ffcb6b", "#f07178", "#f78c6c"],
   },
   "oc-rosepine": {
     id: "oc-rosepine",
@@ -784,22 +702,19 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #403d52 → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #6e6a86 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #9ccfd8 → adjusted for WCAG AA (ADR-033)
     // OpenCode success #31748f → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #f6c177 → adjusted for WCAG AA (ADR-033)
-    // OpenCode danger #eb6f92 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #9ccfd8 → adjusted for WCAG AA (ADR-033)
     background: "#191724",
     card: "#1f1d2e",
     border: "#6b668a",
     foreground: "#e0def4",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#918da5",
+    primary: "#9ccfd8",
+    success: "#4199bd",
+    warning: "#f6c177",
+    danger: "#eb6f92",
+    info: "#9ccfd8",
     accent: "#ebbcba",
+    chart: ["#9ccfd8", "#31748f", "#f6c177", "#eb6f92", "#9cb1d8"],
   },
   "oc-solarized": {
     id: "oc-solarized",
@@ -817,13 +732,14 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     card: "#073642",
     border: "#1086a4",
     foreground: "#8b9b9d",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#859ca3",
+    primary: "#48a0de",
+    success: "#8ea300",
+    warning: "#c49500",
+    danger: "#e87775",
+    info: "#ec7b4c",
     accent: "#2aa198",
+    chart: ["#268bd2", "#859900", "#b58900", "#e87775", "#ec7b4c"],
   },
   "oc-synthwave84": {
     id: "oc-synthwave84",
@@ -831,90 +747,75 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #495495 → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #848bbd → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #36f9f6 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #72f1b8 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #fede5d → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #fe4450 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #ff8b39 → adjusted for WCAG AA (ADR-033)
     background: "#262335",
     card: "#1e1a29",
     border: "#606cb1",
     foreground: "#ffffff",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#989ec8",
+    primary: "#36f9f6",
+    success: "#72f1b8",
+    warning: "#fede5d",
+    danger: "#fe777f",
+    info: "#ff8b39",
     accent: "#b084eb",
+    chart: ["#36f9f6", "#72f1b8", "#fede5d", "#fe4450", "#ff8b39"],
   },
   "oc-tokyonight": {
     id: "oc-tokyonight",
     label: "Tokyo Night",
     nativeMode: "dark",
     // OpenCode mutedForeground #828bb8 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #82aaff → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #c3e88d → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #ff966c → adjusted for WCAG AA (ADR-033)
-    // OpenCode danger #ff757f → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #82aaff → adjusted for WCAG AA (ADR-033)
     background: "#1a1b26",
     card: "#1e2030",
     border: "#737aa2",
     foreground: "#c8d3f5",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#8991bc",
+    primary: "#82aaff",
+    success: "#c3e88d",
+    warning: "#ff966c",
+    danger: "#ff757f",
+    info: "#82aaff",
     accent: "#ff966c",
+    chart: ["#82aaff", "#c3e88d", "#ff966c", "#ff757f", "#9982ff"],
   },
   "oc-vercel": {
     id: "oc-vercel",
     label: "Vercel",
     nativeMode: "dark",
     // OpenCode border #1f1f1f → adjusted for WCAG AA (ADR-033)
-    // OpenCode mutedForeground #878787 → adjusted for WCAG AA (ADR-033)
     // OpenCode primary #0070f3 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #46a758 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #ffb224 → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #e5484d → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #52a8ff → adjusted for WCAG AA (ADR-033)
     background: "#000000",
     card: "#1a1a1a",
     border: "#666666",
     foreground: "#ededed",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#878787",
+    primary: "#1380ff",
+    success: "#46a758",
+    warning: "#ffb224",
+    danger: "#e64c51",
+    info: "#52a8ff",
     accent: "#8e4ec6",
+    chart: ["#0070f3", "#46a758", "#ffb224", "#e5484d", "#52a8ff"],
   },
   "oc-vesper": {
     id: "oc-vesper",
     label: "Vesper",
     nativeMode: "dark",
     // OpenCode border #282828 → adjusted for WCAG AA (ADR-033)
-    // OpenCode mutedForeground #a0a0a0 → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #ffc799 → adjusted for WCAG AA (ADR-033)
-    // OpenCode success #99ffe4 → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #ffc799 → adjusted for WCAG AA (ADR-033)
-    // OpenCode danger #ff8080 → adjusted for WCAG AA (ADR-033)
-    // OpenCode info #ffc799 → adjusted for WCAG AA (ADR-033)
     background: "#101010",
     card: "#101010",
     border: "#606060",
     foreground: "#ffffff",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#a0a0a0",
+    primary: "#ffc799",
+    success: "#99ffe4",
+    warning: "#ffc799",
+    danger: "#ff8080",
+    info: "#ffc799",
     accent: "#ffc799",
+    chart: ["#ffc799", "#99ffe4", "#fffa99", "#ff8080", "#ff999e"],
   },
   "oc-zenburn": {
     id: "oc-zenburn",
@@ -922,22 +823,21 @@ export const themes: Record<ThemePresetId, ThemePreset> = {
     nativeMode: "dark",
     // OpenCode border #5f5f5f → adjusted for WCAG AA (ADR-033)
     // OpenCode mutedForeground #9f9f9f → adjusted for WCAG AA (ADR-033)
-    // OpenCode primary #8cd0d3 → adjusted for WCAG AA (ADR-033)
     // OpenCode success #7f9f7f → adjusted for WCAG AA (ADR-033)
-    // OpenCode warning #f0dfaf → adjusted for WCAG AA (ADR-033)
     // OpenCode danger #cc9393 → adjusted for WCAG AA (ADR-033)
     // OpenCode info #dfaf8f → adjusted for WCAG AA (ADR-033)
     background: "#3f3f3f",
     card: "#4f4f4f",
     border: "#9f9f9f",
     foreground: "#dcdccc",
-    mutedForeground: "#ffffff",
-    primary: "#ffffff",
-    success: "#ffffff",
-    warning: "#ffffff",
-    danger: "#ffffff",
-    info: "#ffffff",
+    mutedForeground: "#c0c0c0",
+    primary: "#8cd0d3",
+    success: "#b3c6b3",
+    warning: "#f0dfaf",
+    danger: "#deb9b9",
+    info: "#e2b89b",
     accent: "#93e0e3",
+    chart: ["#8cd0d3", "#b3c6b3", "#f0dfaf", "#cc9393", "#dfaf8f"],
   },
 };
 
@@ -1116,10 +1016,32 @@ export const ACCENT_CSS_VARS = [
   "--chart-5",
 ] as const;
 
+/**
+ * A user accent is a UI choice, not a guaranteed data-viz colour. Move it toward whichever
+ * extreme increases contrast before using it as the first chart series (ADR-098).
+ */
+function chartAccent(hex: string, palette: ThemePreset): string {
+  const surfaces = [palette.background, palette.card];
+  const clears = (candidate: string) =>
+    surfaces.every((surface) => contrastRatio(candidate, surface) >= 3);
+  if (clears(hex)) return hex;
+
+  const targets =
+    luminanceOfHex(palette.background) < 0.5 ? ["#ffffff", "#000000"] : ["#000000", "#ffffff"];
+  for (const target of targets) {
+    for (let amount = 0.05; amount <= 1.0001; amount += 0.05) {
+      const candidate = mixSrgb(hex, target, amount);
+      if (clears(candidate)) return candidate;
+    }
+  }
+  return hex;
+}
+
 export function accentCssVars(overrides: ThemeOverrides, osDark: boolean): Record<string, string> {
   const hex = overrides.accent;
   if (!hex) return {};
   const palette = themes[resolveTheme(overrides, osDark).theme];
+  const chart = derivedTokens(palette).chart;
   return {
     "--accent": hex,
     "--primary": hex,
@@ -1132,11 +1054,14 @@ export function accentCssVars(overrides: ThemeOverrides, osDark: boolean): Recor
       "#000000",
       "#ffffff",
     ]),
-    "--chart-1": hex,
-    "--chart-2": mixSrgb(hex, palette.background, 0.18),
-    "--chart-3": mixSrgb(hex, palette.background, 0.36),
-    "--chart-4": mixSrgb(hex, palette.background, 0.54),
-    "--chart-5": mixSrgb(hex, palette.background, 0.72),
+    // Keep the accent as series one, but retain the palette's other data colours. Mixing every
+    // series toward the background (the old behaviour) made them indistinguishable and often
+    // failed the 3:1 chart threshold, especially with a light accent on Paper.
+    "--chart-1": chartAccent(hex, palette),
+    "--chart-2": chart[1],
+    "--chart-3": chart[2],
+    "--chart-4": chart[3],
+    "--chart-5": chart[4],
   };
 }
 
@@ -1177,7 +1102,8 @@ export function derivedTokens(theme: ThemePreset): DerivedTokens {
     popover: theme.card,
     // globals.css: --ring: var(--accent) — follows custom accent regeneration for free
     ring: theme.accent,
-    // globals.css: --chart-1..5: primary, success, warning, destructive, info
-    chart: [theme.primary, theme.success, theme.warning, theme.danger, theme.info],
+    // globals.css: --chart-1..5: primary, success, warning, destructive, info — unless the theme
+    // carries a dedicated chart palette (ADR-098: charts need 3:1, text needs 4.5:1).
+    chart: theme.chart ?? [theme.primary, theme.success, theme.warning, theme.danger, theme.info],
   };
 }

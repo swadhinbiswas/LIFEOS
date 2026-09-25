@@ -2173,6 +2173,50 @@ is an uncluttered dashboard.
 - **Consequences:** a stock `.env` boots, and tests never touch real infrastructure. Cost: one more
   rule to remember when adding an optional variable (an empty string is always "unset").
 
+## ADR-098 — Charts get an explicit data-visualisation palette
+
+- **Status:** accepted (2026-09-25)
+- **Context:** ADR-096 corrects imported theme tokens to 4.5:1 for text. Reusing those tokens
+  for charts could therefore turn an authentic hue into a near-white series. The importer also
+  treated its indented generated marker as a regular expression and appended duplicate theme blocks
+  on reruns, which produced transient parse errors while the dev server watched the files.
+- **Decision:** `ThemePreset.chart` is an optional five-colour palette. The importer keeps each
+  authentic OpenCode hue for charts when it clears 3:1 against both surfaces; otherwise it uses the
+  contrast-corrected token, rotating a missing/duplicate semantic hue so all five series stay
+  distinct. Every imported preset emits that palette in `themes.ts` and `globals.css`; hand-written
+  presets retain the semantic-token fallback. A custom accent becomes a contrast-safe series one
+  while the palette's other series (including the danger slot) remain intact. The importer replaces
+  its generated section by marker position and uses the same sRGB mix direction as `mixSrgb`, so
+  reruns are byte-for-byte idempotent.
+- **Consequences:** charts keep their theme identity without weakening text contrast, and a broken
+  generator cannot silently duplicate presets. The palette is explicit data-viz configuration rather
+  than a second user-facing theme axis. `themes.test.ts` guards imported series against an all-white
+  fallback.
+
+## ADR-099 — Redis stays off the page-render critical path
+
+- **Status:** accepted (2026-09-25)
+- **Context:** With real Upstash enabled, the measured REST latency was roughly 40–130 ms per call.
+  Better Auth reads its secondary session store for each server-side session lookup, while a page
+  layout and its page component can both ask for the session. The SDK also retries network failures
+  five times by default, so a cache outage can look like a hung server. In-memory fallback remains
+  correct for development and tests.
+- **Decision:** use Better Auth's encrypted, short-lived session cookie cache (JWE, five minutes)
+  for normal reads, and wrap the central server-session helper in React request-scoped `cache` so
+  layout/page lookups share one result. Configure the Upstash client with a fresh 500 ms abort
+  signal and one attempt; Better Auth's secondary storage and the app rate limiter retain their
+  explicit fail-open policy, while the idempotency cache also fails open around the committed
+  mutation rather than replacing its response with a cache error. The database remains the source
+  of truth and sensitive Better Auth operations can request
+  an authoritative read. Theme persistence is debounced and only writes actual user changes.
+- **Consequences:** ordinary authenticated renders avoid a Redis round trip and duplicate lookups;
+  a Redis outage cannot multiply into multi-second retry chains. The cookie cache is a short-lived
+  optimisation, not a second session authority: RSC responses may not refresh its `Set-Cookie`, so
+  a read after expiry falls back to the server-side session store. The trade-off is up to five
+  minutes of cookie-cache staleness for ordinary reads, bounded by Better Auth's sensitive-session
+  path and the database check when the cache expires. API rate limiting and idempotency remain
+  distributed when Redis is healthy; the bounded client makes their failure behaviour explicit.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

@@ -18,7 +18,7 @@ export function FocusChart({
   data: Array<{ day: string; minutes: number }>;
   title: string;
 }) {
-  const config = { minutes: { label: title, color: "var(--primary)" } } satisfies ChartConfig;
+  const config = { minutes: { label: title, color: "var(--chart-1)" } } satisfies ChartConfig;
 
   return (
     <Card data-slot="focus-chart" className="gap-2">

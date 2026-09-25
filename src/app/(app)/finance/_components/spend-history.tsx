@@ -28,8 +28,8 @@ export function SpendHistory({
   currency: string;
 }) {
   const config = {
-    income: { label: incomeLabel, color: "var(--primary)" },
-    spend: { label: spendLabel, color: "var(--destructive)" },
+    income: { label: incomeLabel, color: "var(--chart-1)" },
+    spend: { label: spendLabel, color: "var(--chart-4)" },
   } satisfies ChartConfig;
 
   return (

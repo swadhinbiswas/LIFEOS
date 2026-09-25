@@ -72,7 +72,7 @@ const LABELS = {
   everforest: "Everforest",
   flexoki: "Flexoki",
   github: "GitHub",
-  gruvbox: "Gruvbox",
+  gruvbox: "Gruvbox (OpenCode)",
   kanagawa: "Kanagawa",
   "lucent-orng": "Lucent Orng",
   material: "Material",
@@ -196,6 +196,42 @@ function ensureContrast(hex, against, min, reference = against) {
   return { hex: backgroundsAreDark ? "#ffffff" : "#000000", changed: true };
 }
 
+const rotateHue = (hex, degrees) => {
+  const parsed = parseHex(hex);
+  if (!parsed) return hex;
+  const { h, s, l } = rgbToHsl(parsed);
+  return toHex(hslToRgb({ h: (h + degrees / 360 + 1) % 1, s, l }));
+};
+
+/**
+ * Find a chart-safe colour that is not already used. OpenCode themes often omit success/info or
+ * alias them to primary; rotating the source hue keeps the palette thematic while the contrast
+ * pass keeps every series visible on both surfaces.
+ */
+const distinctChartColor = (base, used, bgs, label) => {
+  const clears = (hex) => {
+    const parsed = parseHex(hex);
+    return parsed && bgs.every((bg) => contrast(parsed, bg) >= 3);
+  };
+  for (const degrees of [30, -30, 60, -60, 90, -90, 120, -120, 150, -150, 180]) {
+    const candidate = ensureContrast(rotateHue(base, degrees), bgs, 3, bgs).hex;
+    if (clears(candidate) && !used.has(candidate.toLowerCase())) return candidate;
+  }
+  const parsed = parseHex(base);
+  if (!parsed) throw new Error(`${label}: invalid chart colour ${base}`);
+  const { h, s, l } = rgbToHsl(parsed);
+  for (const delta of [0.08, -0.08, 0.16, -0.16, 0.24, -0.24, 0.32, -0.32]) {
+    const candidate = ensureContrast(
+      toHex(hslToRgb({ h, s, l: Math.min(0.95, Math.max(0.05, l + delta)) })),
+      bgs,
+      3,
+      bgs,
+    ).hex;
+    if (clears(candidate) && !used.has(candidate.toLowerCase())) return candidate;
+  }
+  throw new Error(`${label}: could not derive a distinct chart colour`);
+};
+
 // ---------------------------------------------------------------- theme reading
 const fetchTheme = async (name) => {
   const response = await fetch(`${RAW}/${name}.json`);
@@ -257,11 +293,12 @@ for (const name of NAMES) {
   const foregroundHex = fix("foreground", foreground, 4.5);
   // themes.test.ts also checks text against the derived fills (muted 8%, secondary 5%, accent-ui
   // 7% foreground over background), which sit *closer* to the foreground than the background does —
-  // so text has to clear those too, not just the two surfaces.
+  // so text has to clear those too, not just the two surfaces. `mix(a, b, w)` weights `a`, so the
+  // background goes first to mirror `color-mix(in srgb, var(--foreground) 7%, var(--background))`.
   const textBgs = [
     ...bgs,
     ...[0.93, 0.95, 0.92].map((weight) =>
-      parseHex(mix(parseHex(foregroundHex), parseHex(base.background), weight)),
+      parseHex(mix(parseHex(base.background), parseHex(foregroundHex), weight)),
     ),
   ];
   const fixText = (key, color) => fix(key, color, 4.5, textBgs);
@@ -308,13 +345,39 @@ for (const name of NAMES) {
   adjustments.push({ name, originals, transparent });
 }
 
+// ADR-098: charts only need 3:1, so a token's authentic hue is kept for the chart series when it
+// clears that bar instead of the 4.5:1 text-corrected value (which is often near-white). Keeping
+// the field on every imported preset makes the generated CSS explicit and prevents a later importer
+// change from silently falling back to washed-out text tokens.
+for (const [index, preset] of presets.entries()) {
+  const { originals } = adjustments[index];
+  const bgs = [preset.background, preset.card].map((h) => parseHex(h));
+  const clears = (hex) => {
+    const p = parseHex(hex);
+    return p && bgs.every((bg) => contrast(p, bg) >= 3);
+  };
+  const corrected = [preset.primary, preset.success, preset.warning, preset.danger, preset.info];
+  const keys = ["primary", "success", "warning", "danger", "info"];
+  const used = new Set();
+  preset.chart = keys.map((key, i) => {
+    const authentic = originals.get(key);
+    const base = authentic && clears(authentic) ? authentic : corrected[i];
+    const candidate =
+      !used.has(base.toLowerCase()) && clears(base)
+        ? base
+        : distinctChartColor(base, used, bgs, `${preset.id}/${key}`);
+    used.add(candidate.toLowerCase());
+    return candidate;
+  });
+}
+
 // ---------------------------------------------------------------- emit
 const tsLines = presets.map((preset) => {
   const notes = [...adjustments.find((a) => a.name === preset.id.slice(3)).originals.entries()]
     .map(([key, value]) => `    // OpenCode ${key} ${value} → adjusted for WCAG AA (ADR-033)`)
     .join("\n");
   const transparentNote = adjustments.find((a) => a.name === preset.id.slice(3))?.transparent
-    ? "    // OpenCode background is 'transparent' (terminal default) → a solid base (ADR-094)"
+    ? "    // OpenCode background is 'transparent' (terminal default) → a solid base (ADR-096)"
     : "";
   const body = [
     `  "${preset.id}": {`,
@@ -334,6 +397,7 @@ const tsLines = presets.map((preset) => {
     `    danger: "${preset.danger}",`,
     `    info: "${preset.info}",`,
     `    accent: "${preset.accent}",`,
+    `    chart: [${preset.chart.map((c) => `"${c}"`).join(", ")}],`,
     "  },",
   ];
   return body.join("\n");
@@ -353,6 +417,7 @@ const cssBlocks = presets
   --destructive: ${p.danger};
   --info: ${p.info};
   --accent: ${p.accent};
+${p.chart.map((c, i) => `  --chart-${i + 1}: ${c};`).join("\n")}
 }`,
   )
   .join("\n\n");
@@ -371,20 +436,34 @@ themesSrc = themesSrc.replace(/export type ThemePresetId =[^;]+;/, (match) => {
   return already ? match : `export type ThemePresetId = ${existing} | ${unionIds};`;
 });
 
-themesSrc = themesSrc.replace(
-  new RegExp(`\\n${MARKER}[\\s\\S]*?\\n\\};\\n\\nexport const THEME_PRESET_IDS`),
-  "",
-);
-themesSrc = themesSrc.replace(
-  /\n};\n\nexport const THEME_PRESET_IDS/,
-  `\n\n${MARKER}\n${tsLines.join("\n")}\n};\n\nexport const THEME_PRESET_IDS`,
-);
+// The generated block is indented inside the `themes` object. Match its marker by position rather
+// than by a whitespace-sensitive regex: the earlier regex missed that indentation and appended a
+// second copy on every run, leaving duplicate object keys for the dev compiler to report.
+const generatedMarker = `  ${MARKER}`;
+const markerStart = themesSrc.indexOf(generatedMarker);
+const exportStart =
+  markerStart >= 0 ? themesSrc.indexOf("\n\nexport const THEME_PRESET_IDS", markerStart) : -1;
+if (markerStart >= 0 && exportStart < 0) {
+  throw new Error("could not find the end of the generated OpenCode theme block");
+}
+if (markerStart >= 0) {
+  themesSrc =
+    themesSrc.slice(0, markerStart) +
+    `${generatedMarker}\n${tsLines.join("\n")}\n};` +
+    themesSrc.slice(exportStart);
+} else {
+  themesSrc = themesSrc.replace(
+    /\n};\n\nexport const THEME_PRESET_IDS/,
+    `\n\n${generatedMarker}\n${tsLines.join("\n")}\n};\n\nexport const THEME_PRESET_IDS`,
+  );
+}
 await writeFile(themesPath, themesSrc);
 
 // 2. globals.css — one block per preset
 const cssPath = path.join(ROOT, "src/app/globals.css");
 let css = await readFile(cssPath, "utf8");
-css = css.replace(new RegExp(`\\n${CSS_MARKER}[\\s\\S]*$`), "");
+const cssMarkerStart = css.lastIndexOf(CSS_MARKER);
+if (cssMarkerStart >= 0) css = css.slice(0, cssMarkerStart);
 css = `${css.trimEnd()}\n\n${CSS_MARKER}\n${cssBlocks}\n`;
 await writeFile(cssPath, css);
 

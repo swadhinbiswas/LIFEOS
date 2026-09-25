@@ -1,8 +1,9 @@
 # Theming
 
-LifeOS ships six curated presets and a customizer, all driven by CSS variables. There is **one**
-source of truth for colour: `src/config/themes.ts`. Adding a preset means adding one object there and
-one block in `src/app/globals.css`; nothing else changes.
+LifeOS ships six curated presets, 33 imported OpenCode palettes, and a customizer, all driven by CSS
+variables. There is **one** source of truth for colour: `src/config/themes.ts`. Adding a hand-written
+preset means adding one object there and one block in `src/app/globals.css`; imported presets are
+regenerated from their source JSON.
 
 ## How a theme is applied
 
@@ -35,12 +36,17 @@ The customizer composes independent axes (all in `themes.ts`):
 | Sidebar         | variant and mode                                                                 |
 | Accent          | a named accent that overrides the preset's accent variable                       |
 
-**OpenCode palettes (ADR-096).** All 33 themes OpenCode ships
+**OpenCode palettes (ADR-096, ADR-098).** All 33 themes OpenCode ships
 (`packages/tui/src/theme/assets/*.json`, the list behind <https://opencode.ai/docs/themes/>) are
 imported as `oc-*` presets by `scripts/import-opencode-themes.mjs` — colours are **read from those
-files, never guessed**. Where a source token cannot clear WCAG AA it is corrected by shifting its
-lightness, with the original hex kept in a comment. The customizer lists the 6 LifeOS palettes and
-the 33 imported ones as two groups, so 39 chips stay scannable; re-run the script to refresh them.
+files, never guessed**. Where a source token cannot clear WCAG AA for text it is corrected by
+shifting its lightness, with the original hex kept in a comment. Charts have their own explicit
+five-colour palette: an authentic hue is retained when it clears 3:1 against both surfaces, and
+missing/duplicate semantic hues are rotated so the five series stay distinct. A custom accent
+becomes a contrast-safe first series while the palette's other series (including spend red) stay
+intact. The customizer lists the 6 LifeOS palettes and the 33 imported ones as two groups, so 39
+chips stay scannable; re-run the script to refresh them. The importer replaces its marked section
+idempotently and can be run repeatedly without creating duplicate presets.
 
 Settings persist in the cookie and in the `user_settings` row, so a theme follows the account.
 
@@ -64,6 +70,8 @@ Settings persist in the cookie and in the `user_settings` row, so a theme follow
 
 ## Charts
 
-Charts use Recharts through the shadcn `chart` primitive. Give every series a token colour
-(`hsl(var(--chart-1))` via the chart config) and a text label, so colour is never the only carrier of
-meaning — the accessibility sweep checks this.
+Charts use Recharts through the shadcn `chart` primitive. Give every series a chart token (for
+example `var(--chart-1)` and `var(--chart-4)` in the chart config) and a text label, so colour is
+never the only carrier of meaning — the accessibility sweep checks this. Do not point a chart at
+`--primary` or `--destructive`: those are text/UI tokens and may be deliberately lightened for
+WCAG contrast; the chart palette is the data-visualisation surface.
