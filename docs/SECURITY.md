@@ -33,8 +33,9 @@ implied.
 - **AI provider keys** are encrypted with AES-256-GCM using `AI_ENCRYPTION_KEY`; the plaintext is
   decrypted only in the server-side model factory and is never returned to the client — the UI shows
   a `••••1234` hint (ADR-074).
-- **Webhook signing secrets** are currently stored as plaintext in `webhooks_out.secret`. This is a
-  known gap (below); the same AES-256-GCM helper applies.
+- **Webhook signing secrets** are AES-256-GCM encrypted at rest with the same helper; rows written
+  before this change still verify (a plaintext read fallback) and are re-encrypted on their next
+  write.
 - `.env` is never committed; `.env.example` documents keys without values; `env.ts` validates the
   whole contract at boot and enforces paired variables.
 
@@ -76,8 +77,9 @@ implied.
 
 ## Known gaps (deliberate, with next steps)
 
-1. **Webhook secrets are not encrypted at rest** (see above). Fix: reuse the AI crypto helper.
-2. **No CSP/security headers beyond framework defaults.** Add them in `next.config.ts`/middleware.
+1. ~~Webhook secrets are not encrypted at rest~~ — **closed**: encrypted with the ADR-074 helper.
+2. ~~No CSP~~ — **closed**: a conservative CSP (same-origin, `form-action 'self'`,
+   `frame-ancestors 'none'`, no objects) ships from `next.config.ts`.
 3. **SSRF surface is small** (no URL fetching feature yet); when the job clipper or link previews
    land, block private ranges and metadata endpoints.
 4. **TOTP 2FA and passkeys** are planned, not shipped.

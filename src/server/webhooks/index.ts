@@ -3,6 +3,7 @@ import { createHmac, randomBytes } from "node:crypto";
 import { and, asc, desc, eq, isNull, lte } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
+import { decryptSecret, encryptSecret, isEncryptionConfigured } from "@/server/ai/crypto";
 import { db } from "@/server/db";
 import { webhook_deliveries, webhooks_out } from "@/server/db/schema";
 
@@ -50,6 +51,15 @@ export function createSecret(): string {
   return randomBytes(24).toString("hex");
 }
 
+/** Secrets are encrypted at rest (ADR-074 helper); old plaintext rows still verify. */
+const secretFor = (stored: string): string => {
+  try {
+    return decryptSecret(stored);
+  } catch {
+    return stored;
+  }
+};
+
 export const signatureFor = (secret: string, body: string): string =>
   `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
 
@@ -63,18 +73,20 @@ export async function createWebhook(
   userId: string,
   input: { url: string; events: string[] },
 ): Promise<WebhookRow> {
+  const secret = createSecret();
   const [row] = await db
     .insert(webhooks_out)
     .values({
       id: newId(),
       user_id: userId,
       url: input.url.trim(),
-      secret: createSecret(),
+      // Encrypted at rest (ADR-074/083); shown once in plaintext to the caller that created it.
+      secret: isEncryptionConfigured() ? encryptSecret(secret) : secret,
       events: JSON.stringify(input.events),
     })
     .returning();
   if (!row) throw new Error("webhook insert returned no row");
-  return row;
+  return { ...row, secret };
 }
 
 export async function listWebhooks(userId: string): Promise<WebhookRow[]> {
@@ -113,7 +125,7 @@ async function attempt(
       headers: {
         "content-type": "application/json",
         "x-lifeos-event": event,
-        "x-lifeos-signature": signatureFor(row.secret, payload),
+        "x-lifeos-signature": signatureFor(secretFor(row.secret), payload),
       },
       body: payload,
       signal: AbortSignal.timeout(5_000),

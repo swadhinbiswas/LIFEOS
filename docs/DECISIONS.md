@@ -1994,6 +1994,33 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-088 — CV builder: a JSON Resume document, a derived checklist, and text-first exports
+
+- **Status:** accepted (2026-09-25)
+- **Context:** Spec §6.3 wants a CV builder with versions, live preview and PDF/DOCX/JSON export, and
+  §9.2 wants resume reads plus a `propose_resume_edit` tool. The `resumes` / `resume_versions` tables
+  existed with no service. Spec §10 also still had two open gaps: webhook secrets stored plaintext and
+  no CSP.
+- **Decision:**
+  - The document is a **JSON Resume subset** (basics, work, education, skills, projects) with every
+    field defaulted and `.passthrough()`, so unknown sections survive an import/export round-trip.
+  - `src/server/cv` is the single writer: CRUD, full-snapshot versions with restore, a share slug that
+    only serves while sharing is on, and `seedResumeFromProfile`, which builds a CV from the user's
+    own skills/projects/achievements — nothing invented.
+  - The **"ATS score" is a derived checklist** (`atsReview`), reporting what a parser can read and
+    listing each check; it is never presented as a promise (ADR-017).
+  - Exports are **JSON, Markdown and print-ready HTML**: the HTML carries its own stylesheet so the
+    browser's "Save as PDF" yields selectable, ATS-parsable text with no images of text. DOCX is
+    deferred to v1.1 (it needs a new dependency and a second renderer) and recorded as such.
+  - Security, closed in the same pass: webhook secrets are now **AES-256-GCM encrypted at rest** with
+    the ADR-074 helper (legacy plaintext rows still verify and re-encrypt on their next write), and a
+    **conservative CSP** ships from `next.config.ts` (same-origin, no objects, `form-action 'self'`,
+    `frame-ancestors 'none'`; `unsafe-eval` in development only).
+- **Consequences:** CV data is portable and exportable today, and the two security gaps in
+  `docs/SECURITY.md` are closed. Cost: DOCX export and the CV editor's richer templates remain v1.1.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
