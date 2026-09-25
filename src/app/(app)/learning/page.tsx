@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { PageHeader } from "@/components/tui/page-header";
+import { Progress } from "@/components/ui/progress";
 import { getServerSession } from "@/server/auth/session";
 import { listBooks, listCourses } from "@/server/learning";
 
@@ -44,15 +45,17 @@ export default async function LearningPage() {
                 <li
                   key={course.id}
                   data-slot="course-row"
-                  className="flex flex-wrap items-center gap-2 border border-border px-2 py-1 font-mono text-xs"
+                  className="flex flex-wrap items-center gap-2 rounded-[var(--radius)] border border-border px-2 py-1.5 font-mono text-xs transition-colors hover:border-ring"
                 >
                   <span className="min-w-0 flex-1 truncate">{course.title}</span>
                   {course.provider ? (
                     <span className="text-muted-foreground">{course.provider}</span>
                   ) : null}
-                  <span aria-hidden="true" className="text-primary">
-                    {"▇".repeat(Math.round(course.progress / 10))}
-                  </span>
+                  <Progress
+                    value={course.progress}
+                    aria-label={course.title}
+                    className="h-1.5 w-24"
+                  />
                   <CourseProgress courseId={course.id} progress={course.progress} />
                 </li>
               ))}

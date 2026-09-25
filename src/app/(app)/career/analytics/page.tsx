@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/components/tui/page-header";
 import { getServerSession } from "@/server/auth/session";
 import { getCareerAnalytics } from "@/server/career/analytics";
@@ -125,13 +126,15 @@ export default async function CareerAnalyticsPage() {
           <ul className="flex flex-col gap-1 font-mono text-xs">
             {perWeek.map((week) => (
               <li key={week.weekStart} data-slot="week-row" className="flex items-center gap-2">
-                <time dateTime={week.weekStart} className="text-muted-foreground">
+                <time dateTime={week.weekStart} className="text-muted-foreground tabular-nums">
                   {week.weekStart}
                 </time>
-                <span aria-hidden="true" className="text-primary">
-                  {"▇".repeat(Math.round((week.count / busiestWeek) * 12))}
-                </span>
-                <span className="tabular-nums">{week.count}</span>
+                <Progress
+                  value={(week.count / busiestWeek) * 100}
+                  aria-label={week.weekStart}
+                  className="h-1.5 flex-1"
+                />
+                <span className="w-8 text-right tabular-nums">{week.count}</span>
               </li>
             ))}
           </ul>

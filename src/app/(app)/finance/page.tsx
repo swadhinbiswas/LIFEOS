@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { PageHeader } from "@/components/tui/page-header";
+import { Progress } from "@/components/ui/progress";
 import { getServerSession } from "@/server/auth/session";
 import { listAccounts, listSubscriptions, listTransactions, monthSummary } from "@/server/finance";
 import { formatMinor } from "@/server/finance/money";
@@ -113,15 +114,18 @@ export default async function FinancePage() {
                   <li
                     key={budget.id}
                     data-slot="budget-row"
-                    className="flex flex-wrap items-center gap-2 border border-border px-2 py-1 font-mono text-xs"
+                    className="flex flex-wrap items-center gap-2 rounded-[var(--radius)] border border-border px-2 py-1.5 font-mono text-xs transition-colors hover:border-ring"
                   >
                     <span className="min-w-0 flex-1 truncate">{budget.category}</span>
-                    <span
-                      aria-hidden="true"
-                      className={budget.percent >= 100 ? "text-destructive" : "text-primary"}
-                    >
-                      {"▇".repeat(Math.round(budget.percent / 10))}
-                    </span>
+                    <Progress
+                      value={Math.min(100, budget.percent)}
+                      aria-label={budget.category}
+                      className={
+                        budget.percent >= 100
+                          ? "h-1.5 w-24 [&>[data-slot=progress-indicator]]:bg-destructive"
+                          : "h-1.5 w-24"
+                      }
+                    />
                     <span className="tabular-nums text-muted-foreground">
                       {formatMinor(budget.spentMinor, budget.currency)} /{" "}
                       {formatMinor(budget.limit_minor, budget.currency)} ({budget.percent}%)
