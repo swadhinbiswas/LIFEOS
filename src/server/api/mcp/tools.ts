@@ -2,6 +2,7 @@ import { getDailyBrief } from "@/server/boards/brief";
 import { getBoard, moveCard } from "@/server/boards";
 import { getCard } from "@/server/api/v1/cards";
 import { createTask } from "@/server/api/v1/cards";
+import { getResume, listResumes, proposeResumeEdit } from "@/server/cv";
 import { search } from "@/server/search";
 import { getTimeZone } from "@/server/settings";
 
@@ -64,6 +65,39 @@ export const MCP_TOOLS: McpTool[] = [
     description: "Today's brief: overdue, due today and the top cards, in the user's timezone.",
     requiredScope: "read:*",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "list_resumes",
+    description: "The user's CVs with their derived checklist score and share state.",
+    requiredScope: "read:*",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  },
+  {
+    name: "get_resume",
+    description: "One CV by id as a JSON Resume document.",
+    requiredScope: "read:*",
+    inputSchema: {
+      type: "object",
+      properties: { resumeId: { type: "string", description: "CV id." } },
+      required: ["resumeId"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "propose_resume_edit",
+    description:
+      "Propose new summary or headline text for a CV. Returns the proposal and the current text; it never writes.",
+    requiredScope: "read:*",
+    inputSchema: {
+      type: "object",
+      properties: {
+        resumeId: { type: "string" },
+        section: { type: "string", enum: ["summary", "label"] },
+        content: { type: "string", description: "The suggested replacement text." },
+      },
+      required: ["resumeId", "section", "content"],
+      additionalProperties: false,
+    },
   },
 ];
 
@@ -147,6 +181,49 @@ export async function callTool(
         ...brief.top.map((card) => `- ${card.title}`),
       ];
       return text(lines.join("\n"));
+    }
+
+    case "list_resumes": {
+      const resumes = await listResumes(userId);
+      return text(
+        resumes.length === 0
+          ? "no CVs"
+          : resumes
+              .map(
+                (resume) =>
+                  `cv ${resume.id} — ${resume.title} (checklist ${resume.atsScore ?? 0}%)`,
+              )
+              .join("\n"),
+      );
+    }
+
+    case "get_resume": {
+      if (typeof args.resumeId !== "string" || args.resumeId === "") {
+        return fail("get_resume requires a `resumeId` string");
+      }
+      const detail = await getResume(userId, args.resumeId);
+      if (!detail) return fail(`cv not found: ${args.resumeId}`);
+      return text(JSON.stringify(detail.document));
+    }
+
+    case "propose_resume_edit": {
+      if (
+        typeof args.resumeId !== "string" ||
+        (args.section !== "summary" && args.section !== "label") ||
+        typeof args.content !== "string" ||
+        args.content === ""
+      ) {
+        return fail(
+          "propose_resume_edit requires `resumeId`, `section` (summary|label) and `content`",
+        );
+      }
+      const proposal = await proposeResumeEdit(userId, {
+        resumeId: args.resumeId,
+        section: args.section,
+        content: args.content,
+      });
+      if (!proposal) return fail(`cv not found: ${args.resumeId}`);
+      return text(JSON.stringify(proposal));
     }
 
     default:

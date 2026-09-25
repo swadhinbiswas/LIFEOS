@@ -87,6 +87,12 @@ export const TOOL_SPECS: readonly ToolSpec[] = [
     description: "One CV by id, as a JSON Resume document.",
     risk: "read",
   },
+  {
+    name: "propose_resume_edit",
+    description:
+      "Propose a new summary or headline for a CV. Returns the proposal and the current text; it never writes.",
+    risk: "read",
+  },
 
   // --- write: proposes, the user approves ---------------------------------
   {

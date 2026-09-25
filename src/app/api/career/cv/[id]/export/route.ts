@@ -1,6 +1,7 @@
 import { getServerSession } from "@/server/auth/session";
 import { getResume } from "@/server/cv";
 import { toJson, toMarkdown } from "@/server/cv/export";
+import { toDocx } from "@/server/cv/docx";
 
 /**
  * CV export (spec §6.3): `?format=json|md`. Session-authenticated and strictly the caller's own CV;
@@ -41,6 +42,15 @@ export async function GET(
       headers: {
         "content-type": "text/markdown; charset=utf-8",
         "content-disposition": `attachment; filename="${filename}.md"`,
+      },
+    });
+  }
+  if (format === "docx") {
+    const buffer = await toDocx(detail.document);
+    return new Response(new Uint8Array(buffer), {
+      headers: {
+        "content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "content-disposition": `attachment; filename="${filename}.docx"`,
       },
     });
   }

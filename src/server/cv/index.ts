@@ -196,8 +196,45 @@ export async function setShare(
   return enabled ? slug : null;
 }
 
-/** The public document behind a share link. Only ever returned when sharing is enabled. */
-export async function getSharedResume(
+/** A CV text section an agent may propose changes to (spec §9.2: proposals only, never a write). */
+export const PROPOSABLE_SECTIONS = ["summary", "label"] as const;
+export type ProposableSection = (typeof PROPOSABLE_SECTIONS)[number];
+
+export interface ResumeEditProposal {
+  resumeId: string;
+  section: ProposableSection;
+  /** The suggested replacement text. */
+  content: string;
+  /** What the field holds now, so a reviewer can see the diff. */
+  current: string;
+  /** Always false: this function never writes (spec §9.2). */
+  applied: false;
+}
+
+/**
+ * Build a resume edit **proposal**. It reads the CV to check ownership and to show the current
+ * value, and it never writes — the user applies it in the editor, or approves it through the
+ * copilot's normal approval flow. Returns null when the CV is not the caller's.
+ */
+export async function proposeResumeEdit(
+  userId: string,
+  input: { resumeId: string; section: ProposableSection; content: string },
+): Promise<ResumeEditProposal | null> {
+  const detail = await getResume(userId, input.resumeId);
+  if (!detail) return null;
+
+  const current =
+    input.section === "summary" ? detail.document.basics.summary : detail.document.basics.label;
+  return {
+    resumeId: input.resumeId,
+    section: input.section,
+    content: input.content.slice(0, 4_000),
+    current,
+    applied: false,
+  };
+}
+
+/** The public document behind a share link. Only ever returned when sharing is enabled. */ export async function getSharedResume(
   slug: string,
 ): Promise<{ title: string; document: CvDocument } | null> {
   const [row] = await db

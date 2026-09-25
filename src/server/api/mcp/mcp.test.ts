@@ -81,7 +81,15 @@ describe("MCP server /api/mcp (spec 9.2, adr-064)", () => {
 
     const tools = await rpc("tools/list", {}, fullKey);
     const names = (tools.body.result?.tools as Array<{ name: string }>).map((tool) => tool.name);
-    expect(names).toEqual(["search", "create_card", "move_card", "get_daily_brief"]);
+    expect(names).toEqual([
+      "search",
+      "create_card",
+      "move_card",
+      "get_daily_brief",
+      "list_resumes",
+      "get_resume",
+      "propose_resume_edit",
+    ]);
 
     const created = await rpc(
       "tools/call",

@@ -27,6 +27,7 @@ const {
 } = await import("./index");
 const { parseCvDocument } = await import("./schema");
 const { toHtml, toJson, toMarkdown } = await import("./export");
+const { toDocx } = await import("./docx");
 
 const USER = "01HCV0000000000000000000001";
 const OTHER = "01HCV0000000000000000000002";
@@ -163,5 +164,13 @@ describe("cv service (spec §6.3, adr-017)", () => {
     expect(html).toContain("<title>Data engineer CV</title>");
     expect(html).toContain("Cut pipeline runtime by 40%");
     expect(html).not.toContain("<img");
+  });
+
+  it("exports a DOCX that is a real Office archive", async () => {
+    const document = parseCvDocument(JSON.stringify(COMPLETE));
+    const buffer = await toDocx(document);
+    // A .docx is a ZIP (PK\x03\x04) and carries more than an empty document.
+    expect(buffer.subarray(0, 2).toString("utf8")).toBe("PK");
+    expect(buffer.length).toBeGreaterThan(1_000);
   });
 });

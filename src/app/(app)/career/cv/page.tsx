@@ -72,6 +72,12 @@ export default async function CvPage() {
                       markdown
                     </a>
                     <a
+                      href={`/api/career/cv/${resume.id}/export?format=docx`}
+                      className="text-muted-foreground hover:underline"
+                    >
+                      docx
+                    </a>
+                    <a
                       href={`/career/cv/${resume.id}/print`}
                       target="_blank"
                       rel="noreferrer"

@@ -21,7 +21,7 @@ import {
   addInterview,
 } from "@/server/career";
 import { addTransaction } from "@/server/finance";
-import { getResume, listResumes } from "@/server/cv";
+import { getResume, listResumes, proposeResumeEdit } from "@/server/cv";
 import { startSession } from "@/server/focus";
 import { listGoals, setKeyResultValue } from "@/server/goals";
 import { listHabits, setHabitLog } from "@/server/habits";
@@ -242,6 +242,20 @@ export function buildAiTools(userId: string): Record<string, Tool> {
         const detail = await getResume(userId, resumeId);
         if (!detail) throw new Error(`cv not found: ${resumeId}`);
         return { id: detail.summary.id, title: detail.summary.title, document: detail.document };
+      },
+    ),
+
+    propose_resume_edit: make(
+      "propose_resume_edit",
+      z.object({
+        resumeId: z.string().min(1),
+        section: z.enum(["summary", "label"]),
+        content: z.string().min(1).max(4_000),
+      }),
+      async ({ resumeId, section, content }) => {
+        const proposal = await proposeResumeEdit(userId, { resumeId, section, content });
+        if (!proposal) throw new Error(`cv not found: ${resumeId}`);
+        return proposal;
       },
     ),
 
