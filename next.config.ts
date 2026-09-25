@@ -34,6 +34,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Pin the workspace root: a stray lockfile above the repo (e.g. ~/package-lock.json) makes Next's
+  // root inference log a warning, and a wrong root also widens what gets traced for deployment.
+  turbopack: { root: process.cwd() },
   // Accessing the dev server over the LAN (phone, another machine) needs the host allowed, or Next
   // blocks its dev resources. Development only; has no effect on a production build.
   allowedDevOrigins: ["localhost", "127.0.0.1", "192.168.110.3"],

@@ -270,6 +270,8 @@ export default async function RootPage() {
                 alt={t("screenshotDashboardAlt")}
                 width={2880}
                 height={1800}
+                sizes="(min-width: 1200px) 1104px, calc(100vw - 48px)"
+                loading="eager"
                 className="h-auto w-full"
               />
             </div>
@@ -288,6 +290,7 @@ export default async function RootPage() {
                 alt={t("screenshotBoardAlt")}
                 width={2880}
                 height={1800}
+                sizes="(min-width: 1200px) 1104px, calc(100vw - 48px)"
                 className="h-auto w-full"
               />
             </div>
