@@ -12,3 +12,4 @@ export * from "./life";
 export * from "./api";
 export * from "./webhooks";
 export * from "./ai";
+export * from "./billing";

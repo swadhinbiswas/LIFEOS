@@ -1862,6 +1862,68 @@ build` per run, cached by `.next` locally and cold in CI.
 
 ---
 
+## ADR-080 — Billing: config-driven plans, one entitlement resolver, nothing enforced while off
+
+- **Status:** accepted (2026-09-25)
+- **Context:** Spec §11 wants `config/plans.ts` (free/pro/team with limits and features), "a single
+  entitlements service (`can`, `limit`, `assertWithinLimit`) called from the service layer so UI,
+  REST, MCP and AI are gated identically", with free limits effectively unlimited and all features
+  on while `BILLING_ENABLED=false` (ADR-013).
+- **Decision:** plans live in `src/config/plans.ts` (no `plans` table — configuration, not data).
+  `src/server/billing/entitlements.ts` resolves a user's plan from `subscriptions` (falling back to
+  free) and exposes `can`, `limit` and `assertWithinLimit`. While billing is disabled it returns the
+  free plan, whose limits are `Infinity`/features all true, so **nothing is limited**. The schema
+  adds `subscriptions`, `billing_events` and `entitlements` (migration 0012).
+- **Consequences:** flipping `BILLING_ENABLED=true` plus Dodo go-live is configuration, and every
+  surface is gated from one place. Cost: entitlement call sites must be added where a real limit
+  matters (they are cheap no-ops today).
+
+## ADR-081 — Dodo webhooks: verify the raw body, dedupe on the Standard Webhooks id
+
+- **Status:** accepted (2026-09-25)
+- **Context:** Dodo follows the Standard Webhooks spec: `webhook-id` / `webhook-timestamp` /
+  `webhook-signature` headers, where the signature is HMAC-SHA256 over
+  `id.timestamp.rawBody` (docs fetched 2026-09-25). Spec §11 requires signature verification and
+  idempotency (dedupe by event id) with a replay being a no-op.
+- **Decision:** `POST /api/webhooks/dodo` reads the **raw** body, verifies it with the official
+  `dodopayments` SDK's `webhooks.unwrap(body, headers)`, and uses the `webhook-id` header as
+  `billing_events.event_id` (**UNIQUE**). We do **not** use the Next.js adapter's webhook handler for
+  this route because it does not expose the headers we need for idempotency; the adapter still provides
+  checkout and portal. A duplicate id inserts nothing and returns 200.
+- **Consequences:** a replayed delivery is a no-op and a forged one is rejected; the handler is thin
+  over `applyBillingEvent`. Cost: we own the verification call (less than twenty lines) rather than
+  delegating it.
+
+## ADR-082 — Billing UI is invisible while disabled; founder status is recorded, not promised
+
+- **Status:** accepted (2026-09-25)
+- **Context:** Spec §11/§10: no paywalls, upgrade nags or plan badges while `BILLING_ENABLED=false`;
+  `/settings/billing` shows "Free forever during launch" and, when enabled, the plan, renewal date,
+  invoices and cancel; early users are recorded with `joined_during_free_period=true` and a
+  configurable `FOUNDER_PERKS` policy (the column exists on `users`, defaulting true).
+- **Decision:** `/settings/billing` renders the nav entry and page **only** when billing is enabled;
+  the page otherwise shows the launch notice and the founder flag, with no plan branding anywhere
+  else in the app. `config/plans.ts` carries a `FOUNDER_PERKS` policy that is read but never
+  advertised as a promise. The public `/pricing` page renders from `plans.ts`, showing Free with the
+  "Pro coming later, early users are protected" note behind the flag.
+- **Consequences:** the free product cannot regress into nagging, and go-live is a flag flip. Cost:
+  the billing page is untestable through the UI until the flag is on — covered by a flag-on test.
+
+## ADR-083 — Data ownership: full export, import, delete with a grace period, and a visible audit log
+
+- **Status:** accepted (2026-09-25)
+- **Context:** Spec §10: GDPR-style export and hard delete with a 7-day grace period, an audit log
+  visible to the user, and no user content used to train anything.
+- **Decision:** `/settings/data` offers a full JSON export (every module), per-module CSV, Markdown
+  notes and JSON-Resume, all assembled by the owning services; import accepts the same JSON export.
+  Delete-account schedules a soft delete (`deletion_requested_at`) with a 7-day grace, cancels it on
+  sign-in, and only a `CRON_SECRET`-guarded job purges. The `audit_log` written by the AI (ADR-073)
+  is surfaced read-only at `/settings/data`. Nothing is exported or purged across users.
+- **Consequences:** a user can always see and take their data; a mistaken delete is recoverable for
+  a week. Cost: the purge job and the export surface must be kept in step with new modules.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |
