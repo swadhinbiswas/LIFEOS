@@ -4,6 +4,7 @@
   },
   "Shell": {
     "tagline": "একটি ফ্রি, ওপেন, AI-সংযুক্ত ব্যক্তিগত অপারেটিং সিস্টেম",
+    "search": "খুঁজুন",
     "primaryNav": "প্রধান",
     "stopFocus": "ফোকাস থামাও",
     "notifications": "বিজ্ঞপ্তি",
@@ -46,6 +47,11 @@
   "Nav": {
     "dashboard": "ড্যাশবোর্ড",
     "copilot": "কোপাইলট",
+    "sectionWork": "কাজ",
+    "sectionLife": "জীবন",
+    "sectionBuild": "নির্মাণ",
+    "sectionCareer": "ক্যারিয়ার",
+    "sectionSystem": "সিস্টেম",
     "calendar": "ক্যালেন্ডার",
     "reviews": "রিভিউ",
     "tasks": "কাজ",
@@ -152,7 +158,7 @@
     "todayTop3": "শীর্ষ ৩",
     "todayCounts": "বাকি / আজকের / ইনবক্স",
     "todayPlanned": "পরিকল্পিত মিনিট",
-    "overviewKpis": "KPI টেবিল",
+    "overviewKpis": "KPI",
     "overviewWins": "অভ্যাসের ধারা",
     "careerFunnel": "পাইপলাইন ফানেল",
     "careerOpen": "খোলা আবেদন",
@@ -165,6 +171,7 @@
     "Dashboard": {
       "title": "ড্যাশবোর্ড",
       "layout": "বিন্যাস",
+      "customize": "কাস্টমাইজ",
       "layoutHint": "এই ভ্যারিয়েন্টের উইজেট — লুকান বা সরান; বদল সঙ্গে সঙ্গে সেভ হয়",
       "layoutSaved": "বিন্যাস সেভ হয়েছে",
       "show": "{name} দেখাও",

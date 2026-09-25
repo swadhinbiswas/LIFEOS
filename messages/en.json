@@ -4,6 +4,7 @@
   },
   "Shell": {
     "tagline": "A free, open, AI-connected personal operating system",
+    "search": "search",
     "primaryNav": "Primary",
     "stopFocus": "stop focus",
     "notifications": "notifications",
@@ -46,6 +47,11 @@
   "Nav": {
     "dashboard": "Dashboard",
     "copilot": "Copilot",
+    "sectionWork": "Work",
+    "sectionLife": "Life",
+    "sectionBuild": "Build",
+    "sectionCareer": "Career",
+    "sectionSystem": "System",
     "calendar": "Calendar",
     "reviews": "Reviews",
     "tasks": "Tasks",
@@ -152,7 +158,7 @@
     "todayTop3": "top 3",
     "todayCounts": "overdue / due today / inbox",
     "todayPlanned": "planned minutes",
-    "overviewKpis": "KPI table",
+    "overviewKpis": "KPIs",
     "overviewWins": "habit streaks",
     "careerFunnel": "pipeline funnel",
     "careerOpen": "open applications",
@@ -165,6 +171,7 @@
     "Dashboard": {
       "title": "Dashboard",
       "layout": "Layout",
+      "customize": "customize",
       "layoutHint": "widgets on this variant — hide or move them; changes save immediately",
       "layoutSaved": "layout saved",
       "show": "show {name}",

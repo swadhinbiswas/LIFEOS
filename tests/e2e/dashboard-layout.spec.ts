@@ -21,11 +21,11 @@ test("dashboard: widget visibility and order persist", async ({ page }) => {
   await expect(page.getByLabel("show habit streaks")).not.toBeChecked();
   await expect(page.getByRole("heading", { name: "habit streaks", level: 2 })).toHaveCount(0);
 
-  // Move the KPI table down one slot, then reload: the order is kept.
-  await page.getByLabel("move KPI table down").click();
+  // Move the KPI cards down one slot, then reload: the order is kept.
+  await page.getByLabel("move KPIs down").click();
   await expect(page.locator('[data-slot="layout-controls"]')).toContainText("layout saved");
   await page.reload();
   const controls = page.locator('[data-slot="layout-controls"] li');
   await expect(controls.first()).toContainText("habit streaks");
-  await expect(controls.nth(1)).toContainText("KPI table");
+  await expect(controls.nth(1)).toContainText("KPIs");
 });

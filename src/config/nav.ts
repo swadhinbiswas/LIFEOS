@@ -43,6 +43,52 @@ export interface NavItem {
   requiresBilling?: boolean;
 }
 
+/**
+ * Sidebar sections (spec §3.3: reproduce the reference's labelled groups). Order is the display
+ * order; an item not listed here still renders, in a trailing "more" group, so a new route is never
+ * silently hidden.
+ */
+export interface NavSection {
+  id: string;
+  /** Key under `Nav`, e.g. `sectionWork`. */
+  key: string;
+  hrefs: string[];
+}
+
+export const NAV_SECTIONS: NavSection[] = [
+  {
+    id: "work",
+    key: "sectionWork",
+    hrefs: ["/dashboard", "/ai", "/tasks", "/inbox", "/calendar", "/reviews"],
+  },
+  {
+    id: "life",
+    key: "sectionLife",
+    hrefs: ["/habits", "/goals", "/notes", "/focus", "/finance", "/health", "/learning"],
+  },
+  { id: "build", key: "sectionBuild", hrefs: ["/boards", "/trash"] },
+  {
+    id: "career",
+    key: "sectionCareer",
+    hrefs: ["/career/jobs", "/career/analytics", "/career/portfolio", "/career/interview-prep"],
+  },
+  {
+    id: "system",
+    key: "sectionSystem",
+    hrefs: [
+      "/settings",
+      "/settings/billing",
+      "/settings/integrations",
+      "/settings/ai",
+      "/settings/data",
+      "/docs",
+      "/docs/api",
+      "/settings/appearance",
+      "/about",
+    ],
+  },
+];
+
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", key: "dashboard", icon: LayoutDashboard },
   { href: "/ai", key: "copilot", icon: Sparkles },

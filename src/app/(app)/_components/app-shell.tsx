@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { StatusLine } from "@/components/tui/status-line";
 import { Button } from "@/components/ui/button";
 import { APP_NAME } from "@/config/app";
-import { NAV_ITEMS } from "@/config/nav";
+import { NAV_SECTIONS, NAV_ITEMS } from "@/config/nav";
+import { Kbd } from "@/components/tui/kbd";
 import { SHELL_HINTS } from "@/config/shortcuts";
 import { stopFocusAction } from "@/server/focus/actions";
 import { authClient } from "@/lib/auth-client";
@@ -75,6 +76,12 @@ export function AppShell({
         return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
       })()
     : undefined;
+
+  // The current page's label, from the nav registry — the header shows where you are (spec §3.3).
+  const pageTitle =
+    NAV_ITEMS.filter((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
+      .sort((a, b) => b.href.length - a.href.length)
+      .map((item) => tNav(item.key))[0] ?? tShell("tagline");
 
   const stopFocus = async () => {
     if (!focus) return;
@@ -187,29 +194,43 @@ export function AppShell({
           <p className="app-sidebar-brand px-3 py-3 font-mono text-sm font-semibold tracking-tight">
             {APP_NAME}
           </p>
-          <nav aria-label={tShell("primaryNav")} className="flex flex-1 flex-col gap-1 p-2">
-            {NAV_ITEMS.filter((item) => !item.requiresBilling || billing).map(
-              ({ href, key, icon: Icon }) => {
-                const label = tNav(key);
-                const active = pathname === href;
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    aria-current={active ? "page" : undefined}
-                    title={label}
-                    className={cn(
-                      "flex items-center gap-2 rounded-[var(--radius)] px-2 py-1.5 font-mono text-xs",
-                      "hover:bg-accent hover:text-accent-foreground",
-                      active && "bg-accent text-accent-foreground",
-                    )}
-                  >
-                    <Icon aria-hidden="true" className="size-4 shrink-0" />
-                    <span className="nav-label truncate">{label}</span>
-                  </Link>
-                );
-              },
-            )}
+          <nav
+            aria-label={tShell("primaryNav")}
+            className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2"
+          >
+            {NAV_SECTIONS.map((section) => {
+              const items = NAV_ITEMS.filter(
+                (item) => section.hrefs.includes(item.href) && (!item.requiresBilling || billing),
+              );
+              if (items.length === 0) return null;
+              return (
+                <div key={section.id} className="flex flex-col gap-0.5" data-slot="nav-section">
+                  <p className="nav-label px-2 pb-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+                    {tNav(section.key)}
+                  </p>
+                  {items.map(({ href, key, icon: Icon }) => {
+                    const label = tNav(key);
+                    const active = pathname === href;
+                    return (
+                      <Link
+                        key={href}
+                        href={href}
+                        aria-current={active ? "page" : undefined}
+                        title={label}
+                        className={cn(
+                          "flex items-center gap-2 rounded-[var(--radius)] px-2 py-1.5 font-mono text-xs",
+                          "hover:bg-accent hover:text-accent-foreground",
+                          active && "bg-accent text-accent-foreground",
+                        )}
+                      >
+                        <Icon aria-hidden="true" className="size-4 shrink-0" />
+                        <span className="nav-label truncate">{label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </nav>
           <p className="nav-label truncate border-t border-border px-3 py-2 font-mono text-xs text-muted-foreground">
             {user.name}
@@ -219,9 +240,20 @@ export function AppShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-border px-3 py-2">
-          <p className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">
-            {tShell("tagline")}
+          <p className="min-w-0 truncate font-mono text-xs font-semibold tracking-wider uppercase">
+            {pageTitle}
           </p>
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            data-slot="header-search"
+            className="nav-label ml-auto flex max-w-72 min-w-40 flex-1 items-center gap-2 rounded-[var(--radius)] border border-border bg-background px-2 py-1 font-mono text-[10px] text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            <Search aria-hidden="true" className="size-3.5 shrink-0" />
+            <span className="truncate">{tShell("search")}</span>
+            <Kbd className="ml-auto">Ctrl</Kbd>
+            <Kbd>K</Kbd>
+          </button>
           {focus ? (
             <Button
               type="button"

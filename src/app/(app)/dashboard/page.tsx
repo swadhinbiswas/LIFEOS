@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
+import { AsciiMeter } from "@/components/tui/ascii-meter";
 import { getServerSession } from "@/server/auth/session";
 import { ensureSystemTasksBoard } from "@/server/boards";
 import { getDailyBrief } from "@/server/boards/brief";
@@ -124,48 +125,82 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       )
     ) : null,
     "overview.kpis": kpis ? (
-      <table className="w-full border-collapse font-mono text-xs">
-        <caption className="sr-only">{t("kpiCaption")}</caption>
-        <tbody>
-          {kpis.values.map((kpi) => {
-            const definition = KPI_DEFINITIONS[kpi.id];
-            return (
-              <tr key={kpi.id} data-slot="kpi-row" data-kpi={kpi.id}>
-                <th scope="row" className="border-b border-border px-2 py-1 text-left font-normal">
-                  <span title={t(`kpiDef_${kpi.id}`)}>{t(`kpi_${kpi.id}`)}</span>
-                </th>
-                <td className="border-b border-border px-2 py-1 text-right tabular-nums">
-                  {renderValue(kpi.value, kpi.unit)}
-                </td>
-                <td className="border-b border-border px-2 py-1 text-right tabular-nums text-muted-foreground">
-                  {kpi.delta === null ? "—" : `${kpi.delta > 0 ? "+" : ""}${kpi.delta}`}
-                </td>
-                <td className="border-b border-border px-2 py-1">
-                  {definition ? (
-                    <Link href={definition.href} className="text-primary hover:underline">
-                      {t("openList")}
-                    </Link>
-                  ) : null}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {kpis.values.map((kpi) => {
+          const definition = KPI_DEFINITIONS[kpi.id];
+          const label = t(`kpi_${kpi.id}`);
+          const delta = kpi.delta;
+          return (
+            <div
+              key={kpi.id}
+              data-slot="kpi-card"
+              data-kpi={kpi.id}
+              className="flex min-w-0 flex-col gap-2 rounded-[var(--radius)] border border-border bg-card p-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span
+                  className="min-w-0 truncate font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
+                  title={t(`kpiDef_${kpi.id}`)}
+                >
+                  {label}
+                </span>
+                {delta === null ? null : (
+                  <span
+                    data-slot="kpi-delta"
+                    className={`shrink-0 rounded-[var(--radius)] border px-1 font-mono text-[10px] tabular-nums ${
+                      delta > 0
+                        ? "border-success text-success"
+                        : delta < 0
+                          ? "border-destructive text-destructive"
+                          : "border-border text-muted-foreground"
+                    }`}
+                  >
+                    {delta > 0 ? "+" : ""}
+                    {delta}
+                  </span>
+                )}
+              </div>
+              <span className="font-mono text-2xl font-semibold tabular-nums">
+                {renderValue(kpi.value, kpi.unit)}
+              </span>
+              {kpi.id === "habitConsistency" && kpi.value !== null ? (
+                <AsciiMeter
+                  value={Math.min(1, Math.max(0, kpi.value / 100))}
+                  label={label}
+                  cells={14}
+                />
+              ) : null}
+              {definition ? (
+                <Link
+                  href={definition.href}
+                  className="mt-auto font-mono text-[10px] text-primary hover:underline"
+                >
+                  {t("openList")}
+                </Link>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
     ) : null,
     "overview.wins": (
       <ul className="flex flex-col gap-1 font-mono text-xs">
         {habits.length === 0 ? (
           <li className="text-muted-foreground">{t("noHabits")}</li>
         ) : (
-          habits.map((row) => (
-            <li key={row.habit.id} data-slot="streak-row" className="flex items-center gap-2">
-              <span className="min-w-0 flex-1 truncate">{row.habit.name}</span>
-              <span className="text-muted-foreground">
-                {row.streak > 0 ? t("streak", { count: row.streak }) : t("freshStart")}
-              </span>
-            </li>
-          ))
+          habits.map((row) => {
+            const done = row.days.filter((day) => day.done).length;
+            const ratio = row.days.length > 0 ? done / row.days.length : 0;
+            return (
+              <li key={row.habit.id} data-slot="streak-row" className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate">{row.habit.name}</span>
+                <AsciiMeter value={ratio} label={row.habit.name} cells={14} showValue={false} />
+                <span className="w-24 text-right text-muted-foreground tabular-nums">
+                  {row.streak > 0 ? t("streak", { count: row.streak }) : t("freshStart")}
+                </span>
+              </li>
+            );
+          })
         )}
       </ul>
     ),
@@ -249,11 +284,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         ))}
       </nav>
 
-      <div className="grid max-w-4xl gap-4">
-        <Panel title={t("layout")}>
-          <LayoutControls layout={layout} labels={labels} />
-        </Panel>
-
+      <div className="grid gap-4">
         {layout.widgets
           .filter((widget) => widget.visible)
           .map((widget) => (
@@ -263,6 +294,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               )}
             </Panel>
           ))}
+
+        <Panel title={t("layout")} hint={t("customize")}>
+          <LayoutControls layout={layout} labels={labels} />
+        </Panel>
       </div>
     </>
   );

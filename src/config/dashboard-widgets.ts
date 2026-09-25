@@ -41,7 +41,7 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
   {
     id: "overview.kpis",
     variant: "overview",
-    label: "KPI table",
+    label: "KPIs",
     key: "overviewKpis",
     defaultSize: "l",
   },
