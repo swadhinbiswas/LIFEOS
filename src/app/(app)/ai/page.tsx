@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
+import { PageHeader } from "@/components/tui/page-header";
 import { getConversationMessages, listConversations } from "@/server/ai/conversations";
 import { resolveModel } from "@/server/ai/providers";
 import { getServerSession } from "@/server/auth/session";
@@ -33,9 +34,7 @@ export default async function AiPage() {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        {t("title")}
-      </h1>
+      <PageHeader title={t("title")} />
 
       <div className="grid max-w-3xl gap-4">
         <p className="font-mono text-[10px] text-muted-foreground">{t("tagline")}</p>

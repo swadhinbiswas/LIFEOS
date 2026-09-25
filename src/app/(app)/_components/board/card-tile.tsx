@@ -58,7 +58,8 @@ export function CardTile({
       tabIndex={-1}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "group/card border border-border bg-background outline-none",
+        "group/card rounded-[var(--radius)] border border-border bg-background outline-none",
+        "transition-colors hover:border-ring",
         // Focus is communicated by the border token as well as the ring (spec §4.4).
         focused && "border-ring ring-2 ring-ring/40",
         selected && "border-primary ring-2 ring-primary/40",
@@ -79,9 +80,21 @@ export function CardTile({
           <p className="truncate font-mono text-xs">{card.title}</p>
           <p className="mt-1 flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
             {card.priority ? (
-              <span className={cn("uppercase", PRIORITY_TONE[card.priority])}>{card.priority}</span>
+              <span
+                className={cn(
+                  "rounded-[var(--radius)] border border-border px-1 uppercase",
+                  PRIORITY_TONE[card.priority],
+                )}
+              >
+                {card.priority}
+              </span>
             ) : null}
-            {due ? <time dateTime={due}>{due}</time> : null}
+            {due ? (
+              <time dateTime={due} className="tabular-nums">
+                {due}
+              </time>
+            ) : null}
+            {card.estimate_min ? <span className="tabular-nums">{card.estimate_min}m</span> : null}
             {matches ? <span className="text-primary">{t("match")}</span> : null}
           </p>
           {meta && meta.length > 0 ? (

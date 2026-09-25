@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { PageHeader } from "@/components/tui/page-header";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
@@ -19,9 +20,7 @@ export default async function AppearancePage() {
   const t = await getTranslations("Pages.Appearance");
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        {t("title")}
-      </h1>
+      <PageHeader title={t("title")} />
       <ThemeCustomizer />
     </>
   );

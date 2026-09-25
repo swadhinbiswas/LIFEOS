@@ -30,6 +30,6 @@ test("dashboard: KPIs link to their source lists", async ({ page }) => {
 
   // A snapshot KPI shows no delta badge rather than inventing a baseline.
   await expect(
-    page.locator('[data-slot="kpi-card"][data-kpi="openApplications"] [data-slot="kpi-delta"]'),
+    page.locator('[data-slot="kpi-card"][data-kpi="openApplications"] [data-slot="stat-delta"]'),
   ).toHaveCount(0);
 });

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
+import { PageHeader } from "@/components/tui/page-header";
 import { getServerSession } from "@/server/auth/session";
 import { listGrowth, parseProjectTech } from "@/server/career/growth";
 
@@ -25,9 +26,7 @@ export default async function PortfolioPage() {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        {t("portfolioTitle")}
-      </h1>
+      <PageHeader title={t("portfolioTitle")} />
 
       <div className="grid max-w-4xl gap-4">
         <Panel title={t("sampleData")} hint={t("labelledRemovable")}>

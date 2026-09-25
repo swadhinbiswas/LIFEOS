@@ -29,24 +29,27 @@ tokens, monospace — §4); the **craft** must not (§13).
 
 ## Gaps found in our build (and status)
 
-| #   | Gap                                                                | Reference                                                        | Status                                                         |
-| --- | ------------------------------------------------------------------ | ---------------------------------------------------------------- | -------------------------------------------------------------- |
-| 1   | Sidebar was a flat 26-item list                                    | labelled sections + nested groups + user block                   | **Fixed** — `NAV_SECTIONS`, section labels, brand + user block |
-| 2   | Header showed a tagline, no location or search                     | page title + global search + icons                               | **Fixed** — page title from nav + search button (Ctrl/Cmd+K)   |
-| 3   | Dashboard opened with a widget-config panel and a KPI _table_      | stat cards first, config behind an affordance                    | **Fixing** — KPI cards + layout panel moved to the end         |
-| 4   | Lists rendered as plain text rows (notes, habits, goals, finance…) | avatars, pills, preview columns, row menus                       | **Open** — next pass, module by module                         |
-| 5   | Our table view lacks pills/avatars/menus                           | status pills, icons, row menu                                    | **Open**                                                       |
-| 6   | Kanban columns are hairline boxes; cards are text-only             | rounded columns + rich record cards                              | **Open**                                                       |
-| 7   | Dashboard has no charts; KPIs have no delta pills                  | bar/line/donut charts, delta badges                              | **Open** — `Spark`/`AsciiMeter` exist; needs wiring            |
-| 8   | Screens waste width (`max-w-4xl` inside a centred main)            | full-width card grids                                            | **Fixing** — widen the content column                          |
-| 9   | Settings has one flat page                                         | second-level settings nav (Personal/Workspace/Developers/System) | **Open**                                                       |
+| #   | Gap                                                                | Reference                                                        | Status                                                                                                                              |
+| --- | ------------------------------------------------------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Sidebar was a flat 26-item list                                    | labelled sections + nested groups + user block                   | **Fixed** — `NAV_SECTIONS`, section labels, brand + user block                                                                      |
+| 2   | Header showed a tagline, no location or search                     | page title + global search + icons                               | **Fixed** — page title from nav + search button (Ctrl/Cmd+K)                                                                        |
+| 3   | Dashboard opened with a widget-config panel and a KPI _table_      | stat cards first, config behind an affordance                    | **Fixed** — `StatCard` grid (value, delta pill, meter, link); layout panel last                                                     |
+| 4   | Lists rendered as plain text rows (notes, habits, goals, finance…) | avatars, pills, preview columns, row menus                       | **Partial** — notes (pills, hover, `EmptyState`) and habits (meter, heatmap) done; goals, finance, learning, portfolio, prep remain |
+| 5   | Our table view lacks pills/avatars/menus                           | status pills, icons, row menu                                    | **Open**                                                                                                                            |
+| 6   | Kanban columns are hairline boxes; cards are text-only             | rounded columns + rich record cards                              | **Fixed** — rounded columns with a count pill; cards with priority pills, estimate, hover                                           |
+| 7   | Dashboard has no charts; KPIs have no delta pills                  | bar/line/donut charts, delta badges                              | **Partial** — delta pills and `AsciiMeter`s are in; no time-series charts (no series data yet)                                      |
+| 8   | Screens waste width / overflow the page                            | full-width card grids that scroll internally                     | **Fixed** — `PageHeader` on 27 pages; the board scrolls inside its container; `min-w-0` + `overflow-x-hidden` guard                 |
+| 9   | Settings has one flat page                                         | second-level settings nav (Personal/Workspace/Developers/System) | **Open**                                                                                                                            |
+
+Shared primitives introduced: `PageHeader`, `StatCard`, `EmptyState` (`src/components/tui/`).
+Re-capture with `node scripts/design-qa.mjs` and update this table per pass.
 
 ## Priority for the remaining pass
 
-1. Dashboard stat cards + charts + delta pills (the first screen anyone sees).
-2. Notes / habits / goals lists → avatars + pills + preview columns.
-3. Board kanban + table craft (rounded columns, card internals, status pills, row menus).
-4. Settings second-level nav.
+1. Lists: goals, finance, learning, portfolio, prep → pills, preview columns, `EmptyState`.
+2. Table view: status pills, avatars, row menus.
+3. Dashboard: time-series charts (focus minutes, habit history) via `Spark`.
+4. Settings: second-level nav (Personal / Workspace / Developers / System).
 5. Re-capture `docs/design-qa/` after each pass and update this table.
 
 This table is the honest record: the fixes are shipped one screen at a time, and a screen is only

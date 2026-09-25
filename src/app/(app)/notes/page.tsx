@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
+import { EmptyState } from "@/components/tui/empty-state";
+import { PageHeader } from "@/components/tui/page-header";
 import { getServerSession } from "@/server/auth/session";
 import { listNotes, searchNotes } from "@/server/notes";
 import { listIdsByTag, listTags, listTagsForMany } from "@/server/tags";
@@ -43,9 +45,7 @@ export default async function NotesPage({ searchParams }: PageProps) {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        {t("title")}
-      </h1>
+      <PageHeader title={t("title")} count={hits.length} />
 
       <div className="grid max-w-3xl gap-4">
         <Panel title={t("startWriting")}>
@@ -116,20 +116,22 @@ export default async function NotesPage({ searchParams }: PageProps) {
           hint={`${hits.length}`}
         >
           {hits.length === 0 ? (
-            <p className="font-mono text-xs text-muted-foreground">
-              {activeTag !== ""
-                ? t("emptyTagged")
-                : query === ""
-                  ? t("emptyNone")
-                  : t("emptyNoMatch")}
-            </p>
+            <EmptyState
+              title={
+                activeTag !== ""
+                  ? t("emptyTagged")
+                  : query === ""
+                    ? t("emptyNone")
+                    : t("emptyNoMatch")
+              }
+            />
           ) : (
             <ul className="flex flex-col gap-1">
               {hits.map((note) => (
                 <li
                   key={note.id}
                   data-slot="note-row"
-                  className="flex flex-wrap items-baseline gap-2 border border-border px-2 py-1"
+                  className="flex flex-wrap items-baseline gap-2 rounded-[var(--radius)] border border-border px-2 py-1.5 transition-colors hover:border-ring"
                 >
                   <Link
                     href={`/notes/${note.id}`}
@@ -138,16 +140,20 @@ export default async function NotesPage({ searchParams }: PageProps) {
                     {note.title === "" ? t("untitled") : note.title}
                   </Link>
                   {note.kind !== "note" ? (
-                    <span className="font-mono text-[10px] text-muted-foreground">{note.kind}</span>
+                    <span className="rounded-[var(--radius)] border border-border px-1 font-mono text-[10px] text-muted-foreground uppercase">
+                      {note.kind}
+                    </span>
                   ) : null}
                   {note.pinned ? (
-                    <span className="font-mono text-[10px] text-warning">{t("pinned")}</span>
+                    <span className="rounded-[var(--radius)] border border-warning px-1 font-mono text-[10px] text-warning">
+                      {t("pinned")}
+                    </span>
                   ) : null}
                   {(tagsByNote[note.id] ?? []).map((name) => (
                     <span
                       key={name}
                       data-slot="note-tag"
-                      className="font-mono text-[10px] text-info"
+                      className="rounded-[var(--radius)] border border-border px-1 font-mono text-[10px] text-info"
                     >
                       #{name}
                     </span>

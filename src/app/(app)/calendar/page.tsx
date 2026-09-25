@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
+import { PageHeader } from "@/components/tui/page-header";
 import { dayKeyInTimeZone } from "@/lib/timezone";
 import { getServerSession } from "@/server/auth/session";
 import { getCalendar } from "@/server/calendar";
@@ -55,9 +56,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        {t("title")}
-      </h1>
+      <PageHeader title={t("title")} count={events.length} />
 
       <div className="grid gap-4">
         <div className="flex flex-wrap items-center gap-2 font-mono text-xs">

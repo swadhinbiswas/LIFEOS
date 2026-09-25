@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
+import { PageHeader } from "@/components/tui/page-header";
 import { auth } from "@/server/auth";
 import { getRegionalSettings } from "@/server/settings";
 
@@ -26,9 +27,7 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        {t("title")}
-      </h1>
+      <PageHeader title={t("title")} />
       <div className="grid max-w-3xl gap-4">
         <Panel title={t("account")}>
           <ProfileForm name={session.user.name} email={session.user.email} joined={joined} />

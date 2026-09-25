@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
+import { PageHeader } from "@/components/tui/page-header";
 import { listCredentials } from "@/server/ai/credentials";
 import { isEncryptionConfigured } from "@/server/ai/crypto";
 import { listMemories } from "@/server/ai/memory";
@@ -32,9 +33,7 @@ export default async function AiSettingsPage() {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        {t("title")}
-      </h1>
+      <PageHeader title={t("title")} />
 
       <div className="grid max-w-3xl gap-4">
         <Panel title={t("title")}>

@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
+import { AsciiMeter } from "@/components/tui/ascii-meter";
+import { PageHeader } from "@/components/tui/page-header";
 import { getServerSession } from "@/server/auth/session";
 import { listHabits } from "@/server/habits";
 
@@ -23,9 +25,7 @@ export default async function HabitsPage() {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        {t("title")}
-      </h1>
+      <PageHeader title={t("title")} count={rows.length} />
 
       <div className="grid max-w-4xl gap-4">
         <Panel title={t("newHabit")}>
@@ -47,7 +47,7 @@ export default async function HabitsPage() {
                     key={row.habit.id}
                     data-slot="habit-row"
                     data-habit-id={row.habit.id}
-                    className="flex flex-wrap items-center gap-3 border border-border px-2 py-1.5"
+                    className="flex flex-wrap items-center gap-3 rounded-[var(--radius)] border border-border px-2 py-1.5 transition-colors hover:border-ring"
                   >
                     <span className="flex min-w-40 items-center gap-1 font-mono text-xs">
                       {row.habit.glyph ? <span aria-hidden="true">{row.habit.glyph}</span> : null}
@@ -60,10 +60,18 @@ export default async function HabitsPage() {
                       kind={row.habit.kind === "numeric" ? "numeric" : "binary"}
                     />
                     {row.habit.kind === "numeric" && row.habit.target ? (
-                      <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
-                        {t("ofTarget", { progress: row.progress ?? 0, target: row.habit.target })}
-                        {row.habit.unit ? ` ${row.habit.unit}` : ""}
-                      </span>
+                      <>
+                        <AsciiMeter
+                          value={Math.min(1, Math.max(0, (row.progress ?? 0) / 100))}
+                          label={row.habit.name}
+                          cells={10}
+                          showValue={false}
+                        />
+                        <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
+                          {t("ofTarget", { progress: row.progress ?? 0, target: row.habit.target })}
+                          {row.habit.unit ? ` ${row.habit.unit}` : ""}
+                        </span>
+                      </>
                     ) : null}
                     <span className="font-mono text-[10px] text-muted-foreground">
                       {row.streak > 0 ? t("streak", { count: row.streak }) : t("freshStart")}

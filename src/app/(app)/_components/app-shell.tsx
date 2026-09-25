@@ -175,7 +175,7 @@ export function AppShell({
 
   return (
     <div
-      className="app-shell flex min-h-svh bg-background"
+      className="app-shell flex min-h-svh overflow-x-hidden bg-background"
       data-overlay={overlayOpen ? "open" : "closed"}
     >
       <aside

@@ -4,6 +4,8 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { AsciiMeter } from "@/components/tui/ascii-meter";
+import { PageHeader } from "@/components/tui/page-header";
+import { StatCard } from "@/components/tui/stat-card";
 import { getServerSession } from "@/server/auth/session";
 import { ensureSystemTasksBoard } from "@/server/boards";
 import { getDailyBrief } from "@/server/boards/brief";
@@ -128,57 +130,21 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {kpis.values.map((kpi) => {
           const definition = KPI_DEFINITIONS[kpi.id];
-          const label = t(`kpi_${kpi.id}`);
-          const delta = kpi.delta;
           return (
-            <div
+            <StatCard
               key={kpi.id}
-              data-slot="kpi-card"
+              slot="kpi-card"
               data-kpi={kpi.id}
-              className="flex min-w-0 flex-col gap-2 rounded-[var(--radius)] border border-border bg-card p-3"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <span
-                  className="min-w-0 truncate font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
-                  title={t(`kpiDef_${kpi.id}`)}
-                >
-                  {label}
-                </span>
-                {delta === null ? null : (
-                  <span
-                    data-slot="kpi-delta"
-                    className={`shrink-0 rounded-[var(--radius)] border px-1 font-mono text-[10px] tabular-nums ${
-                      delta > 0
-                        ? "border-success text-success"
-                        : delta < 0
-                          ? "border-destructive text-destructive"
-                          : "border-border text-muted-foreground"
-                    }`}
-                  >
-                    {delta > 0 ? "+" : ""}
-                    {delta}
-                  </span>
-                )}
-              </div>
-              <span className="font-mono text-2xl font-semibold tabular-nums">
-                {renderValue(kpi.value, kpi.unit)}
-              </span>
-              {kpi.id === "habitConsistency" && kpi.value !== null ? (
-                <AsciiMeter
-                  value={Math.min(1, Math.max(0, kpi.value / 100))}
-                  label={label}
-                  cells={14}
-                />
-              ) : null}
-              {definition ? (
-                <Link
-                  href={definition.href}
-                  className="mt-auto font-mono text-[10px] text-primary hover:underline"
-                >
-                  {t("openList")}
-                </Link>
-              ) : null}
-            </div>
+              label={t(`kpi_${kpi.id}`)}
+              value={renderValue(kpi.value, kpi.unit)}
+              delta={kpi.delta}
+              meter={
+                kpi.id === "habitConsistency" && kpi.value !== null
+                  ? Math.min(1, Math.max(0, kpi.value / 100))
+                  : undefined
+              }
+              {...(definition ? { href: definition.href, linkLabel: t("openList") } : {})}
+            />
           );
         })}
       </div>
@@ -263,26 +229,24 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        {t("title")}
-      </h1>
-
-      <nav aria-label={t("title")} className="mb-4 flex flex-wrap gap-1 font-mono text-[10px]">
-        {DASHBOARD_VARIANTS.map((option) => (
-          <Link
-            key={option}
-            href={`/dashboard?variant=${option}`}
-            aria-current={option === variant ? "page" : undefined}
-            className={
-              option === variant
-                ? "rounded-[var(--radius)] border border-primary bg-primary px-2 py-0.5 text-primary-foreground"
-                : "rounded-[var(--radius)] border border-border px-2 py-0.5 hover:bg-accent hover:text-accent-foreground"
-            }
-          >
-            {t(VARIANT_KEY[option])}
-          </Link>
-        ))}
-      </nav>
+      <PageHeader title={t("title")}>
+        <nav aria-label={t("title")} className="flex flex-wrap gap-1 font-mono text-[10px]">
+          {DASHBOARD_VARIANTS.map((option) => (
+            <Link
+              key={option}
+              href={`/dashboard?variant=${option}`}
+              aria-current={option === variant ? "page" : undefined}
+              className={
+                option === variant
+                  ? "rounded-[var(--radius)] border border-primary bg-primary px-2 py-0.5 text-primary-foreground"
+                  : "rounded-[var(--radius)] border border-border px-2 py-0.5 hover:bg-accent hover:text-accent-foreground"
+              }
+            >
+              {t(VARIANT_KEY[option])}
+            </Link>
+          ))}
+        </nav>
+      </PageHeader>
 
       <div className="grid gap-4">
         {layout.widgets

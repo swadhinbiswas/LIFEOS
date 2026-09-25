@@ -266,7 +266,7 @@ export function BoardView({
   }, [focusedId]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3">
       <BoardToolbar
         view={view}
         onView={(next) => void setViewParam(next === "kanban" ? null : next)}

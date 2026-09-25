@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
+import { PageHeader } from "@/components/tui/page-header";
 import { getServerSession } from "@/server/auth/session";
 import { listGoals } from "@/server/goals";
 
@@ -30,9 +31,7 @@ export default async function GoalsPage() {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        {t("title")}
-      </h1>
+      <PageHeader title={t("title")} count={goals.length} />
 
       <div className="grid max-w-4xl gap-4">
         {stale > 0 ? (

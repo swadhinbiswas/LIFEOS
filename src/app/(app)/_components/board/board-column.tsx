@@ -88,10 +88,10 @@ export function BoardColumn({
       data-slot="board-column"
       data-column-id={column.id}
       data-column-name={column.name}
-      className="flex w-64 shrink-0 flex-col border border-border bg-card"
+      className="flex w-64 shrink-0 flex-col rounded-[var(--radius)] border border-border bg-card"
       aria-label={column.name}
     >
-      <header className="flex items-center gap-2 border-b border-border px-2 py-1.5">
+      <header className="flex items-center gap-2 rounded-t-[var(--radius)] border-b border-border bg-background/60 px-2 py-1.5">
         {column.glyph ? (
           <span aria-hidden="true" className="font-mono text-xs text-muted-foreground">
             {column.glyph}
@@ -102,7 +102,7 @@ export function BoardColumn({
         </h2>
         <span
           className={cn(
-            "font-mono text-[10px] tabular-nums",
+            "rounded-[var(--radius)] border border-border px-1 font-mono text-[10px] tabular-nums",
             overLimit ? "text-warning" : "text-muted-foreground",
           )}
           title={column.wip_limit !== null ? t("wipLimit", { limit: column.wip_limit }) : undefined}

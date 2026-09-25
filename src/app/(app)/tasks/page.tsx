@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/tui/page-header";
 import { getTranslations } from "next-intl/server";
 
 import { getServerSession } from "@/server/auth/session";
@@ -32,16 +33,13 @@ export default async function TasksPage() {
 
   return (
     <>
-      <h1 className="mb-4 font-mono text-sm font-semibold tracking-wider uppercase">
-        {t("title")}
-      </h1>
-      <div className="grid gap-4">
-        <div className="flex justify-end">
-          <CopilotQuickAction
-            label={tCopilot("planMyDay")}
-            prompt="Plan my day: call get_daily_brief, then propose the three most valuable tasks for today and note anything overdue."
-          />
-        </div>
+      <PageHeader title={t("title")} count={payload.cards.length}>
+        <CopilotQuickAction
+          label={tCopilot("planMyDay")}
+          prompt="Plan my day: call get_daily_brief, then propose the three most valuable tasks for today and note anything overdue."
+        />
+      </PageHeader>
+      <div className="grid min-w-0 gap-4">
         <PlanMyDay boardId={board.id} brief={brief} />
         <BoardView boardId={board.id} initialData={payload} />
       </div>
