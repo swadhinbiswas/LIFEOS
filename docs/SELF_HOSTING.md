@@ -32,11 +32,15 @@ Only two variables are required:
 | `BETTER_AUTH_SECRET` | ≥16 chars; `openssl rand -base64 32`   |
 
 Everything else is optional and documented in `.env.example`, grouped by the ADR that introduced it:
-`TURSO_AUTH_TOKEN`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`, Upstash pair, Resend pair + `EMAIL_FROM`,
-OAuth pairs, `BILLING_ENABLED` + Dodo keys, `CRON_SECRET`, the AI keys (`AI_ENCRYPTION_KEY`,
-`TOOL_APPROVAL_SECRET`, `OPENAI_API_KEY`/`ANTHROPIC_API_KEY`/`GOOGLE_GENERATIVE_AI_API_KEY`/
-`OPENROUTER_API_KEY`/`AI_COMPATIBLE_BASE_URL`, `AI_DEFAULT_PROVIDER`, `AI_DEFAULT_MODEL`,
-`AI_SCRIPTED`).
+`TURSO_AUTH_TOKEN`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`, `TRUSTED_ORIGINS`, Upstash pair,
+Resend pair + `EMAIL_FROM`, OAuth pairs, `BILLING_ENABLED` + Dodo keys, `CRON_SECRET`, the AI keys
+(`AI_ENCRYPTION_KEY`, `TOOL_APPROVAL_SECRET`, `OPENAI_API_KEY`/`ANTHROPIC_API_KEY`/
+`GOOGLE_GENERATIVE_AI_API_KEY`/`OPENROUTER_API_KEY`/`AI_COMPATIBLE_BASE_URL`, `AI_DEFAULT_PROVIDER`,
+`AI_DEFAULT_MODEL`, `AI_SCRIPTED`).
+
+If you serve the app on a host that differs from `NEXT_PUBLIC_APP_URL` (a second domain, a tunnel, a
+reverse proxy), list those origins in `TRUSTED_ORIGINS` (comma-separated) or sign-in returns
+`403 INVALID_ORIGIN` — Better Auth only trusts its base URL plus that list (ADR-092).
 
 Paired variables are enforced at boot: setting half of a pair is a startup error, not a silent
 half-configured feature.

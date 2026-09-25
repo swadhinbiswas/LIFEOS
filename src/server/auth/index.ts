@@ -1,6 +1,7 @@
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
+import { networkInterfaces } from "node:os";
 
 import { APP_NAME } from "@/config/app";
 import { env } from "@/env";
@@ -16,6 +17,38 @@ const baseURL = env.BETTER_AUTH_URL ?? env.NEXT_PUBLIC_APP_URL;
 const appOrigin = env.NEXT_PUBLIC_APP_URL ?? env.BETTER_AUTH_URL ?? "http://localhost:3000";
 
 /**
+ * Origins Better Auth accepts state-changing requests from (ADR-092). Better Auth trusts only its
+ * `baseURL` by default, so reaching the app on any other host — a LAN IP while testing on a phone,
+ * a tunnel, a second domain — is rejected `INVALID_ORIGIN` and sign-in appears to do nothing. The
+ * configured app origins are always trusted; `TRUSTED_ORIGINS` adds explicit ones; in development
+ * the machine's own IPv4 addresses are added too, because the dev server is routinely opened over
+ * the LAN and that address changes with the network.
+ */
+function trustedOrigins(): string[] {
+  const origins = new Set<string>();
+  for (const value of [env.BETTER_AUTH_URL, env.NEXT_PUBLIC_APP_URL]) {
+    if (value) origins.add(new URL(value).origin);
+  }
+  for (const value of (env.TRUSTED_ORIGINS ?? "").split(",")) {
+    const origin = value.trim();
+    if (origin) origins.add(origin);
+  }
+  if (process.env.NODE_ENV !== "production") {
+    const port = new URL(appOrigin).port || "3000";
+    origins.add(`http://localhost:${port}`);
+    origins.add(`http://127.0.0.1:${port}`);
+    for (const entries of Object.values(networkInterfaces())) {
+      for (const entry of entries ?? []) {
+        if (entry.family === "IPv4" && !entry.internal) {
+          origins.add(`http://${entry.address}:${port}`);
+        }
+      }
+    }
+  }
+  return [...origins];
+}
+
+/**
  * Better Auth 1.7.5 wired to the LifeOS ERD (ADRs 030/036/037).
  *
  * The model/column overrides below are a contract verified against
@@ -28,6 +61,7 @@ const appOrigin = env.NEXT_PUBLIC_APP_URL ?? env.BETTER_AUTH_URL ?? "http://loca
 export const auth = betterAuth({
   ...(baseURL ? { baseURL } : {}),
   secret: env.BETTER_AUTH_SECRET,
+  trustedOrigins: trustedOrigins(),
 
   database: drizzleAdapter(db, { provider: "sqlite", schema }),
 

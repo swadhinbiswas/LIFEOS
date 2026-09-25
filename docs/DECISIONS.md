@@ -2083,6 +2083,27 @@ is an uncluttered dashboard.
 
 ---
 
+## ADR-092 — Trusted origins: sign-in must work on the host you actually use
+
+- **Status:** accepted (2026-09-25)
+- **Context:** Sign-in worked on `localhost` but failed `403 INVALID_ORIGIN` when the app was opened
+  on the machine's LAN address (`http://192.168.110.3:3000`) — the common way to try it on a phone.
+  Better Auth runs a CSRF/origin check and, by default, trusts only its `baseURL`. `NEXT_PUBLIC_APP_URL`
+  was `http://localhost:3000`, so every other origin was rejected and the form silently did nothing.
+  (The page also isn't a secure context over plain HTTP on an IP, which is why unrelated browser
+  extensions were throwing `crypto.randomUUID is not a function` — noisy, but not the cause.)
+- **Decision:** configure `trustedOrigins` in `src/server/auth/index.ts`: the `BETTER_AUTH_URL` and
+  `NEXT_PUBLIC_APP_URL` origins, plus any comma-separated `TRUSTED_ORIGINS` from the environment, plus
+  — **in development only** — `localhost`, `127.0.0.1` and the machine's own non-internal IPv4
+  addresses on the app port. The LAN address is discovered with `os.networkInterfaces()`, so it keeps
+  working when the network changes and no IP is committed. Production trusts exactly what is
+  configured.
+- **Consequences:** LAN/mobile testing and tunnels sign in without editing config, and self-hosting on
+  a second domain is one env var. Cost: in development the app accepts sign-in origins from its own
+  network interfaces, which is the intended dev trade-off and never applies in production.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

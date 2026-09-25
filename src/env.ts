@@ -30,6 +30,10 @@ const envSchema = z
     BETTER_AUTH_SECRET: z.string().min(16),
     BETTER_AUTH_URL: z.url().optional(),
     NEXT_PUBLIC_APP_URL: z.url().optional(),
+    // ADR-092: extra origins Better Auth accepts state-changing requests from (CSRF check), as a
+    // comma-separated list. Needed when the app is reached on a host other than the base URL
+    // (a LAN IP, a tunnel, a second domain). Development also trusts the machine's own addresses.
+    TRUSTED_ORIGINS: z.string().optional(),
     // ADR-021: both or neither (enforced below); absent = in-memory dev fallback
     UPSTASH_REDIS_REST_URL: z.url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
