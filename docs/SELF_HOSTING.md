@@ -63,6 +63,19 @@ docker run --rm -p 3000:3000 \
 The image runs migrations on start (`pnpm db:migrate`) then `pnpm start`. Mount a volume at `/data`
 so the SQLite file survives restarts.
 
+### Local SQLite: WAL and the lock
+
+The app puts a file-backed database into **WAL** journal mode with a 10 s busy timeout (ADR-102), so
+a read is never blocked by a write and two writers queue instead of erroring out. Two consequences
+for a self-hosted box:
+
+- The database directory gains `lifeos.db-wal` and `lifeos.db-shm` sidecar files. **Back up all
+  three** together, or use `sqlite3 .data/lifeos.db ".backup out.db"` — copying only the `.db` file
+  while the app is running can miss recent writes.
+- WAL needs a filesystem with working shared-memory support. A local disk is fine; some network
+  mounts (older NFS, certain SMB configurations) are not — put the database on local storage, or use
+  Turso (`libsql://…`), where the pragmas are simply ignored.
+
 ## Scheduled work
 
 Three `CRON_SECRET`-guarded routes expect a scheduler (Vercel Cron, QStash, or plain cron):
