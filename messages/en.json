@@ -69,6 +69,7 @@
     "api": "API docs",
     "appearance": "Appearance",
     "aiSettings": "AI settings",
+    "data": "Data",
     "about": "About"
   },
   "Shortcuts": {
@@ -951,6 +952,30 @@
       "featureMcp": "MCP + REST API",
       "featureExports": "Exports and data ownership",
       "featureTeams": "Shared workspaces"
+    },
+    "Data": {
+      "title": "Data",
+      "exportTitle": "Export",
+      "exportIntro": "Download everything you have entered. The files are yours; nothing is sent anywhere.",
+      "exportJson": "full JSON export",
+      "exportNotes": "notes as Markdown",
+      "exportResume": "JSON Resume",
+      "exportCsv": "CSV:",
+      "importTitle": "Import",
+      "importIntro": "Restore a LifeOS JSON export. Notes, cards, habits and goals are restored; anything else is reported as skipped.",
+      "importButton": "choose a file",
+      "importing": "importing…",
+      "importReport": "restored {notes} notes, {cards} cards, {habits} habits, {goals} goals",
+      "importSkipped": "skipped: {list}",
+      "deleteTitle": "Delete account",
+      "deleteIntro": "Deleting schedules a permanent removal after 7 days. You can cancel any time before then.",
+      "deleteRequest": "request deletion",
+      "deleteCancel": "cancel deletion",
+      "deleteScheduled": "scheduled — data is removed after {date}",
+      "deleteNone": "no deletion scheduled",
+      "auditTitle": "Audit log",
+      "auditEmpty": "nothing logged yet",
+      "auditActor": "actor"
     },
     "Capture": {
       "label": "capture a task",

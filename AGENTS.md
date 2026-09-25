@@ -12,12 +12,12 @@ career/CV, habits, notes, finance) rendered as a keyboard-first, TUI-skinned web
    is not optional, never commit secrets, ask only when genuinely blocked.
 2. **Phase gate:** do not start phase N+1 until phase N's checks pass and a status report has been
    given to the user. The user asked to stop at each phase boundary and report.
-   - Current phase: **6 → complete** (AI copilot: provider-agnostic model resolution with a BYO /
-     platform / scripted fallback, approval-gated tools over the shared service layer, signed
-     approvals, injection defense, memory, the proactive brief/review cron, `/ai` + Ctrl/Cmd+J
-     slide-over + `/settings/ai`, and `pnpm eval`; ADR-073…079; gate green: 258 unit + 9 evals,
-     50 e2e twice, build, typecheck, lint). Next: **Phase 7 (billing scaffold, settings, data
-     ownership), awaiting go-ahead**.
+   - Current phase: **7 → complete** (billing scaffold behind `BILLING_ENABLED=false`:
+     config-driven plans, entitlements, subscriptions + idempotent Dodo webhooks, checkout/portal
+     routes, `/settings/billing`, `/pricing`; plus data ownership: export/import, delete-account with
+     a 7-day grace and purge cron, audit-log UI. ADR-080…083; gate green: 271 unit + 9 evals, 52 e2e
+     twice, build, typecheck, lint). Next: **Phase 8 (onboarding, templates, seed, landing),
+     awaiting go-ahead**.
 
 ## Repository map
 

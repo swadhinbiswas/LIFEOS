@@ -1,16 +1,33 @@
-# Handoff — LifeOS in Phase 6
+# Handoff — LifeOS in Phase 7
 
 Read `AGENTS.md` and `prompt.md` first; this file records **state, outstanding gaps and gotchas**,
 not decisions (those are in `docs/DECISIONS.md`).
 
 ## Status
 
-- Phases 0–5 complete and reported. **Phase 6 complete** (AI copilot); awaiting the user's go-ahead
-  for Phase 7 (billing scaffold, settings, data ownership).
+- Phases 0–6 complete and reported. **Phase 7 complete** (billing scaffold, data ownership);
+  awaiting the user's go-ahead for Phase 8 (onboarding, templates, seed, landing).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
-  `pnpm test` **258 passed** ✓ · `pnpm eval` **9 passed, thresholds 100 %** ✓ ·
-  `pnpm e2e` **50 passed, twice** ✓.
-- ADR-044 … ADR-079 record the decisions. Nothing is pushed; all work is on local `master`.
+  `pnpm test` **271 passed** ✓ · `pnpm eval` **9 passed, thresholds 100 %** ✓ ·
+  `pnpm e2e` **52 passed, twice** ✓.
+- ADR-044 … ADR-083 record the decisions. Nothing is pushed; all work is on local `master`.
+
+## Phase 7 — billing scaffold and data ownership (complete)
+
+- Billing: `config/plans.ts` (free/pro/team, free unlimited, prices null until go-live,
+  `FOUNDER_PERKS`), `subscriptions` / `billing_events` / `entitlements` (migration 0012), the single
+  entitlement resolver (`can`/`limit`/`assertWithinLimit`), and `applyBillingEvent` idempotent on the
+  Standard Webhooks `webhook-id` (ADR-080/081).
+- Surface: `POST /api/billing/checkout` (server-set metadata), `GET /api/billing/portal`,
+  `POST /api/webhooks/dodo` (signature-verified, replay is a no-op), `/settings/billing` and public
+  `/pricing`. Everything is hidden unless `BILLING_ENABLED=true` **and** the Dodo keys exist
+  (`billingReady`); the billing nav entry only appears then (ADR-082).
+- Data ownership: `/settings/data` with full JSON export, notes-as-Markdown, JSON Resume and ten
+  per-module CSVs (`/api/data/export`), a partial import (notes/cards/habits/goals; the rest reported
+  as skipped), delete-account with a 7-day grace (`GET /api/cron/purge`) and a read-only audit log
+  (ADR-083).
+- Open risk unchanged: Dodo merchant eligibility for a Bangladesh-domiciled operator (R1); nothing
+  user-facing depends on it while the flag is off.
 
 ## Phase 6 — AI copilot (complete)
 

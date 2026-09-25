@@ -69,6 +69,7 @@
     "api": "এপিআই ডকস",
     "appearance": "চেহারা",
     "aiSettings": "এআই সেটিংস",
+    "data": "ডেটা",
     "about": "পরিচিতি"
   },
   "Shortcuts": {
@@ -951,6 +952,30 @@
       "featureMcp": "MCP + REST API",
       "featureExports": "এক্সপোর্ট ও ডেটা মালিকানা",
       "featureTeams": "শেয়ার করা ওয়ার্কস্পেস"
+    },
+    "Data": {
+      "title": "ডেটা",
+      "exportTitle": "এক্সপোর্ট",
+      "exportIntro": "আপনি যা লিখেছেন সব ডাউনলোড করুন। ফাইলগুলো আপনার; কোথাও পাঠানো হয় না।",
+      "exportJson": "সম্পূর্ণ JSON এক্সপোর্ট",
+      "exportNotes": "নোট Markdown হিসেবে",
+      "exportResume": "JSON রেজুমে",
+      "exportCsv": "CSV:",
+      "importTitle": "ইমপোর্ট",
+      "importIntro": "একটি LifeOS JSON এক্সপোর্ট ফিরিয়ে আনুন। নোট, কার্ড, অভ্যাস ও লক্ষ্য ফেরে; বাকিগুলো বাদ পড়েছে হিসেবে জানানো হয়।",
+      "importButton": "একটি ফাইল বেছে নিন",
+      "importing": "ইমপোর্ট হচ্ছে…",
+      "importReport": "ফিরেছে {notes} নোট, {cards} কার্ড, {habits} অভ্যাস, {goals} লক্ষ্য",
+      "importSkipped": "বাদ পড়েছে: {list}",
+      "deleteTitle": "অ্যাকাউন্ট মুছুন",
+      "deleteIntro": "মুছলে ৭ দিন পরে স্থায়ীভাবে সরানো হবে। তার আগে যেকোনো সময় বাতিল করতে পারেন।",
+      "deleteRequest": "মুছে ফেলার অনুরোধ",
+      "deleteCancel": "অনুরোধ বাতিল",
+      "deleteScheduled": "নির্ধারিত — {date}-এর পরে ডেটা সরানো হবে",
+      "deleteNone": "কোনো মুছে ফেলা নির্ধারিত নেই",
+      "auditTitle": "অডিট লগ",
+      "auditEmpty": "এখনো কিছু লেখা হয়নি",
+      "auditActor": "কর্তা"
     },
     "Capture": {
       "label": "একটি কাজ ক্যাপচার করুন",

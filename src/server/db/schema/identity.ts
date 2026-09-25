@@ -36,6 +36,9 @@ export const users = sqliteTable("users", {
   joined_during_free_period: integer("joined_during_free_period", { mode: "boolean" })
     .notNull()
     .default(true),
+  // spec §10 / ADR-083: a hard delete is scheduled, not immediate. Null = no request; the purge
+  // cron removes accounts whose grace period has passed.
+  deletion_requested_at: integer("deletion_requested_at", { mode: "timestamp_ms" }),
   created_at: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   updated_at: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
 });

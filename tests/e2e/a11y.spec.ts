@@ -63,6 +63,7 @@ const SHELL_ROUTES = [
   "/settings/integrations",
   "/settings/ai",
   "/settings/billing",
+  "/settings/data",
   "/ai",
   "/docs/api",
   "/about",

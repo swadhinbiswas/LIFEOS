@@ -23,6 +23,9 @@ export default async function PricingPage() {
 
       <div className="grid max-w-3xl gap-4">
         <p className="font-mono text-[10px] text-muted-foreground">{t("intro")}</p>
+        {!billingEnabled ? (
+          <p className="font-mono text-[10px] text-muted-foreground">{t("comingSoon")}</p>
+        ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2">
           {plans.map((plan) => (

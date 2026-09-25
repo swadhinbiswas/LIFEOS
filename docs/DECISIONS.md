@@ -1921,6 +1921,14 @@ build` per run, cached by `.next` locally and cold in CI.
   is surfaced read-only at `/settings/data`. Nothing is exported or purged across users.
 - **Consequences:** a user can always see and take their data; a mistaken delete is recoverable for
   a week. Cost: the purge job and the export surface must be kept in step with new modules.
+- **Completion (2026-09-25):** `/settings/data` exports the full JSON (`/api/data/export?format=json`),
+  notes as Markdown, JSON Resume and ten per-module CSVs; import restores **notes, cards, habits and
+  goals** through the owning services and names everything else as `skipped` rather than dropping it
+  silently; delete-account records `users.deletion_requested_at` with a **7-day** grace, is
+  cancellable, and `GET /api/cron/purge` (`CRON_SECRET`) removes expired accounts. The audit log is
+  read-only here. Two boundaries recorded rather than hidden: import is intentionally partial (a
+  board hierarchy and finance balances need a bespoke restore), and cancellation is an explicit
+  action on this page instead of an implicit "sign-in cancels it" hook.
 
 ---
 
