@@ -18,15 +18,16 @@ export interface DocEntry {
 
 export const DOCS: DocEntry[] = [
   { slug: "readme", title: "README", path: "README.md", phase: "Phase 0" },
+  { slug: "architecture", title: "Architecture", path: "docs/ARCHITECTURE.md", phase: "Phase 9" },
+  { slug: "security", title: "Security", path: "docs/SECURITY.md", phase: "Phase 9" },
+  { slug: "self-hosting", title: "Self-hosting", path: "docs/SELF_HOSTING.md", phase: "Phase 9" },
+  { slug: "release", title: "Release", path: "docs/RELEASE.md", phase: "Phase 9" },
   { slug: "handoff", title: "Handoff", path: "docs/HANDOFF.md", phase: "Phase 0" },
   { slug: "decisions", title: "Decisions", path: "docs/DECISIONS.md", phase: "Phase 0" },
   { slug: "scope", title: "MVP scope", path: "docs/MVP-SCOPE.md", phase: "Phase 0" },
   { slug: "research", title: "Research", path: "docs/RESEARCH.md", phase: "Phase 0" },
   { slug: "erd", title: "Data model", path: "docs/ERD.md", phase: "Phase 0" },
   { slug: "ingest", title: "Ingest", path: "docs/INGEST.md", phase: "Phase 5" },
-  { slug: "architecture", title: "Architecture", path: "docs/ARCHITECTURE.md", phase: "Phase 9" },
-  { slug: "security", title: "Security", path: "docs/SECURITY.md", phase: "Phase 9" },
-  { slug: "self-hosting", title: "Self-hosting", path: "docs/SELF_HOSTING.md", phase: "Phase 9" },
 ];
 
 export function docBySlug(slug: string): DocEntry | null {

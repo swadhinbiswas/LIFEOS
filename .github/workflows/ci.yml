@@ -30,6 +30,10 @@ jobs:
         run: pnpm lint
       - name: format
         run: pnpm format:check
+      # §10: dependency audit. Fails on high/critical; the one known moderate is tracked in
+      # docs/SECURITY.md (dev-only esbuild via drizzle-kit).
+      - name: audit
+        run: pnpm audit --audit-level high
       - name: test
         run: pnpm test
         env:

@@ -21,6 +21,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/server/seed/cli.ts",
+    "load": "node scripts/load.mjs",
+    "lighthouse": "pnpm dlx @lhci/cli autorun",
     "prepare": "husky"
   },
   "dependencies": {

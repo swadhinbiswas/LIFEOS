@@ -1,16 +1,28 @@
-# Handoff — LifeOS in Phase 8
+# Handoff — LifeOS v0.1.0 (Phases 0–9 complete)
 
 Read `AGENTS.md` and `prompt.md` first; this file records **state, outstanding gaps and gotchas**,
 not decisions (those are in `docs/DECISIONS.md`).
 
 ## Status
 
-- Phases 0–7 complete and reported. **Phase 8 complete** (onboarding, templates, seed, landing);
-  awaiting the user's go-ahead for Phase 9 (hardening and release).
+- Phases 0–9 complete and released as **v0.1.0**. See `docs/RELEASE.md` for the release checklist
+  (two items remain: Lighthouse budgets and the Vercel preview deploy, both needing an environment
+  this run did not have).
 - Last verified gate (clean tree): `typecheck` · `lint` · `format:check` · `build` ✓ ·
   `pnpm test` **271 passed** ✓ · `pnpm eval` **9 passed, thresholds 100 %** ✓ ·
-  `pnpm e2e` **57 passed, twice** ✓.
-- ADR-044 … ADR-087 record the decisions. Nothing is pushed; all work is on local `master`.
+  `pnpm e2e` **57 passed** ✓ · load test **1419 req/s, p95 26 ms** ✓.
+- ADR-044 … ADR-087 record the decisions. Tagged `v0.1.0` locally; nothing is pushed.
+
+## Phase 9 — hardening and release (complete)
+
+- `docs/ARCHITECTURE.md`, `docs/SECURITY.md` (review against §10 with the honest gaps),
+  `docs/SELF_HOSTING.md`, `docs/RELEASE.md`, `CHANGELOG.md`, a `Dockerfile` + `.dockerignore`,
+  `GET /api/health`, `.github/dependabot.yml`, a `pnpm audit` CI step, `lighthouserc.json`,
+  `scripts/load.mjs`, and `pnpm load` / `pnpm lighthouse` scripts.
+- The in-app `/docs` now renders Architecture, Security, Self-hosting and Release alongside the
+  project documents.
+- Security review found one acceptance-worthy gap (webhook secrets stored plaintext) and one
+  moderate dev-only dependency advisory; both are recorded with next steps rather than hidden.
 
 ## Phase 8 — onboarding, templates, seed, landing (complete)
 

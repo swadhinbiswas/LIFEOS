@@ -1,0 +1,8 @@
+node_modules
+.next
+.git
+.github
+.data
+tests/e2e/.e2e.db*
+docs/reference
+*.log

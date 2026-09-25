@@ -12,11 +12,11 @@ career/CV, habits, notes, finance) rendered as a keyboard-first, TUI-skinned web
    is not optional, never commit secrets, ask only when genuinely blocked.
 2. **Phase gate:** do not start phase N+1 until phase N's checks pass and a status report has been
    given to the user. The user asked to stop at each phase boundary and report.
-   - Current phase: **8 → complete** (seed generated from the research file with profiles, the
-     three-step `/onboarding` on `users.onboarded_at`, the template gallery, the public TUI-hero
-     landing and a no-account read-only `/demo`, and the in-app `/docs` site. ADR-080…087; gate
-     green: 271 unit + 9 evals, 57 e2e twice, build, typecheck, lint). Next: **Phase 9 (hardening
-     and release), awaiting go-ahead**.
+   - Current phase: **9 → complete** (hardening and release): `docs/{ARCHITECTURE,SECURITY,
+SELF_HOSTING,RELEASE}.md`, CHANGELOG, Dockerfile, `/api/health`, dependabot + audit CI,
+     Lighthouse config, a load-test script (ran at 1419 req/s, p95 26 ms). Gate green: 271 unit +
+     9 evals, 57 e2e, build, typecheck, lint. Tagged **v0.1.0** locally. Next: v1.1 backlog
+     (docs/RELEASE.md + CHANGELOG list the open items).
 
 ## Repository map
 
