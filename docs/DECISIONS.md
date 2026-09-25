@@ -2398,6 +2398,43 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   CLS at zero. Lighthouse still needs Chrome, so the run stays a documented step rather than part of
   the unit gate.
 
+## ADR-110 — Activity tracking pulls from WakaTime; LifeOS does not re-implement heartbeats
+
+- **Status:** accepted (2026-09-26)
+- **Context:** the request is to track coding activity the way WakaTime does — from the
+  WakaTime CLI, the OpenCode plugin, a phone, and any agent harness — and show it on a real
+  dashboard. Verified against the official WakaTime developer docs on 2026-09-26 rather than from
+  memory:
+  - the API base is https://api.wakatime.com/api/v1/, authenticated with HTTP Basic, the API key
+    base64-encoded and prefixed Basic (OAuth2 is also offered);
+  - GET /users/current/summaries?start&end returns one summary per day, and each day now carries
+    ai_additions, ai_deletions, human_additions, human_deletions, per-model line counts and
+    per-model **costs**, so AI usage is measurable rather than guessable;
+  - GET /users/current/stats[/<range>] covers last_7_days through all_time and reports
+    is_up_to_date, so a stale response is detectable;
+  - POST /users/current/heartbeats exists, and the docs explicitly say an integration normally
+    should not use it and should let wakatime-cli send heartbeats;
+  - there is an official WakaTime plugin for OpenCode: add @wakatime/opencode-wakatime to the
+    plugin array in opencode.json and keep the key in ~/.wakatime.cfg.
+    That last point settles the architecture. WakaTime already aggregates every editor plugin, the
+    CLI, the OpenCode plugin and a phone app behind one account. A second heartbeat pipeline inside
+    LifeOS would double-count the same keystrokes and re-implement a solved problem.
+- **Decision:** LifeOS is a WakaTime client, not a competitor. The API key is stored encrypted
+  at rest with the existing ADR-074 AES-256-GCM helper (never returned in plaintext, only a masked
+  hint), a bounded sync pulls daily summaries into a local cache keyed by day, and a fifth dashboard
+  variant renders coding time, AI-versus-human lines and cost, languages, editors and projects from
+  that cache. Every figure shown is what WakaTime reported: LifeOS stores and renders, and never
+  invents or re-derives a WakaTime number. A sync failure is fail-open — the last synced series
+  stays, with the error shown in place.
+- **Consequences:** setup is one API key, and the phone, CLI, OpenCode and any-plugin story is
+  solved by WakaTime itself rather than by four integrations. The local table is a cache of a remote
+  source, which is the one case where this repo accepts denormalised rows: the source cannot be
+  queried offline, so a chart would otherwise need a network round trip per render. Re-syncing a
+  day is idempotent, so a retry cannot double-count. Real data needs the user's own key, so it
+  cannot be exercised end to end here: the sync is covered by a fixture test against the documented
+  shape and a live run stays a manual step. A push endpoint for harnesses with no WakaTime plugin is
+  left for later, recorded as a manual source rather than pretended for now.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs
