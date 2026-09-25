@@ -2351,6 +2351,53 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   advertise now have their own widget. `?variant=career` is already inside the axe sweep;
   `?variant=productivity` should join it.
 
+## ADR-105 — The response rate is stage-aware, and its denominator is what you actually sent
+
+- **Status:** accepted (2026-09-26)
+- **Context:** getFunnel counted an application as a response when its stage history had more than one entry, over a denominator of every card on the board. That is wrong twice. An application still sitting in Wishlist was never sent and sat in the denominator, halving the rate of a healthy pipeline. A pipeline seeded or imported straight into Screening has a single history entry, so it read zero responses while plainly having one — the demo workspace showed 0% next to an Accepted stage.
+- **Decision:** the numerator asks whether a stage past Applied was ever _reached_ (the current column, or any history entry), and the denominator counts only applications that left the entry column. Board order is pipeline order, so the threshold is a position in the user's own columns: Applied when the template provides it, otherwise the second column. The funnel now exposes sent and responded alongside the rate, so the UI can say what the number counts rather than paraphrasing it.
+- **Consequences:** a never-sent pipeline reports 0 instead of dividing by wishlist rows, and a hand-built or imported pipeline reports what the user can see. The rate is deliberately not a vanity metric: it cannot exceed the share of applications the user actually sent that got an answer. The existing fixture's expected value moves from 0.5 to 1, which is the fix rather than a regression, and two new cases cover the imported-pipeline and never-sent cases.
+
+## ADR-106 — The AI brief is a surface, not a notification body
+
+- **Status:** accepted (2026-09-26)
+- **Context:** deliverProactive has always written the morning brief into a system notification, and the only place that text was ever rendered was one truncated line in the notification list, with a link to /ai, a page that never reads notifications. The AI was writing a three-to-five line brief that no one could read. The cron path was correct; only the delivery was invisible.
+- **Decision:** a read side (latestBrief) plus a user-initiated re-run (regenerateBrief) and a today.brief widget that shows the model's own text with its line breaks preserved. A re-run replaces today's row instead of adding one, so the notification centre cannot accumulate duplicates, and the cron still dedupes on ai:brief:<day>. Only a user's own click can trigger a re-run. The opt-out is not a block on an explicit request, and a re-run never switches a user from in-app to email.
+- **Consequences:** the loop the copilot was built for is closed: generate, read, refresh. The brief is rendered as text, never HTML (spec §10), so it cannot inject markup. When no brief exists the widget explains the opt-in and links to AI settings rather than showing an empty box, and the one actionable failure, no provider configured, is reported in place.
+
+## ADR-107 — One trend surface for the charts, the tool and the copilot's context
+
+- **Status:** accepted (2026-09-26)
+- **Context:** not one of the 30 AI tools returned a time series. get_daily_brief, list_habits and get_pipeline_stats are all snapshots, so the most natural question for a personal OS, am I trending up or down, was the one the copilot could only answer by guessing. The dashboard already computed exactly those series for its charts.
+- **Decision:** getTrends composes the three series the dashboard renders (focus minutes, habit consistency, completed cards) into totals for the window, the last seven days, and the change against the seven before. It is exposed as get_trends, a read tool, and its one-line summary rides in the system context so the model knows the direction before it is asked. A percent change is null when the earlier window is empty: a zero base has no direction, and reporting 0% or 100% there would be inventing data.
+- **Consequences:** aggregates rather than row dumps, so a trend question costs a fraction of a series. Three eval fixtures pin the tool selection, and the tool is a thin adapter over services the UI already calls, so it can never show a number the dashboard does not.
+
+## ADR-108 — Starter layouts are a template, not a second layout format
+
+- **Status:** accepted (2026-09-26)
+- **Context:** the widget registry made every variant customizable (ADR-046), but a new account arrives at every widget in registry order — a defensible default and a poor first impression. There were board templates and seed profiles, and nothing equivalent for dashboards.
+- **Decision:** a template is a named list of widget ids for one variant, expanded by templateLayout into a _complete_ layout (its widgets visible and in order, every other widget for the variant hidden) and saved through the same saveLayout service the reorder buttons use. Ids not registered for that variant are dropped, so a typo cannot be written to a user's layout. A small set ships per variant, ending with everything.
+- **Consequences:** no second persistence format and no migration, and a template can never produce a layout the user could not have built by hand. Applying one replaces the current layout, which the disclosure says out loud, because silently hiding a widget a user just configured would be the surprising part.
+
+## ADR-109 — The performance budget is measured, and the a11y sweep needs data
+
+- **Status:** accepted (2026-09-26)
+- **Context:** the Lighthouse item on the release checklist had never been run, and the axe sweep
+  signed in a brand-new account, so every data-dependent widget was invisible to it. Measuring the
+  dashboard properly - a production build, signed in, seeded, over all four variants - put
+  accessibility at 96 on the today variant and found two violations the suite could not: a top-3
+  link with no padding (a real touch-target failure, not only an audit one) and a search button whose
+  visible key caps were part of its text but not of its accessible name.
+- **Decision:** the top-3 row is a real target (min-h-8, centred) and the search button key caps are
+  aria-hidden, so the accessible name is the visible word. The sweep itself is fixed: it creates a
+  card and a habit before scanning, so widgets that only appear with data are covered. The measured
+  budgets are recorded in docs/RELEASE.md rather than left as a promise.
+- **Consequences:** a blank-account sweep is a weak gate for any dashboard - it cannot see a chart, a
+  streak, a queue or a top-3 row, and every one of those is where the violations were. The budget is
+  now evidence: four extra charts and a full widget set hold performance 98 and accessibility 100 with
+  CLS at zero. Lighthouse still needs Chrome, so the run stays a documented step rather than part of
+  the unit gate.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

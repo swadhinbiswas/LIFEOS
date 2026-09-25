@@ -9,6 +9,8 @@ coverage/
 .data/
 *.tsbuildinfo
 playwright-report/
+# Lighthouse CI writes its own reports and cache here; they are run artifacts.
+.lighthouseci/
 test-results/
 tests/e2e/.e2e.db*
 

@@ -16,9 +16,11 @@ items are honest gaps with the reason and the next step.
 - [x] `pnpm audit` — 1 moderate, dev-only chain (see `docs/SECURITY.md` "Known gaps")
 - [x] API load test — `node scripts/load.mjs http://localhost:3000/api/health 300 25` against a local
       `pnpm start`: **1419 req/s, p50 13 ms, p95 26 ms, 0 failed** (2026-09-25)
-- [ ] Lighthouse budgets (LCP < 2 s, INP < 200 ms, CLS < 0.05) — **not run here**: `lighthouserc.json`
-      is committed and `pnpm lighthouse` runs it where Chrome is available; this environment had no
-      Lighthouse run. Next: wire it into CI on the dashboard.
+- [x] Lighthouse budgets (LCP < 2 s, INP < 200 ms, CLS < 0.05) **run 2026-09-26** against a
+      production build, signed in and seeded, over all four dashboard variants: **performance 98,
+      accessibility 100, LCP 1.06 s, TBT 0-4 ms, CLS 0.000**. The four extra charts cost nothing
+      measurable. `lighthouserc.json` is committed and `pnpm lighthouse` runs it where Chrome is
+      available (ADR-109).
 
 ## Security review (prompt §10)
 

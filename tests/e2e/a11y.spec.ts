@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
 
-import { createVerifiedUser, signIn, uniqueEmail } from "./helpers";
+import { createVerifiedUser, serverCard, signIn, uniqueEmail } from "./helpers";
 
 const axeSource = readFileSync(require.resolve("axe-core/axe.min.js"), "utf8");
 
@@ -117,6 +117,17 @@ test("axe: signed-in shell passes in every preset", async ({ page }) => {
 
   await createVerifiedUser(page, email);
   await signIn(page, email);
+
+  // A blank account hides data-dependent widgets: no cards means no top-3 rows, no habits
+  // means no chart. Lighthouse found a touch-target violation on a row that a blank
+  // sweep can never render, so the scan gets a card and a habit first (ADR-109).
+  await page.goto("/tasks");
+  await page.getByLabel("add a card to Inbox").fill("axe card");
+  await page.keyboard.press("Enter");
+  await expect(serverCard(page, "Inbox", "axe card")).toBeVisible();
+  await page.goto("/habits");
+  await page.getByLabel("habit name").fill("axe habit");
+  await page.getByRole("button", { name: "add habit" }).click();
 
   for (const preset of PRESETS) {
     await page.goto("/settings/appearance");

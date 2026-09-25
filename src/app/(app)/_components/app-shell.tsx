@@ -293,8 +293,14 @@ export function AppShell({
           >
             <Search aria-hidden="true" className="size-3.5 shrink-0" />
             <span className="hidden truncate sm:inline">{tShell("search")}</span>
-            <Kbd className="ml-auto hidden sm:inline">Ctrl</Kbd>
-            <Kbd className="hidden sm:inline">K</Kbd>
+            {/* The key caps are a visual hint; the accessible name is the visible word, so
+                they are hidden from assistive tech (axe label-content-name-mismatch). */}
+            <Kbd aria-hidden="true" className="ml-auto hidden sm:inline">
+              Ctrl
+            </Kbd>
+            <Kbd aria-hidden="true" className="hidden sm:inline">
+              K
+            </Kbd>
           </button>
           {focus ? (
             <Button
