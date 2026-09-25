@@ -85,6 +85,11 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 
   return (
     <style
+      // The theme CSS is a style node in the React tree, and dark-mode extensions (Dark Reader and
+      // friends) rewrite style nodes before hydration — e.g. adding `native-dark-class-modified`.
+      // That mutation is theirs, not a mismatch in our HTML, so skip diffing this node rather than
+      // logging a hydration error nobody can fix in the app.
+      suppressHydrationWarning
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
