@@ -9,8 +9,17 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { useTranslations } from "next-intl";
+import { MoreHorizontal } from "lucide-react";
 import { useMemo } from "react";
 
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -136,6 +145,7 @@ function GroupTable({
                   )}
                 </TableHead>
               ))}
+              <TableHead className="w-10" />
             </TableRow>
           ))}
         </TableHeader>
@@ -145,18 +155,45 @@ function GroupTable({
               {row.getAllCells().map((cell) => (
                 <TableCell key={cell.id}>
                   {cell.column.id === "title" ? (
-                    <button
-                      type="button"
-                      className="text-left hover:text-primary"
-                      onClick={() => onOpen(row.original.id)}
-                    >
-                      <table.FlexRender cell={cell} />
-                    </button>
+                    <span className="flex items-center gap-2">
+                      <Avatar className="size-5">
+                        <AvatarFallback className="font-mono text-[10px]">
+                          {(row.original.title.trim()[0] ?? "·").toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <button
+                        type="button"
+                        className="text-left hover:text-primary"
+                        onClick={() => onOpen(row.original.id)}
+                      >
+                        <table.FlexRender cell={cell} />
+                      </button>
+                    </span>
                   ) : (
                     <table.FlexRender cell={cell} />
                   )}
                 </TableCell>
               ))}
+              <TableCell className="w-10 text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`${t("openCard", { title: row.original.title })}`}
+                      data-slot="row-menu"
+                    >
+                      <MoreHorizontal aria-hidden="true" className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => onOpen(row.original.id)}>
+                      {t("open")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

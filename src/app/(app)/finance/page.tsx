@@ -17,6 +17,7 @@ import {
   AddTransactionForm,
 } from "./_components/finance-forms";
 import { SubscriptionControls } from "./_components/subscription-controls";
+import { SpendChart } from "./_components/spend-chart";
 
 export const metadata = { title: "Finance" };
 
@@ -82,6 +83,18 @@ export default async function FinancePage() {
           title={t("thisMonth", { month: summary.month })}
           hint={t("currencies", { count: summary.totals.length })}
         >
+          {summary.totals.length > 0 ? (
+            <SpendChart
+              data={summary.totals.map((total) => ({
+                currency: total.currency,
+                income: total.incomeMinor / 100,
+                spend: total.spendMinor / 100,
+              }))}
+              title={t("chartTitle")}
+              incomeLabel={t("income")}
+              spendLabel={t("expense")}
+            />
+          ) : null}
           {summary.totals.length === 0 ? (
             <p className="font-mono text-xs text-muted-foreground">{t("nothingRecorded")}</p>
           ) : (

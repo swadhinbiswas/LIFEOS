@@ -5,11 +5,13 @@ import { getTranslations } from "next-intl/server";
 import { Panel } from "@/components/tui/panel";
 import { EmptyState } from "@/components/tui/empty-state";
 import { PageHeader } from "@/components/tui/page-header";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getServerSession } from "@/server/auth/session";
 import { listNotes, searchNotes } from "@/server/notes";
 import { listIdsByTag, listTags, listTagsForMany } from "@/server/tags";
 
 import { NewNote } from "./_components/new-note";
+import { NoteRowMenu } from "./_components/note-row-menu";
 
 export const metadata = { title: "Notes" };
 
@@ -133,6 +135,11 @@ export default async function NotesPage({ searchParams }: PageProps) {
                   data-slot="note-row"
                   className="flex flex-wrap items-baseline gap-2 rounded-[var(--radius)] border border-border px-2 py-1.5 transition-colors hover:border-ring"
                 >
+                  <Avatar className="size-5 self-center">
+                    <AvatarFallback className="font-mono text-[10px]">
+                      {(note.title.trim()[0] ?? "·").toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                   <Link
                     href={`/notes/${note.id}`}
                     className="font-mono text-xs text-primary hover:underline"
@@ -161,6 +168,10 @@ export default async function NotesPage({ searchParams }: PageProps) {
                   <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-muted-foreground">
                     {note.excerpt}
                   </span>
+                  <NoteRowMenu
+                    noteId={note.id}
+                    title={note.title === "" ? t("untitled") : note.title}
+                  />
                 </li>
               ))}
             </ul>
