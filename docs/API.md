@@ -41,14 +41,14 @@ quote it in a bug report.
 
 ## Conventions
 
-| Concern         | Behaviour                                                                            |
-| --------------- | ------------------------------------------------------------------------------------ |
-| Pagination      | Cursor: `?limit=50&cursor=…`; the response carries `next_cursor` until the last page |
-| Filtering       | Resource-specific query params, e.g. `?status=applied&board_id=…&q=…&due_before=…`   |
-| Field selection | `?fields=id,title,due_at` returns only those keys                                    |
-| Concurrency     | Reads return `ETag`; send `If-Match` on updates, or a stale write returns `409`      |
-| Idempotency     | `Idempotency-Key: <uuid>` on any `POST` makes a retry safe                           |
-| Rate limits     | Per key and per IP; `X-RateLimit-*` and `Retry-After` headers on every response      |
+| Concern         | Behaviour                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Pagination      | Cursor: `?limit=50&cursor=…`; the response carries `next_cursor` until the last page                                            |
+| Filtering       | Resource-specific query params, e.g. `?status=applied&board_id=…&q=…&due_before=…`                                              |
+| Field selection | `?fields=id,title,due_at` returns only those keys                                                                               |
+| Concurrency     | Reads return `ETag`; send `If-Match` on updates, or a stale write returns `409`                                                 |
+| Idempotency     | `Idempotency-Key: <uuid>` on any `POST` makes a retry safe while Redis is available; a cache outage does not block the mutation |
+| Rate limits     | Per key and per IP; `X-RateLimit-*` and `Retry-After` headers on every response                                                 |
 
 ## Resources
 

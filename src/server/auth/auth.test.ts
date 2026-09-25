@@ -132,6 +132,10 @@ describe("auth end-to-end over the ERD schema (adr-030/036/037)", () => {
     );
     if (!sessionSetCookie)
       throw new Error(`sign-in set no session cookie: ${setCookies.join(" | ")}`);
+    expect(
+      setCookies.some((entry) => entry.startsWith("better-auth.session_data=")),
+      "ADR-099: sign-in should seed the short-lived encrypted session cache",
+    ).toBe(true);
     sessionCookieHeader = sessionSetCookie.split(";")[0] ?? "";
 
     const session = await one("SELECT * FROM sessions WHERE token = ?", [sessionToken]);

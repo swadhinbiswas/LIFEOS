@@ -43,7 +43,11 @@ reverse proxy), list those origins in `TRUSTED_ORIGINS` (comma-separated) or sig
 `403 INVALID_ORIGIN` — Better Auth only trusts its base URL plus that list (ADR-092).
 
 Paired variables are enforced at boot: setting half of a pair is a startup error, not a silent
-half-configured feature.
+half-configured feature. When the Upstash pair is present, Redis accelerates Better Auth sessions,
+rate limits and API idempotency but is never the source of truth. Normal session reads use a
+five-minute encrypted cookie cache; Redis commands make one attempt that aborts after 500 ms, and
+cache/rate-limit/idempotency paths fail open. If Redis is slow or unavailable, expect a cache miss
+or a bounded request rather than a multi-second retry hang (ADR-099).
 
 ## Docker
 

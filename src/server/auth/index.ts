@@ -77,6 +77,10 @@ export const auth = betterAuth({
   session: {
     modelName: "sessions",
     storeSessionInDatabase: true, // DB = source of truth, secondary = cache (ADR-037)
+    // ADR-099: normal reads use a short encrypted cookie cache, avoiding a remote Upstash
+    // round-trip for every layout/page render. Sensitive Better Auth operations still request an
+    // authoritative server-side read, and the database remains the source of truth.
+    cookieCache: { enabled: true, strategy: "jwe", maxAge: 300, refreshCache: false },
     fields: {
       expiresAt: "expires_at",
       createdAt: "created_at",

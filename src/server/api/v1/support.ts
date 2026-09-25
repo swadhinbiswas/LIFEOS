@@ -4,6 +4,8 @@ import { redis } from "@/server/redis/client";
  * Cross-cutting REST concerns (spec §9.1, ADR-063): an opaque keyset cursor, sparse fields, an
  * Idempotency-Key cache and a per-actor rate limit. The cursor is base64 so clients treat it as
  * opaque; the idempotency and rate-limit stores are the existing Redis (Upstash or the dev stub).
+ * The idempotency cache is best-effort: a Redis outage must not turn a committed mutation into a
+ * 500, so both cache operations fail open (ADR-099).
  */
 
 export interface KeysetCursor {
@@ -70,7 +72,14 @@ export async function idempotent(
   run: () => Promise<Response>,
 ): Promise<Response> {
   const storeKey = `idem:${userId}:${key}`;
-  const cached = await redis.get(storeKey);
+  let cached: unknown = null;
+  try {
+    cached = await redis.get(storeKey);
+  } catch {
+    // The cache is an optimisation, not the mutation's source of truth. If Redis is unavailable,
+    // run the request rather than turning a cache outage into a 500 before the mutation happens.
+    cached = null;
+  }
   if (typeof cached === "string") {
     return new Response(cached, {
       status: 200,
@@ -81,7 +90,12 @@ export async function idempotent(
   const response = await run();
   if (response.ok) {
     const body = await response.clone().text();
-    await redis.set(storeKey, body, IDEMPOTENCY_TTL_SECONDS);
+    try {
+      await redis.set(storeKey, body, IDEMPOTENCY_TTL_SECONDS);
+    } catch {
+      // The mutation already committed. Never replace its real response with a cache-write error;
+      // a retry may run again while Redis is down, which is the documented availability tradeoff.
+    }
   }
   return response;
 }

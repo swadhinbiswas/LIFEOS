@@ -1,11 +1,11 @@
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 
 import { THEME_COOKIE } from "@/config/app";
 import { parseThemeOverrides } from "@/config/themes";
 import { billingReady } from "@/env";
-import { auth } from "@/server/auth";
+import { getServerSession } from "@/server/auth/session";
 import { getRunningSession } from "@/server/focus";
 import { isOnboarded } from "@/server/onboarding";
 import { unreadCount } from "@/server/notifications";
@@ -22,7 +22,7 @@ import { AppProviders } from "./_providers/app-providers";
  * overrides in `user_settings`, those win on hydration and follow them across devices.
  */
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
   const cookieStore = await cookies();

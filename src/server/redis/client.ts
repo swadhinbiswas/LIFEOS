@@ -23,6 +23,14 @@ export const TAKE_SCRIPT = `local v = redis.call("GET", KEYS[1])
 if v then redis.call("DEL", KEYS[1]) end
 return v`;
 
+/**
+ * ADR-099: Redis is an accelerator, never a request-blocking dependency. Upstash's SDK defaults
+ * to five retries; with a remote outage that turns one cache read into a multi-second wait. A
+ * fresh signal is created for every command, and the single attempt is bounded to 500 ms. Callers
+ * that can safely fall back (Better Auth secondary storage and the API limiter) do so explicitly.
+ */
+const UPSTASH_TIMEOUT_MS = 500;
+
 /** The operations LifeOS uses from Redis today; both backends implement exactly this. */
 export interface RedisClient {
   get(key: string): Promise<unknown>;
@@ -115,7 +123,14 @@ class MemoryClient implements RedisClient {
 export const redis: RedisClient =
   hasUpstash && env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
     ? new UpstashClient(
-        new Redis({ url: env.UPSTASH_REDIS_REST_URL, token: env.UPSTASH_REDIS_REST_TOKEN }),
+        new Redis({
+          url: env.UPSTASH_REDIS_REST_URL,
+          token: env.UPSTASH_REDIS_REST_TOKEN,
+          signal: () => AbortSignal.timeout(UPSTASH_TIMEOUT_MS),
+          // `retry: false` still performs two SDK attempts; zero retries is the explicit
+          // single-attempt policy this accelerator needs.
+          retry: { retries: 0, backoff: () => 0 },
+        }),
       )
     : new MemoryClient();
 

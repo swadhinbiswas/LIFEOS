@@ -19,9 +19,15 @@ implied.
   (buttons appear only when the provider's env pair is set — ADR-023).
 - Sessions live in the database with a secondary storage cache; cookies are httpOnly/SameSite, and
   the root layout performs the real session check (the proxy only redirects on cookie presence,
-  ADR-026).
+  ADR-026). Normal reads also use Better Auth's encrypted five-minute JWE session cache so a remote
+  Redis round trip is not required for every render; that means a revoked session can remain
+  authorized for up to five minutes on ordinary page reads. Sensitive auth operations use the
+  authoritative server-side path, sign-out clears the cache, and the database remains the source of
+  truth (ADR-099).
 - Login and reset are rate-limited (Upstash sliding window; in-memory fallback) with a documented
-  ceiling override for tests (ADR-039).
+  ceiling override for tests (ADR-039). Redis commands make one attempt with a 500 ms abort;
+  cache/rate-limit/idempotency callers fail open explicitly rather than turning a cache outage into
+  a hang.
 
 ## API keys
 

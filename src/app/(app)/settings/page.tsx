@@ -1,10 +1,9 @@
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { PageHeader } from "@/components/tui/page-header";
-import { auth } from "@/server/auth";
+import { getServerSession } from "@/server/auth/session";
 import { getRegionalSettings } from "@/server/settings";
 
 import { ProfileForm } from "./_components/profile-form";
@@ -18,7 +17,7 @@ export const metadata = { title: "Profile" };
  * controls (spec §1). This read re-checks the session itself (ADR-026), not just the layout.
  */
 export default async function SettingsPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) redirect("/sign-in");
 
   const t = await getTranslations("Pages.Settings");
