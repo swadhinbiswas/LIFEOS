@@ -60,3 +60,63 @@ export function formatMinor(minor: number, currency: string): string {
   const cents = String(absolute % 100).padStart(2, "0");
   return `${sign}${whole.toLocaleString()}.${cents} ${currency}`;
 }
+
+/** A transaction reduced to what a monthly chart needs; `month` is `YYYY-MM`. */
+export interface FlowEntry {
+  amountMinor: number;
+  currency: string;
+  month: string;
+}
+
+export interface MonthlyFlow {
+  /** `YYYY-MM`, oldest first. */
+  month: string;
+  incomeMinor: number;
+  spendMinor: number;
+}
+
+const monthOf = (date: Date): string => date.toISOString().slice(0, 7);
+
+/**
+ * Income and spend per month over the last `months` months, in the most-used currency (spec §6.6:
+ * never convert without a rate, so one currency is charted and named). Pure, so the chart and the
+ * tests agree on the arithmetic.
+ */
+export function monthlyFlows(
+  entries: FlowEntry[],
+  options: { months?: number; now?: Date } = {},
+): { currency: string | null; flows: MonthlyFlow[] } {
+  const months = options.months ?? 6;
+  const now = options.now ?? new Date();
+
+  const counts = new Map<string, number>();
+  for (const entry of entries) counts.set(entry.currency, (counts.get(entry.currency) ?? 0) + 1);
+  let currency: string | null = null;
+  let best = 0;
+  for (const [code, count] of counts) {
+    if (count > best) {
+      best = count;
+      currency = code;
+    }
+  }
+
+  const keys: string[] = [];
+  for (let index = months - 1; index >= 0; index -= 1) {
+    keys.push(monthOf(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - index, 1))));
+  }
+
+  const byMonth = new Map<string, MonthlyFlow>(
+    keys.map((month) => [month, { month, incomeMinor: 0, spendMinor: 0 }]),
+  );
+  if (currency) {
+    for (const entry of entries) {
+      if (entry.currency !== currency) continue;
+      const bucket = byMonth.get(entry.month);
+      if (!bucket) continue;
+      if (entry.amountMinor >= 0) bucket.incomeMinor += entry.amountMinor;
+      else bucket.spendMinor += Math.abs(entry.amountMinor);
+    }
+  }
+
+  return { currency, flows: keys.map((month) => byMonth.get(month)!) };
+}

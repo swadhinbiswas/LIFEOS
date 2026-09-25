@@ -471,6 +471,7 @@
       "noAccounts": "এখনো অ্যাকাউন্ট নেই",
       "thisMonth": "এ মাস · {month}",
       "chartTitle": "মুদ্রা অনুযায়ী আয় বনাম খরচ",
+      "historyTitle": "গত ৬ মাসের আয় বনাম খরচ",
       "currencies": "{count} মুদ্রা",
       "nothingRecorded": "এ মাসে কিছু লেখা হয়নি",
       "noBudgets": "এখনো বাজেট নেই — যে বিভাগ দেখতে চান সেটির একটি সেট করুন",

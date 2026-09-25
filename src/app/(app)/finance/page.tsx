@@ -1,12 +1,18 @@
 import { redirect } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { PageHeader } from "@/components/tui/page-header";
 import { Progress } from "@/components/ui/progress";
 import { getServerSession } from "@/server/auth/session";
-import { listAccounts, listSubscriptions, listTransactions, monthSummary } from "@/server/finance";
-import { formatMinor } from "@/server/finance/money";
+import {
+  listAccounts,
+  listSubscriptions,
+  listTransactions,
+  monthKey,
+  monthSummary,
+} from "@/server/finance";
+import { formatMinor, monthlyFlows } from "@/server/finance/money";
 import { subscriptionTotals } from "@/server/finance/subscriptions";
 import { getTimeZone } from "@/server/settings";
 
@@ -18,6 +24,7 @@ import {
 } from "./_components/finance-forms";
 import { SubscriptionControls } from "./_components/subscription-controls";
 import { SpendChart } from "./_components/spend-chart";
+import { SpendHistory } from "./_components/spend-history";
 
 export const metadata = { title: "Finance" };
 
@@ -31,12 +38,27 @@ export default async function FinancePage() {
   if (!session) redirect("/sign-in");
 
   const t = await getTranslations("Pages.Finance");
+  const locale = await getLocale();
   const [accounts, summary, recent, subscriptions] = await Promise.all([
     listAccounts(session.user.id),
     monthSummary(session.user.id),
-    listTransactions(session.user.id),
+    listTransactions(session.user.id, 500),
     listSubscriptions(session.user.id, new Date(), await getTimeZone(session.user.id)),
   ]);
+  const history = monthlyFlows(
+    recent.map((row) => ({
+      amountMinor: row.amount_minor,
+      currency: row.currency,
+      month: monthKey(new Date(row.occurred_at)),
+    })),
+    { months: 6 },
+  );
+  const monthLabel = new Intl.DateTimeFormat(locale, { month: "short" });
+  const historyData = history.flows.map((flow) => ({
+    month: monthLabel.format(new Date(`${flow.month}-01T00:00:00Z`)),
+    income: flow.incomeMinor / 100,
+    spend: flow.spendMinor / 100,
+  }));
   const subscriptionTotal = subscriptionTotals(
     subscriptions.map(({ subscription }) => ({
       amountMinor: subscription.amount_minor,
@@ -116,6 +138,16 @@ export default async function FinancePage() {
               ))}
             </ul>
           )}
+
+          {history.currency && historyData.some((row) => row.income > 0 || row.spend > 0) ? (
+            <SpendHistory
+              data={historyData}
+              title={t("historyTitle")}
+              incomeLabel={t("income")}
+              spendLabel={t("expense")}
+              currency={history.currency}
+            />
+          ) : null}
 
           <div className="flex flex-col gap-2">
             <AddBudgetForm />

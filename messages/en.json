@@ -471,6 +471,7 @@
       "noAccounts": "no accounts yet",
       "thisMonth": "This month · {month}",
       "chartTitle": "Income vs spend by currency",
+      "historyTitle": "Income vs spend over 6 months",
       "currencies": "{count} currencies",
       "nothingRecorded": "nothing recorded this month",
       "noBudgets": "no budgets yet — set one per category you want to watch",

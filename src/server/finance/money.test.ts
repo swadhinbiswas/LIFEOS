@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { accountBalance, budgetPercent, formatMinor, spendByCategory } from "./money";
+import { accountBalance, budgetPercent, formatMinor, monthlyFlows, spendByCategory } from "./money";
 
 const entry = (
   amountMinor: number,
@@ -60,5 +60,34 @@ describe("money arithmetic (spec 6.6, adr-045)", () => {
     expect(formatMinor(123_456, "EUR")).toBe("1,234.56 EUR");
     expect(formatMinor(-5_050, "BDT")).toBe("-50.50 BDT");
     expect(formatMinor(7, "USD")).toBe("0.07 USD");
+  });
+});
+
+describe("monthlyFlows (spec 6.6)", () => {
+  const now = new Date("2026-09-15T00:00:00Z");
+
+  it("buckets income and spend by month in the most-used currency", () => {
+    const { currency, flows } = monthlyFlows(
+      [
+        { amountMinor: 300_000, currency: "EUR", month: "2026-09" },
+        { amountMinor: -50_000, currency: "EUR", month: "2026-09" },
+        { amountMinor: -20_000, currency: "EUR", month: "2026-08" },
+        { amountMinor: 100_000, currency: "USD", month: "2026-09" }, // minority currency
+      ],
+      { months: 3, now },
+    );
+
+    expect(currency).toBe("EUR");
+    expect(flows.map((flow) => flow.month)).toEqual(["2026-07", "2026-08", "2026-09"]);
+    expect(flows[0]).toMatchObject({ incomeMinor: 0, spendMinor: 0 });
+    expect(flows[1]).toMatchObject({ incomeMinor: 0, spendMinor: 20_000 });
+    expect(flows[2]).toMatchObject({ incomeMinor: 300_000, spendMinor: 50_000 });
+  });
+
+  it("returns a null currency and empty buckets when nothing is recorded", () => {
+    const { currency, flows } = monthlyFlows([], { months: 2, now });
+    expect(currency).toBeNull();
+    expect(flows).toHaveLength(2);
+    expect(flows.every((flow) => flow.incomeMinor === 0 && flow.spendMinor === 0)).toBe(true);
   });
 });
