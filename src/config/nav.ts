@@ -24,6 +24,7 @@ import {
   Info,
   KeyRound,
   FileCode,
+  FileText,
   Trash2,
   UserRound,
   type LucideIcon,
@@ -70,7 +71,13 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     id: "career",
     key: "sectionCareer",
-    hrefs: ["/career/jobs", "/career/analytics", "/career/portfolio", "/career/interview-prep"],
+    hrefs: [
+      "/career/jobs",
+      "/career/cv",
+      "/career/analytics",
+      "/career/portfolio",
+      "/career/interview-prep",
+    ],
   },
   {
     id: "system",
@@ -106,6 +113,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/boards", key: "boards", icon: LayoutGrid },
   { href: "/trash", key: "trash", icon: Trash2 },
   { href: "/career/jobs", key: "jobs", icon: Briefcase },
+  { href: "/career/cv", key: "cv", icon: FileText },
   { href: "/career/analytics", key: "analytics", icon: BarChart3 },
   { href: "/career/portfolio", key: "portfolio", icon: Sparkles },
   { href: "/career/interview-prep", key: "prep", icon: MessageSquareQuote },

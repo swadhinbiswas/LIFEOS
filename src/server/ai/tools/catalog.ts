@@ -77,6 +77,16 @@ export const TOOL_SPECS: readonly ToolSpec[] = [
     description: "One note by id, including its markdown body.",
     risk: "read",
   },
+  {
+    name: "list_resumes",
+    description: "The user's CVs, with their derived checklist score and share state.",
+    risk: "read",
+  },
+  {
+    name: "get_resume",
+    description: "One CV by id, as a JSON Resume document.",
+    risk: "read",
+  },
 
   // --- write: proposes, the user approves ---------------------------------
   {

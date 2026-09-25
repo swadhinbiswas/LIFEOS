@@ -21,6 +21,7 @@ import {
   addInterview,
 } from "@/server/career";
 import { addTransaction } from "@/server/finance";
+import { getResume, listResumes } from "@/server/cv";
 import { startSession } from "@/server/focus";
 import { listGoals, setKeyResultValue } from "@/server/goals";
 import { listHabits, setHabitLog } from "@/server/habits";
@@ -221,6 +222,28 @@ export function buildAiTools(userId: string): Record<string, Tool> {
       if (!detail) throw new Error(`note not found: ${noteId}`);
       return { id: detail.note.id, title: detail.note.title, body: detail.note.body };
     }),
+
+    list_resumes: make("list_resumes", z.object({}), async () => {
+      const resumes = await listResumes(userId);
+      return {
+        resumes: resumes.map((resume) => ({
+          id: resume.id,
+          title: resume.title,
+          checklist: resume.atsScore,
+          shared: resume.shareEnabled,
+        })),
+      };
+    }),
+
+    get_resume: make(
+      "get_resume",
+      z.object({ resumeId: z.string().min(1) }),
+      async ({ resumeId }) => {
+        const detail = await getResume(userId, resumeId);
+        if (!detail) throw new Error(`cv not found: ${resumeId}`);
+        return { id: detail.summary.id, title: detail.summary.title, document: detail.document };
+      },
+    ),
 
     // --- writes: approval-gated (ADR-076) -----------------------------------
     create_card: make(

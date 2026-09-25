@@ -89,6 +89,7 @@ const SHELL_ROUTES = [
   "/boards",
   "/trash",
   "/career/jobs",
+  "/career/cv",
   "/career/analytics",
   "/career/portfolio",
   "/career/interview-prep",
