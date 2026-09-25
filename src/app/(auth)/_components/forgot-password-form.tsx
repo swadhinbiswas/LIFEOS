@@ -59,6 +59,7 @@ export function ForgotPasswordForm() {
   return (
     <form
       method="post"
+      action="/forgot-password"
       onSubmit={(event) => void onSubmit(event)}
       noValidate
       className="flex flex-col gap-3"

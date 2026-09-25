@@ -45,4 +45,16 @@ describe("forms never default to GET", () => {
     }
     expect(gets).toEqual(["src/app/(app)/notes/page.tsx"]);
   });
+
+  it("auth forms pin an explicit action so a submit cannot inherit the current query string", () => {
+    // Without an action, a form posts to the current URL *including* whatever is in its query
+    // string — which is how credentials ended up in the request log.
+    for (const file of files) {
+      if (!file.includes("(auth)")) continue;
+      const source = readFileSync(file, "utf8");
+      for (const tag of source.match(FORM_RE) ?? []) {
+        expect(tag, file).toMatch(/action="\//);
+      }
+    }
+  });
 });

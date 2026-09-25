@@ -13,6 +13,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Accessing the dev server over the LAN (phone, another machine) needs the host allowed, or Next
+  // blocks its dev resources. Development only; has no effect on a production build.
+  allowedDevOrigins: ["localhost", "127.0.0.1", "192.168.110.3"],
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },

@@ -55,6 +55,7 @@ export function SignUpForm() {
   return (
     <form
       method="post"
+      action="/sign-up"
       onSubmit={(event) => void onSubmit(event)}
       noValidate
       className="flex flex-col gap-3"

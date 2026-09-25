@@ -57,6 +57,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <form
       method="post"
+      action="/reset-password"
       onSubmit={(event) => void onSubmit(event)}
       noValidate
       className="flex flex-col gap-3"

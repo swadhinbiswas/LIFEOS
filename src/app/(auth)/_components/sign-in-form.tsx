@@ -41,6 +41,7 @@ export function SignInForm({ next, notice }: { next?: string | null; notice?: st
   return (
     <form
       method="post"
+      action="/sign-in"
       onSubmit={(event) => void onSubmit(event)}
       noValidate
       className="flex flex-col gap-3"
