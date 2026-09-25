@@ -1,9 +1,10 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, gte, isNull } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
 import {
   DEFAULT_TIME_ZONE,
   dayKeyInTimeZone,
+  shiftDayKey,
   startOfDayInTimeZone,
   startOfWeekInstant,
   type WeekStart,
@@ -94,6 +95,17 @@ export interface FocusTotals {
   sessionsToday: number;
 }
 
+/** Minutes a session actually ran. A still-running or zero-length session contributes nothing. */
+function sessionMinutes(session: FocusSession): number {
+  if (!session.ended_at) return 0;
+  return Math.max(
+    0,
+    Math.round(
+      (new Date(session.ended_at).getTime() - new Date(session.started_at).getTime()) / MINUTE_MS,
+    ),
+  );
+}
+
 export async function focusTotals(
   userId: string,
   now: Date = new Date(),
@@ -111,31 +123,82 @@ export async function focusTotals(
   const dayStart = startOfDayInTimeZone(dayKeyInTimeZone(now, timeZone), timeZone);
   const weekStartInstant = startOfWeekInstant(now, timeZone, weekStart);
 
-  const minutesOf = (session: FocusSession): number =>
-    session.ended_at
-      ? Math.max(
-          0,
-          Math.round(
-            (new Date(session.ended_at).getTime() - new Date(session.started_at).getTime()) /
-              MINUTE_MS,
-          ),
-        )
-      : 0;
-
   let todayMin = 0;
   let weekMin = 0;
   let sessionsToday = 0;
   for (const session of rows) {
     if (session.kind !== "focus") continue;
     const started = new Date(session.started_at).getTime();
-    if (started >= weekStartInstant.getTime()) weekMin += minutesOf(session);
+    if (started >= weekStartInstant.getTime()) weekMin += sessionMinutes(session);
     if (started >= dayStart.getTime()) {
-      todayMin += minutesOf(session);
+      todayMin += sessionMinutes(session);
       sessionsToday += 1;
     }
   }
 
   return { todayMin, weekMin, sessionsToday };
+}
+
+export interface FocusDay {
+  /** The user's local day key, `YYYY-MM-DD` (ADR-057). */
+  day: string;
+  /** Minutes actually focused that day — a running session counts as 0, not as "now". */
+  minutes: number;
+  /** Completed focus sessions that started that day. */
+  sessions: number;
+}
+
+/** Guard rails on the window: long enough for a year of habits, short enough to stay a chart. */
+const MIN_SERIES_DAYS = 1;
+const MAX_SERIES_DAYS = 180;
+/** Bounded read (ADR-099): a chart is a shape, not a ledger. */
+const MAX_SERIES_ROWS = 2000;
+
+/**
+ * Minutes focused per user-local day across the last `days` days, oldest first, with **every** day
+ * in the window present — a quiet day is `0`, never a missing point a chart would have to invent
+ * (spec §1). Bucketing is by the user's day key, so the series follows their timezone rather than
+ * UTC; only `kind = "focus"` sessions count, and the read is scoped to the one user.
+ *
+ * This is the single source for the focus chart, so the dashboard and the focus page cannot drift
+ * (ADR-101).
+ */
+export async function focusDailySeries(
+  userId: string,
+  days = 14,
+  now: Date = new Date(),
+  timeZone: string = DEFAULT_TIME_ZONE,
+): Promise<FocusDay[]> {
+  const window = Math.min(MAX_SERIES_DAYS, Math.max(MIN_SERIES_DAYS, Math.round(days)));
+  const last = dayKeyInTimeZone(now, timeZone);
+  const first = shiftDayKey(last, -(window - 1));
+
+  const byDay = new Map<string, { minutes: number; sessions: number }>();
+  for (let cursor = first; cursor <= last; cursor = shiftDayKey(cursor, 1)) {
+    byDay.set(cursor, { minutes: 0, sessions: 0 });
+  }
+
+  const rows = await db
+    .select()
+    .from(focus_sessions)
+    .where(
+      and(
+        eq(focus_sessions.user_id, userId),
+        eq(focus_sessions.kind, "focus"),
+        gte(focus_sessions.started_at, startOfDayInTimeZone(first, timeZone)),
+      ),
+    )
+    .orderBy(desc(focus_sessions.started_at))
+    .limit(MAX_SERIES_ROWS);
+
+  for (const session of rows) {
+    const bucket = byDay.get(dayKeyInTimeZone(new Date(session.started_at), timeZone));
+    if (!bucket) continue;
+    bucket.minutes += sessionMinutes(session);
+    bucket.sessions += 1;
+  }
+
+  return [...byDay].map(([day, bucket]) => ({ day, ...bucket }));
 }
 
 export async function listSessions(userId: string, limit = 12): Promise<FocusSession[]> {

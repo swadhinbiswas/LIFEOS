@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { Panel } from "@/components/tui/panel";
 import { PageHeader } from "@/components/tui/page-header";
 import { getServerSession } from "@/server/auth/session";
-import { focusTotals, getRunningSession, listSessions } from "@/server/focus";
+import { focusDailySeries, focusTotals, getRunningSession, listSessions } from "@/server/focus";
 import { getRegionalSettings } from "@/server/settings";
 
 import { FocusTimer } from "./_components/focus-timer";
@@ -24,33 +24,15 @@ export default async function FocusPage() {
   const t = await getTranslations("Pages.Focus");
   const { timeZone, weekStart } = await getRegionalSettings(session.user.id);
   const now = new Date();
-  const [running, totals, sessions] = await Promise.all([
+  const [running, totals, sessions, series] = await Promise.all([
     getRunningSession(session.user.id),
     focusTotals(session.user.id, now, timeZone, weekStart),
     listSessions(session.user.id),
+    focusDailySeries(session.user.id, 14, now, timeZone),
   ]);
 
-  // Minutes per day for the last two weeks, from the same session rows the log lists.
-  const DAY_MS = 24 * 60 * 60 * 1000;
-  const focusChart = Array.from({ length: 14 }, (_, index) =>
-    new Date(now.getTime() - (13 - index) * DAY_MS).toISOString().slice(0, 10),
-  ).map((day) => ({
-    day: day.slice(5),
-    minutes: sessions
-      .filter((row) => row.ended_at && new Date(row.started_at).toISOString().slice(0, 10) === day)
-      .reduce(
-        (sum, row) =>
-          sum +
-          Math.max(
-            0,
-            Math.round(
-              (new Date(row.ended_at as Date).getTime() - new Date(row.started_at).getTime()) /
-                60000,
-            ),
-          ),
-        0,
-      ),
-  }));
+  // Minutes per day for the last two weeks, bucketed by the user's own day key (ADR-101).
+  const focusChart = series.map((row) => ({ day: row.day.slice(5), minutes: row.minutes }));
 
   return (
     <>
@@ -68,7 +50,7 @@ export default async function FocusPage() {
           />
         </Panel>
 
-        {sessions.some((row) => row.ended_at) ? (
+        {series.some((row) => row.minutes > 0) ? (
           <FocusChart data={focusChart} title={t("chartTitle")} />
         ) : null}
 

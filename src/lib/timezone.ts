@@ -58,12 +58,19 @@ function offsetMs(instant: Date, timeZone: string): number {
   return asUtc - instant.getTime();
 }
 
-const nextDay = (dayKey: string): string => {
+/**
+ * Move a `YYYY-MM-DD` day key by `days` (negative goes back). Pure UTC arithmetic on the key, so a
+ * day never shifts because of a timezone or a DST boundary (ADR-045). One implementation, shared by
+ * the habit streak maths and every module that buckets rows into user-local days.
+ */
+export function shiftDayKey(dayKey: string, days: number): string {
   const [year, month, day] = dayKey.split("-").map(Number);
   const date = new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1));
-  date.setUTCDate(date.getUTCDate() + 1);
+  date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
-};
+}
+
+const nextDay = (dayKey: string): string => shiftDayKey(dayKey, 1);
 
 /** The UTC instant of 00:00 on `dayKey` in `timeZone`. */
 export function startOfDayInTimeZone(dayKey: string, timeZone: string): Date {
@@ -90,12 +97,7 @@ export function resolveWeekStart(value: string | null | undefined): WeekStart {
   return value === "sun" ? "sun" : "mon";
 }
 
-const shiftKey = (dayKey: string, days: number): string => {
-  const [year, month, day] = dayKey.split("-").map(Number);
-  const date = new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1));
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
-};
+const shiftKey = shiftDayKey;
 
 /** The `YYYY-MM-DD` of the first day of `instant`'s week in `timeZone`, for the chosen start. */
 export function startOfWeekInTimeZone(

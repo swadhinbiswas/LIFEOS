@@ -6,13 +6,13 @@
  * UTC on the key itself, so a streak never shifts because of a timezone or a DST boundary.
  */
 
+import { shiftDayKey } from "@/lib/timezone";
+
 export const dayKey = (date: Date): string => date.toISOString().slice(0, 10);
 
+/** One shared day-key implementation (lib/timezone), so habits and other modules bucket alike. */
 export function shiftDay(key: string, days: number): string {
-  const [year, month, day] = key.split("-").map(Number);
-  const date = new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1));
-  date.setUTCDate(date.getUTCDate() + days);
-  return dayKey(date);
+  return shiftDayKey(key, days);
 }
 
 /** Inclusive list of day keys from `from` to `to`. */

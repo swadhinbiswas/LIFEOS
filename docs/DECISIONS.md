@@ -2234,6 +2234,65 @@ is an uncluttered dashboard.
 
 ---
 
+## ADR-101 — The Today dashboard is a signal board, not a task list
+
+- **Status:** accepted (2026-09-25)
+- **Context:** the `today` variant shipped three text widgets (top 3, overdue/due/inbox counts,
+  planned minutes) while the spec's Today view is a _signals_ surface (spec §6.8, prompt.md L289).
+  Every number it needs already existed in real data — `getDailyBrief` (overdue / due today / inbox
+  / open cards), `listHabits` (28 days of per-habit logs + streaks) and the focus sessions — but the
+  variant rendered none of it as a chart. The only Recharts consumer lived on `overview`, so Today
+  looked like a text file next to a real dashboard.
+- **Decision:** Today gains four registry widgets so it stays customizable like every other variant
+  (ADR-046): `today.pulse` (14-day habit consistency bar chart), `today.focus` (14-day focus-minutes
+  area chart), `today.habits` (per-habit 7-day dot strip + `Spark` + streak meter) and `today.queue`
+  (overdue/due/inbox split as a stacked proportion bar). The two charts are Recharts via the shadcn
+  `chart` wrapper with series colours from `--chart-1`/`--chart-2` and `accessibilityLayer`; the two
+  glyph widgets are **server-rendered** and cost no client JS, because `Spark` and `AsciiMeter` are
+  already the spec's ASCII/braille vocabulary (spec §4.1). Every widget has a text alternative:
+  the charts ship a real `<table>` in a `<details>`, the glyph rows carry `sr-only` facts and real
+  `progressbar`/`img` roles. New shared components are `trend-chart.tsx` (replaces the
+  habit-only `habit-chart.tsx`, so `overview` gains a table alternative too) plus server components
+  `habit-constellation.tsx` and `queue-split.tsx`. A per-day focus series is now a service read
+  (`focusDailySeries`) instead of inline page arithmetic, so the focus page and the dashboard derive
+  the same chart from the same bounded, tenant-scoped query.
+- **Consequences:** the Today variant carries one more bounded read (the focus series) and more
+  client JS for the two Recharts charts — accepted, because the axe sweep, the chart-token rules and
+  the LCP budget are the same constraints the overview chart already satisfies, and the four new
+  widgets are all default-on but individually hideable. `focusDailySeries` removes a real defect: the
+  focus page's chart was built from `listSessions`' 12-row cap in UTC day keys, so it silently
+  under-reported. No new invented data: every series is derived from habit logs, focus sessions or
+  the daily brief, and a user with no rows sees an empty state, not a zero-filled chart.
+
+---
+
+## ADR-102 — The local database waits for the file lock instead of failing
+
+- **Status:** accepted (2026-09-25)
+- **Context:** the E2E run intermittently failed with `Failed to create user` on a sign-up. The
+  server log showed the real cause: `SQLITE_BUSY: database is locked`, on an ordinary `insert into
+users` that had nothing to do with the feature under test. libSQL surfaces a local file-lock
+  collision immediately and without retry, so any request that overlaps another write burst — a
+  500-card render test, a queued capture, a cron sweep — fails outright. It surfaced as a
+  sign-up failure only because the sign-up happened to be the unlucky statement.
+- **Decision:** apply two pragmas on the shared client before `drizzle()` is constructed.
+  `PRAGMA journal_mode = WAL` lets a reader run while a writer holds the lock — measured, not
+  assumed: with another connection holding an exclusive write, a plain client's read fails with
+  `SQLITE_BUSY` while a WAL client's succeeds. WAL is a _persistent_ database property, so one
+  early statement covers every later connection. `PRAGMA busy_timeout = 10000` then makes two
+  writers queue instead of the loser erroring on first contact; it is per-connection, which is why
+  it is issued at client construction rather than once per query. Both run fire-and-forget: a
+  remote database (Turso) has no file lock and ignores unknown pragmas, so it must never fail at
+  import time, and a momentarily busy local file keeps the old mode until a later process applies it.
+- **Consequences:** transient write contention becomes latency instead of a failed request, in dev,
+  in E2E and in a self-hosted single-process deployment. It does not paper over real contention —
+  a write that cannot get the lock in ten seconds still fails, loudly, with the same error. WAL
+  changes the on-disk layout: the database gains `-wal` and `-shm` sidecar files, and the mode needs
+  a filesystem with working shared-memory support, which rules out some network mounts (noted in
+  `docs/SELF_HOSTING.md`). Readers no longer block a writer, so a long read stops stalling writes.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

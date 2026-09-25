@@ -23,7 +23,13 @@ export interface DashboardWidget {
 }
 
 export const DASHBOARD_WIDGETS: DashboardWidget[] = [
-  { id: "today.top3", variant: "today", label: "top 3", key: "todayTop3", defaultSize: "m" },
+  {
+    id: "today.pulse",
+    variant: "today",
+    label: "habit pulse",
+    key: "todayPulse",
+    defaultSize: "l",
+  },
   {
     id: "today.counts",
     variant: "today",
@@ -31,6 +37,28 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     key: "todayCounts",
     defaultSize: "m",
   },
+  {
+    id: "today.habits",
+    variant: "today",
+    label: "habit constellation",
+    key: "todayHabits",
+    defaultSize: "m",
+  },
+  {
+    id: "today.focus",
+    variant: "today",
+    label: "focus rhythm",
+    key: "todayFocus",
+    defaultSize: "m",
+  },
+  {
+    id: "today.queue",
+    variant: "today",
+    label: "open card queue",
+    key: "todayQueue",
+    defaultSize: "s",
+  },
+  { id: "today.top3", variant: "today", label: "top 3", key: "todayTop3", defaultSize: "m" },
   {
     id: "today.planned",
     variant: "today",

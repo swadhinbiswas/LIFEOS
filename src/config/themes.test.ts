@@ -136,7 +136,7 @@ describe("imported theme generation", () => {
 
 describe("chart token wiring", () => {
   const chartSources = [
-    "(app)/dashboard/_components/habit-chart.tsx",
+    "(app)/dashboard/_components/trend-chart.tsx",
     "(app)/focus/_components/focus-chart.tsx",
     "(app)/career/analytics/_components/funnel-chart.tsx",
     "(app)/finance/_components/spend-chart.tsx",
@@ -146,7 +146,10 @@ describe("chart token wiring", () => {
   it("keeps series on the chart palette instead of text tokens", () => {
     for (const relative of chartSources) {
       const source = fs.readFileSync(path.join(__dirname, "..", "app", relative), "utf8");
-      const colors = [...source.matchAll(/\bcolor:\s*"([^"]+)"/g)].map((match) => match[1]);
+      // Both spellings count: a `color: "…"` in a ChartConfig and a `color = "…"` prop default.
+      const colors = [...source.matchAll(/\bcolor\s*(?::|=)\s*"([^"]+)"/g)].map(
+        (match) => match[1],
+      );
       expect(colors.length, `${relative} should declare chart series colours`).toBeGreaterThan(0);
       for (const color of colors) {
         expect(color, `${relative} should use only chart tokens`).toMatch(/^var\(--chart-[1-5]\)$/);
@@ -155,6 +158,16 @@ describe("chart token wiring", () => {
         /var\(--(?:primary|destructive|success|warning|info)\)/,
       );
     }
+  });
+
+  it("keeps the dashboard queue bar on the chart palette too", () => {
+    const source = fs.readFileSync(
+      path.join(__dirname, "..", "app", "(app)", "dashboard", "_components", "queue-split.tsx"),
+      "utf8",
+    );
+    const tones = [...source.matchAll(/"bg-([a-z0-9-]+)"/g)].map((match) => match[1]);
+    expect(tones.length, "the queue bar should declare one class per slice").toBe(4);
+    for (const tone of tones) expect(tone).toMatch(/^chart-[1-5]$/u);
   });
 });
 
