@@ -335,6 +335,7 @@
     "Focus": {
       "title": "Focus",
       "timer": "Timer",
+      "chartTitle": "Focus minutes · last 14 days",
       "timerHint": "{today} min today · {week} min this week",
       "recent": "Recent sessions",
       "empty": "no sessions yet — starting one logs it here automatically",

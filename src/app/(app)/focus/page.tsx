@@ -8,6 +8,7 @@ import { focusTotals, getRunningSession, listSessions } from "@/server/focus";
 import { getRegionalSettings } from "@/server/settings";
 
 import { FocusTimer } from "./_components/focus-timer";
+import { FocusChart } from "./_components/focus-chart";
 
 export const metadata = { title: "Focus" };
 
@@ -22,11 +23,34 @@ export default async function FocusPage() {
 
   const t = await getTranslations("Pages.Focus");
   const { timeZone, weekStart } = await getRegionalSettings(session.user.id);
+  const now = new Date();
   const [running, totals, sessions] = await Promise.all([
     getRunningSession(session.user.id),
-    focusTotals(session.user.id, new Date(), timeZone, weekStart),
+    focusTotals(session.user.id, now, timeZone, weekStart),
     listSessions(session.user.id),
   ]);
+
+  // Minutes per day for the last two weeks, from the same session rows the log lists.
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const focusChart = Array.from({ length: 14 }, (_, index) =>
+    new Date(now.getTime() - (13 - index) * DAY_MS).toISOString().slice(0, 10),
+  ).map((day) => ({
+    day: day.slice(5),
+    minutes: sessions
+      .filter((row) => row.ended_at && new Date(row.started_at).toISOString().slice(0, 10) === day)
+      .reduce(
+        (sum, row) =>
+          sum +
+          Math.max(
+            0,
+            Math.round(
+              (new Date(row.ended_at as Date).getTime() - new Date(row.started_at).getTime()) /
+                60000,
+            ),
+          ),
+        0,
+      ),
+  }));
 
   return (
     <>
@@ -43,6 +67,10 @@ export default async function FocusPage() {
             plannedMin={running?.planned_min ?? null}
           />
         </Panel>
+
+        {sessions.some((row) => row.ended_at) ? (
+          <FocusChart data={focusChart} title={t("chartTitle")} />
+        ) : null}
 
         <Panel title={t("recent")} hint={`${sessions.length}`}>
           {sessions.length === 0 ? (

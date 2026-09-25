@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
+import { FunnelChart } from "./_components/funnel-chart";
 import { PageHeader } from "@/components/tui/page-header";
 import { getServerSession } from "@/server/auth/session";
 import { getCareerAnalytics } from "@/server/career/analytics";
@@ -42,6 +43,13 @@ export default async function CareerAnalyticsPage() {
       <PageHeader title={t("analyticsTitle")} />
 
       <div className="grid max-w-4xl gap-4">
+        {funnel.total > 0 ? (
+          <FunnelChart
+            data={funnel.stages.map((stage) => ({ stage: stage.stage, count: stage.count }))}
+            title={t("funnel")}
+          />
+        ) : null}
+
         <Panel
           title={t("funnel")}
           hint={t("funnelHint", {
