@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { PageHeader } from "@/components/tui/page-header";
+import { Badge } from "@/components/ui/badge";
 import { getServerSession } from "@/server/auth/session";
 import { listGrowth, parseProjectTech } from "@/server/career/growth";
 
@@ -52,7 +53,7 @@ export default async function PortfolioPage() {
                   <li
                     key={project.id}
                     data-slot="project-row"
-                    className="flex flex-wrap items-center gap-2 border border-border px-2 py-1 font-mono text-xs"
+                    className="flex flex-wrap items-center gap-2 rounded-[var(--radius)] border border-border px-2 py-1.5 font-mono text-xs transition-colors hover:border-ring"
                   >
                     <a
                       href={project.url ?? project.repo ?? "#"}
@@ -65,15 +66,29 @@ export default async function PortfolioPage() {
                     <span className="min-w-0 flex-1 truncate text-muted-foreground">
                       {project.description ?? ""}
                     </span>
-                    {tech.language ? <span>{tech.language}</span> : null}
-                    {tech.stars > 0 ? <span className="tabular-nums">★{tech.stars}</span> : null}
+                    {tech.language ? (
+                      <Badge variant="outline" className="font-mono text-[10px]">
+                        {tech.language}
+                      </Badge>
+                    ) : null}
+                    {tech.stars > 0 ? (
+                      <span className="text-muted-foreground tabular-nums">★{tech.stars}</span>
+                    ) : null}
                     {project.featured ? (
-                      <span className="text-warning">{t("featured")}</span>
+                      <Badge
+                        variant="outline"
+                        className="border-warning font-mono text-[10px] text-warning"
+                      >
+                        {t("featured")}
+                      </Badge>
                     ) : null}
                     {project.is_demo ? (
-                      <span className="border border-border px-1 text-muted-foreground">
+                      <Badge
+                        variant="outline"
+                        className="font-mono text-[10px] text-muted-foreground"
+                      >
                         {t("sample")}
-                      </span>
+                      </Badge>
                     ) : null}
                   </li>
                 );
@@ -92,7 +107,7 @@ export default async function PortfolioPage() {
                 <li
                   key={skill.id}
                   data-slot="skill-row"
-                  className="flex items-center gap-1 border border-border px-2 py-0.5"
+                  className="flex items-center gap-1.5 rounded-[var(--radius)] border border-border px-2 py-0.5"
                 >
                   {skill.name}
                   {skill.level !== null ? (

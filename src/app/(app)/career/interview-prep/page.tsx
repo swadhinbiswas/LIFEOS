@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { PageHeader } from "@/components/tui/page-header";
+import { Badge } from "@/components/ui/badge";
 import { getServerSession } from "@/server/auth/session";
 import { listPrep } from "@/server/career/prep";
 
@@ -36,14 +37,21 @@ export default async function InterviewPrepPage() {
                 <li
                   key={question.id}
                   data-slot="question-row"
-                  className="flex flex-wrap items-center gap-2 border border-border px-2 py-1 font-mono text-xs"
+                  className="flex flex-wrap items-center gap-2 rounded-[var(--radius)] border border-border px-2 py-1.5 font-mono text-xs transition-colors hover:border-ring"
                 >
                   <span className="min-w-0 flex-1">{question.question}</span>
                   {question.category ? (
-                    <span className="text-primary">{question.category}</span>
+                    <Badge variant="outline" className="font-mono text-[10px] text-primary">
+                      {question.category}
+                    </Badge>
                   ) : null}
                   {question.difficulty ? (
-                    <span className="text-muted-foreground">{question.difficulty}</span>
+                    <Badge
+                      variant="outline"
+                      className="font-mono text-[10px] text-muted-foreground"
+                    >
+                      {question.difficulty}
+                    </Badge>
                   ) : null}
                 </li>
               ))}
@@ -61,7 +69,7 @@ export default async function InterviewPrepPage() {
                 <li
                   key={story.id}
                   data-slot="story-row"
-                  className="flex flex-wrap items-center gap-2 border border-border px-2 py-1 font-mono text-xs"
+                  className="flex flex-wrap items-center gap-2 rounded-[var(--radius)] border border-border px-2 py-1.5 font-mono text-xs transition-colors hover:border-ring"
                 >
                   <span className="text-primary">{story.title}</span>
                   {story.result ? (
