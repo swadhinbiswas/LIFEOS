@@ -45,6 +45,24 @@ test("sign up, verify by the mailed link, then sign in", async ({ page, context 
   await expect(page).toHaveURL(/\/settings$/);
 });
 
+test("stale session cookie cannot create a redirect loop", async ({ page, context }) => {
+  await page.goto("/");
+  await context.addCookies([
+    {
+      name: "better-auth.session_token",
+      value: "stale-session-token",
+      url: new URL(page.url()).origin,
+    },
+  ]);
+
+  await page.goto("/sign-in");
+  await expect(page).toHaveURL(/\/sign-in$/);
+  await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
+
+  await page.goto("/settings");
+  await expect(page).toHaveURL(/\/sign-in$/);
+});
+
 test("password reset: mailed link replaces the password", async ({ page }) => {
   const email = uniqueEmail();
 

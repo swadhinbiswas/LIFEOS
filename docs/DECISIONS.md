@@ -2217,6 +2217,21 @@ is an uncluttered dashboard.
   path and the database check when the cache expires. API rate limiting and idempotency remain
   distributed when Redis is healthy; the bounded client makes their failure behaviour explicit.
 
+## ADR-100 — Cookie presence must never drive an auth-page redirect
+
+- **Status:** accepted (2026-09-25)
+- **Context:** The proxy originally treated any `better-auth.session_token` cookie as a signed-in
+  session and redirected every auth page to `/settings`. A stale, expired or forged cookie therefore
+  produced the cycle `/sign-in` → `/settings` → `/sign-in`, because the app layout correctly
+  rejected the same cookie. The browser reported `ERR_TOO_MANY_REDIRECTS`.
+- **Decision:** the proxy uses cookie presence only to send visitors without a cookie away from
+  protected `/settings` routes. It never redirects an auth page from cookie presence. The `(auth)`
+  layout performs the authoritative `getServerSession()` check and redirects only a real session to
+  `/settings`; a stale cookie renders the sign-in page normally.
+- **Consequences:** stale cookies self-heal without asking the user to delete cookies, valid-session
+  UX is preserved, and authorization remains in the server session check rather than the proxy. A
+  focused proxy unit test and a browser regression test cover both sides of the boundary.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

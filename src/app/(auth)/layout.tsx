@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { APP_NAME } from "@/config/app";
+import { getServerSession } from "@/server/auth/session";
 
 import { ScrubCredentials } from "./_components/scrub-credentials";
 
@@ -11,6 +13,10 @@ import { ScrubCredentials } from "./_components/scrub-credentials";
  * tagline is translated (ADR-060), so the locale cookie applies before a user even signs in.
  */
 export default async function AuthLayout({ children }: { children: ReactNode }) {
+  // Validate the session instead of trusting cookie presence. This is what lets a stale cookie
+  // render the sign-in page rather than bouncing between /sign-in and /settings.
+  if (await getServerSession()) redirect("/settings");
+
   const t = await getTranslations("Shell");
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-4">
