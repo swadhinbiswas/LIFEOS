@@ -372,8 +372,21 @@ export interface FunnelStage {
 export interface Funnel {
   stages: FunnelStage[];
   total: number;
-  /** Response rate: jobs that ever left their first stage / all jobs. */
+  /**
+   * Share of **sent** applications that reached a stage beyond Applied — 0…1.
+   *
+   * Stage-aware, not history-aware (ADR-105). The old definition counted "ever changed stage",
+   * which is wrong twice: an application still sitting in Wishlist was never sent and sat in the
+   * denominator, while a pipeline seeded or imported straight into Screening had no stage history
+   * and so read as zero responses. The numerator now asks whether a stage past Applied was ever
+   * *reached* (current stage, or any history entry), and the denominator only counts what was
+   * actually sent.
+   */
   responseRate: number;
+  /** Applications that left Wishlist — the denominator, exposed so the label can be honest. */
+  sent: number;
+  /** Of those, how many reached a stage beyond Applied. */
+  responded: number;
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -424,13 +437,38 @@ export async function getFunnel(userId: string, now: Date = new Date()): Promise
   });
 
   const total = payload.cards.length;
-  const progressed = applications.filter(
-    (application) => parseHistory(application.stage_history).length > 1,
-  ).length;
+
+  // Stage-aware response rate (ADR-105). Board order is pipeline order, so "past Applied" is a
+  // position in the user's own columns rather than a history heuristic: "Applied" when the
+  // template provides it, otherwise the second column, the first stage past the entry point.
+  const columnName = new Map(payload.columns.map((column) => [column.id, column.name]));
+  const stageOrder = new Map(payload.columns.map((column, index) => [column.name, index]));
+  const respondedAt = stageOrder.get("Applied") ?? 1;
+
+  let sent = 0;
+  let responded = 0;
+  for (const application of applications) {
+    const card = cardsById.get(application.card_id);
+    if (!card) continue;
+    const current = columnName.get(card.column_id);
+    const currentIndex = current === undefined ? -1 : (stageOrder.get(current) ?? -1);
+    // Still in the entry column: never sent, so it is not in the denominator at all. A pipeline
+    // seeded or imported straight into Screening has no stage history, and everReached reads that
+    // as the response it plainly is.
+    if (currentIndex <= 0) continue;
+    sent += 1;
+    const everReached = Math.max(
+      currentIndex,
+      ...parseHistory(application.stage_history).map((entry) => stageOrder.get(entry.to) ?? -1),
+    );
+    if (everReached > respondedAt) responded += 1;
+  }
 
   return {
     stages,
     total,
-    responseRate: total === 0 ? 0 : Math.round((progressed / total) * 100) / 100,
+    responseRate: sent === 0 ? 0 : Math.round((responded / sent) * 100) / 100,
+    sent,
+    responded,
   };
 }

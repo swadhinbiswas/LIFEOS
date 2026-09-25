@@ -20,6 +20,13 @@ export const TOOL_SELECTION_FIXTURES: ToolSelectionFixture[] = [
   { prompt: "Show card abc123", expectedTool: "get_card", risk: "read" },
   { prompt: "What jobs am I tracking?", expectedTool: "list_jobs", risk: "read" },
   { prompt: "What is my response rate?", expectedTool: "get_pipeline_stats", risk: "read" },
+  { prompt: "Am I getting more done than last week?", expectedTool: "get_trends", risk: "read" },
+  { prompt: "Is my focus time trending up or down?", expectedTool: "get_trends", risk: "read" },
+  {
+    prompt: "How consistent have my habits been lately?",
+    expectedTool: "get_trends",
+    risk: "read",
+  },
   { prompt: "How are my habits going?", expectedTool: "list_habits", risk: "read" },
   { prompt: "What are my current goals?", expectedTool: "list_goals", risk: "read" },
   { prompt: "Open my note about the trip", expectedTool: "get_note", risk: "read" },

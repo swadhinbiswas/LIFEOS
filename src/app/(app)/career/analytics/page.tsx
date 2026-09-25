@@ -55,6 +55,8 @@ export default async function CareerAnalyticsPage() {
           hint={t("funnelHint", {
             total: funnel.total,
             rate: Math.round(funnel.responseRate * 100),
+            sent: funnel.sent,
+            responded: funnel.responded,
           })}
         >
           {funnel.total === 0 ? (

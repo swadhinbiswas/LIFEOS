@@ -6,6 +6,7 @@ import { z } from "zod";
 import { auth } from "@/server/auth";
 import { getAiPrefs, saveAiPrefs } from "@/server/settings";
 
+import { regenerateBrief } from "./brief";
 import { deleteCredential, saveCredential } from "./credentials";
 import { addMemory, deleteMemory, updateMemory } from "./memory";
 import { AI_PROVIDERS, aiPrefsSchema } from "./prefs";
@@ -153,4 +154,27 @@ export async function deleteMemoryAction(
 
   await deleteMemory(session.user.id, parsed.data.id);
   return { ok: true };
+}
+
+/**
+ * Re-run the morning brief on demand (ADR-106). The only path that may replace a brief the cron
+ * already wrote, and it is always the user's own click.
+ */
+export async function regenerateBriefAction(): Promise<{
+  ok: boolean;
+  message?: string;
+}> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { ok: false, message: "you are signed out" };
+
+  const result = await regenerateBrief(session.user.id);
+  if (result.ok) return { ok: true };
+  // "no provider configured" is the one failure a user can act on, so it gets a pointer.
+  return {
+    ok: false,
+    message:
+      result.reason === "no provider configured"
+        ? "no AI provider is configured"
+        : "could not write a brief",
+  };
 }

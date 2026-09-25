@@ -20,6 +20,8 @@ const { createJob, ensureCompany, ensureJobBoard, getFunnel, moveJobStage, updat
 
 const USER = "01HCAREER000000000000000001";
 const FUNNEL_USER = "01HCAREER000000000000000002";
+const IMPORTED_USER = "01HCAREER000000000000000003";
+const NEVER_SENT_USER = "01HCAREER000000000000000004";
 
 const stageId = async (userId: string, boardId: string, name: string): Promise<string> => {
   const payload = await getBoard(userId, boardId);
@@ -32,7 +34,7 @@ describe("career service (spec 6.3, adr-044)", () => {
   beforeAll(async () => {
     await migrate(db, { migrationsFolder: "./drizzle" });
     await db.insert(users).values(
-      [USER, FUNNEL_USER].map((id) => ({
+      [USER, FUNNEL_USER, IMPORTED_USER, NEVER_SENT_USER].map((id) => ({
         id,
         email: `${id.toLowerCase()}@example.test`,
         name: id,
@@ -172,6 +174,53 @@ describe("career service (spec 6.3, adr-044)", () => {
     expect(byStage.get("Wishlist")?.averageDaysInStage).toBe(2.5);
     expect(byStage.get("Applied")?.averageDaysInStage).toBe(2);
     expect(funnel.total).toBe(2);
-    expect(funnel.responseRate).toBe(0.5); // one of two ever left the first stage
+
+    // Stage-aware (ADR-105): B is still in Wishlist, so it was never sent and is not in the
+    // denominator. A is the only application sent, and it reached Screening, so the rate is 1.
+    expect(funnel.sent).toBe(1);
+    expect(funnel.responded).toBe(1);
+    expect(funnel.responseRate).toBe(1);
+  });
+
+  it("counts a response from the current stage alone, with no history at all", async () => {
+    // The case the old definition got wrong: a pipeline seeded or imported straight into Screening
+    // has a single history entry, so "ever changed stage" reads 0 responses on a pipeline that
+    // plainly has one.
+    const board = await ensureJobBoard(IMPORTED_USER);
+    const screening = (await getBoard(IMPORTED_USER, board.id)).columns.find(
+      (column) => column.name === "Screening",
+    );
+    if (!screening) throw new Error("pipeline stages missing");
+
+    const job = await createJob(IMPORTED_USER, { title: "imported", source: "import" });
+    const payload = await getBoard(IMPORTED_USER, board.id);
+    const card = payload.cards.find((row) => row.id === job.card.id);
+    if (!card) throw new Error("imported job missing");
+    await moveJobStage(IMPORTED_USER, {
+      applicationId: job.application.id,
+      version: card.version,
+      toColumnId: screening.id,
+      prevCardId: null,
+      nextCardId: null,
+    });
+    await db
+      .update(job_applications)
+      .set({
+        stage_history: JSON.stringify([
+          { from: null, to: "Screening", at: "2026-09-01T00:00:00.000Z" },
+        ]),
+      })
+      .where(eq(job_applications.id, job.application.id));
+
+    const funnel = await getFunnel(IMPORTED_USER, new Date("2026-09-06T00:00:00.000Z"));
+    expect(funnel.sent).toBe(1);
+    expect(funnel.responded).toBe(1);
+    expect(funnel.responseRate).toBe(1);
+  });
+
+  it("is 0 when nothing has been sent, rather than dividing by the wishlist", async () => {
+    const funnel = await getFunnel(NEVER_SENT_USER, new Date("2026-09-06T00:00:00.000Z"));
+    expect(funnel.sent).toBe(0);
+    expect(funnel.responseRate).toBe(0);
   });
 });

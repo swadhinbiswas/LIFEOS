@@ -24,6 +24,13 @@ export interface DashboardWidget {
 
 export const DASHBOARD_WIDGETS: DashboardWidget[] = [
   {
+    id: "today.brief",
+    variant: "today",
+    label: "morning brief",
+    key: "todayBrief",
+    defaultSize: "l",
+  },
+  {
     id: "today.pulse",
     variant: "today",
     label: "habit pulse",

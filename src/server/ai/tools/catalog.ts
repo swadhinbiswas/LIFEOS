@@ -63,6 +63,12 @@ export const TOOL_SPECS: readonly ToolSpec[] = [
     risk: "read",
   },
   {
+    name: "get_trends",
+    description:
+      "Focus minutes, habit consistency and completed cards over a window, with the last seven days and the change against the seven before. Use it for questions about direction or whether something is improving.",
+    risk: "read",
+  },
+  {
     name: "list_habits",
     description: "Habits with today's value, streak and recent days.",
     risk: "read",

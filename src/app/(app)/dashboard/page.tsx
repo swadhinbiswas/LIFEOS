@@ -17,6 +17,7 @@ import {
   type DashboardVariant,
 } from "@/config/dashboard-widgets";
 import { dayKeyInTimeZone } from "@/lib/timezone";
+import { briefEnabled, latestBrief } from "@/server/ai/brief";
 import { getDashboardKpis, KPI_DEFINITIONS } from "@/server/dashboard";
 import { completedDailySeries } from "@/server/dashboard/completion";
 import { constellationRows, habitConsistencySeries } from "@/server/dashboard/habits";
@@ -27,6 +28,7 @@ import { listReviews } from "@/server/reviews";
 import { reviewStreak } from "@/server/reviews/streak";
 import { getRegionalSettings } from "@/server/settings";
 
+import { AiBriefPanel } from "./_components/ai-brief";
 import { LayoutControls } from "./_components/layout-controls";
 import { DashboardTabs } from "./_components/dashboard-tabs";
 import { FunnelChart } from "./_components/funnel-chart";
@@ -89,28 +91,33 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const wantsKpis =
     visible.some((id) => id.startsWith("overview.") || id.startsWith("productivity.")) ||
     visible.includes("career.open");
-  const [brief, kpis, habits, focusSeries, career, reviews, doneSeries] = await Promise.all([
-    visible.some((id) => id.startsWith("today."))
-      ? getDailyBrief(session.user.id, now, timeZone)
-      : Promise.resolve(null),
-    // `career.open` needs this too: without it the widget used to render a placeholder (ADR-104).
-    wantsKpis ? getDashboardKpis(session.user.id, now, timeZone, weekStart) : Promise.resolve(null),
-    // The day key is passed in so the habits read does not re-resolve the timezone (ADR-099).
-    wantsHabits
-      ? listHabits(session.user.id, dayKeyInTimeZone(now, timeZone))
-      : Promise.resolve([]),
-    wantsFocus ? focusDailySeries(session.user.id, 14, now, timeZone) : Promise.resolve([]),
-    visible.some((id) => id.startsWith("career."))
-      ? getCareerAnalytics(session.user.id, now, 21, timeZone, weekStart)
-      : Promise.resolve(null),
-    // 52 rows is a year of weeks, which is the window a streak can actually reach.
-    visible.includes("productivity.reviews")
-      ? listReviews(session.user.id, 52)
-      : Promise.resolve([]),
-    visible.includes("productivity.done")
-      ? completedDailySeries(session.user.id, 14, now, timeZone)
-      : Promise.resolve([]),
-  ]);
+  const [brief, kpis, habits, focusSeries, career, reviews, doneSeries, aiBrief, aiBriefOn] =
+    await Promise.all([
+      visible.some((id) => id.startsWith("today."))
+        ? getDailyBrief(session.user.id, now, timeZone)
+        : Promise.resolve(null),
+      // `career.open` needs this too: without it the widget used to render a placeholder (ADR-104).
+      wantsKpis
+        ? getDashboardKpis(session.user.id, now, timeZone, weekStart)
+        : Promise.resolve(null),
+      // The day key is passed in so the habits read does not re-resolve the timezone (ADR-099).
+      wantsHabits
+        ? listHabits(session.user.id, dayKeyInTimeZone(now, timeZone))
+        : Promise.resolve([]),
+      wantsFocus ? focusDailySeries(session.user.id, 14, now, timeZone) : Promise.resolve([]),
+      visible.some((id) => id.startsWith("career."))
+        ? getCareerAnalytics(session.user.id, now, 21, timeZone, weekStart)
+        : Promise.resolve(null),
+      // 52 rows is a year of weeks, which is the window a streak can actually reach.
+      visible.includes("productivity.reviews")
+        ? listReviews(session.user.id, 52)
+        : Promise.resolve([]),
+      visible.includes("productivity.done")
+        ? completedDailySeries(session.user.id, 14, now, timeZone)
+        : Promise.resolve([]),
+      visible.includes("today.brief") ? latestBrief(session.user.id, now) : Promise.resolve(null),
+      visible.includes("today.brief") ? briefEnabled(session.user.id) : Promise.resolve(false),
+    ]);
   const kpiById = new Map((kpis?.values ?? []).map((kpi) => [kpi.id, kpi]));
 
   // Chart series, each derived from the module that owns the rows behind it (ADR-101/ADR-104).
@@ -143,6 +150,31 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const shareOpen = (total: number, open: number): number => (total > 0 ? open / total : 0);
 
   const widgets: Record<string, React.ReactNode> = {
+    "today.brief": (
+      <AiBriefPanel
+        brief={
+          aiBrief
+            ? {
+                title: aiBrief.title,
+                body: aiBrief.body,
+                createdAt: aiBrief.createdAt,
+                isToday: aiBrief.isToday,
+              }
+            : null
+        }
+        enabled={aiBriefOn}
+        labels={{
+          regenerate: t("briefRegenerate"),
+          regenerating: t("briefRegenerating"),
+          stale: t("briefStale"),
+          noBrief: t("briefNone"),
+          noBriefHint: t("briefNoneHint"),
+          enableLink: t("briefEnable"),
+          regenerateLink: t("briefOpenSettings"),
+          aiSettings: t("briefAsk"),
+        }}
+      />
+    ),
     "today.pulse": (
       <TrendChart
         data={pulseData}
@@ -352,7 +384,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         tableToggle={t("tableView")}
         emptyLabel={tc("noJobs")}
         emptyAction={{ href: "/career/jobs", label: t("addJobLink") }}
-        caption={t("funnelMoved", { rate: Math.round(career.funnel.responseRate * 100) })}
+        caption={t("funnelMoved", {
+          responded: career.funnel.responded,
+          sent: career.funnel.sent,
+        })}
       />
     ) : null,
     "career.velocity": career ? (

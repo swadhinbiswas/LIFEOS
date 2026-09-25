@@ -7,6 +7,7 @@ import { getRegionalSettings } from "@/server/settings";
 import { listMemories } from "./memory";
 import type { AiPrefs } from "./prefs";
 import { untrusted } from "./prompt";
+import { getTrends, trendSummary } from "./trends";
 
 /**
  * The compact, always-fresh user context injected server-side (spec §8, ADR-077). It is small by
@@ -14,12 +15,13 @@ import { untrusted } from "./prompt";
  * data so the model treats it as facts about the user, not as instructions.
  */
 export async function buildUserContext(userId: string, prefs: AiPrefs): Promise<string> {
-  const [{ timeZone, weekStart }, boards, goals, habits, memories] = await Promise.all([
+  const [{ timeZone, weekStart }, boards, goals, habits, memories, trends] = await Promise.all([
     getRegionalSettings(userId),
     listBoards(userId),
     listGoals(userId),
     listHabits(userId),
     prefs.memoryEnabled ? listMemories(userId, 20) : Promise.resolve([]),
+    getTrends(userId, 14),
   ]);
 
   const activeGoals = goals.filter((goal) => goal.goal.status === "active");
@@ -38,6 +40,7 @@ export async function buildUserContext(userId: string, prefs: AiPrefs): Promise<
       .slice(0, AI_CONTEXT_LIMITS.habits)
       .map((row) => `${row.habit.name}${row.value > 0 ? " done today" : ""}`)
       .join("; ")}`,
+    `trends: ${trendSummary(trends)}`,
   ];
 
   if (memories.length > 0) {

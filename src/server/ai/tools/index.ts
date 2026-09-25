@@ -30,6 +30,7 @@ import { search } from "@/server/search";
 import { getTimeZone } from "@/server/settings";
 
 import { findToolSpec } from "./catalog";
+import { getTrends } from "../trends";
 
 /**
  * The AI tool layer (spec §8, ADR-076). Every tool is a thin adapter over the service the UI, REST
@@ -183,6 +184,34 @@ export function buildAiTools(userId: string): Record<string, Tool> {
       return funnel;
     }),
 
+    get_trends: make(
+      "get_trends",
+      z.object({
+        days: z.number().int().min(7).max(90).optional(),
+      }),
+      async ({ days }) => {
+        const trends = await getTrends(userId, days ?? 14);
+        return {
+          windowDays: trends.days,
+          focus: {
+            minutes: trends.focusMinutes,
+            activeDays: trends.focusActiveDays,
+            sessions: trends.focusSessions,
+            changeVsPrevious7: trends.focusChangeVsPrevious7,
+          },
+          habits: {
+            count: trends.habitCount,
+            consistencyPercent: trends.habitConsistencyPercent,
+            changeVsPrevious7: trends.habitChangeVsPrevious7,
+          },
+          output: {
+            cardsCompleted: trends.cardsCompleted,
+            estimatedMinutes: trends.completedMinutes,
+          },
+          last7: trends.last7,
+        };
+      },
+    ),
     list_habits: make("list_habits", z.object({}), async () => {
       const habits = await listHabits(userId);
       return {
