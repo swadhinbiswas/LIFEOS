@@ -22,6 +22,7 @@ import { listReviews } from "@/server/reviews";
 import { getRegionalSettings } from "@/server/settings";
 
 import { LayoutControls } from "./_components/layout-controls";
+import { HabitChart } from "./_components/habit-chart";
 
 export const metadata = { title: "Dashboard" };
 
@@ -74,7 +75,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const kpis = visible.some((id) => id.startsWith("overview.") || id.startsWith("productivity."))
     ? await getDashboardKpis(session.user.id, new Date(), timeZone, weekStart)
     : null;
-  const habits = visible.includes("overview.wins") ? await listHabits(session.user.id) : [];
+  const habits =
+    visible.includes("overview.wins") || variant === "overview"
+      ? await listHabits(session.user.id)
+      : [];
   const career = visible.some((id) => id.startsWith("career."))
     ? await getCareerAnalytics(session.user.id, new Date(), 21, timeZone, weekStart)
     : null;
@@ -82,6 +86,18 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     ? await listReviews(session.user.id)
     : [];
   const kpiById = new Map((kpis?.values ?? []).map((kpi) => [kpi.id, kpi]));
+
+  // One bar per day: the share of habits checked off, derived from the same log the streaks use.
+  const chartData =
+    habits.length > 0
+      ? (habits[0]?.days ?? []).map((day, index) => {
+          const done = habits.filter((row) => row.days[index]?.done).length;
+          return {
+            day: day.key.slice(5),
+            value: Math.round((done / habits.length) * 100),
+          };
+        })
+      : [];
 
   const widgets: Record<string, React.ReactNode> = {
     "today.counts": brief ? (
@@ -249,6 +265,15 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       </PageHeader>
 
       <div className="grid gap-4">
+        {variant === "overview" && chartData.length > 0 ? (
+          <HabitChart
+            data={chartData}
+            habitCount={habits.length}
+            title={t("chartTitle")}
+            description={t("chartHint")}
+          />
+        ) : null}
+
         {layout.widgets
           .filter((widget) => widget.visible)
           .map((widget) => (

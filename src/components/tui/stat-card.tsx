@@ -2,13 +2,14 @@ import Link from "next/link";
 import * as React from "react";
 
 import { cn } from "cn";
-
-import { AsciiMeter } from "./ascii-meter";
+import { AsciiMeter } from "@/components/tui/ascii-meter";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /**
- * The stat card (spec §3.3 anatomy, reference "Total companies / 60"): a small muted label, a large
- * value, an optional delta pill, an optional meter, and a link to the list behind the number.
- * Colour is only ever used for state (positive/negative), never decoration.
+ * The stat card (spec §3.3 anatomy, reference "Total companies / 60"), built on the shadcn `Card`
+ * and `Badge` primitives re-skinned by our tokens — not a hand-rolled box. A small muted label, a
+ * large value, an optional delta badge, an optional meter, and a link to the list behind the number.
  */
 export function StatCard({
   label,
@@ -24,7 +25,7 @@ export function StatCard({
 }: {
   label: string;
   value: React.ReactNode;
-  /** A signed change; `null` means there is no baseline and no pill is shown. */
+  /** A signed change; `null` means there is no baseline and no badge is shown. */
   delta?: number | null;
   meter?: number;
   href?: string;
@@ -36,50 +37,49 @@ export function StatCard({
   const badge = delta === undefined || delta === null ? null : `${delta > 0 ? "+" : ""}${delta}`;
 
   return (
-    <div
+    <Card
       data-slot={slot ?? "stat-card"}
-      className={cn(
-        "flex min-w-0 flex-col gap-2 rounded-[var(--radius)] border border-border bg-card p-3",
-        "transition-colors hover:border-ring",
-        className,
-      )}
+      className={cn("gap-2 p-3 transition-colors hover:border-ring", className)}
       {...props}
     >
-      <span
-        className="min-w-0 truncate font-mono text-[10px] tracking-wider text-muted-foreground uppercase"
-        title={label}
-      >
-        {label}
-      </span>
-
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="font-mono text-2xl leading-none font-semibold tabular-nums">{value}</span>
+      <CardHeader className="grid-cols-[1fr_auto] p-0">
+        <CardTitle
+          className="min-w-0 truncate font-mono text-[10px] font-normal tracking-wider text-muted-foreground uppercase"
+          title={label}
+        >
+          {label}
+        </CardTitle>
         {badge === null ? null : (
-          <span
-            data-slot="stat-delta"
-            className={cn(
-              "shrink-0 rounded-[var(--radius)] border px-1 font-mono text-[10px] tabular-nums",
-              delta! > 0
-                ? "border-success text-success"
-                : delta! < 0
-                  ? "border-destructive text-destructive"
-                  : "border-border text-muted-foreground",
-            )}
-          >
-            {badge}
-          </span>
+          <CardAction>
+            <Badge
+              data-slot="stat-delta"
+              variant="outline"
+              className={cn(
+                "font-mono text-[10px] tabular-nums",
+                delta! > 0
+                  ? "border-success text-success"
+                  : delta! < 0
+                    ? "border-destructive text-destructive"
+                    : "text-muted-foreground",
+              )}
+            >
+              {badge}
+            </Badge>
+          </CardAction>
         )}
-      </div>
+      </CardHeader>
 
-      {meter !== undefined ? (
-        <AsciiMeter value={meter} label={label} cells={14} showValue={false} />
-      ) : null}
-
-      {href ? (
-        <Link href={href} className="mt-auto font-mono text-[10px] text-primary hover:underline">
-          {linkLabel ?? "open list"}
-        </Link>
-      ) : null}
-    </div>
+      <CardContent className="flex flex-col gap-2 p-0">
+        <span className="font-mono text-2xl leading-none font-semibold tabular-nums">{value}</span>
+        {meter !== undefined ? (
+          <AsciiMeter value={meter} label={label} cells={14} showValue={false} />
+        ) : null}
+        {href ? (
+          <Link href={href} className="mt-auto font-mono text-[10px] text-primary hover:underline">
+            {linkLabel ?? "open list"}
+          </Link>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

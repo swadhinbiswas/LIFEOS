@@ -172,6 +172,8 @@
       "title": "Dashboard",
       "layout": "Layout",
       "customize": "customize",
+      "chartTitle": "Habit consistency",
+      "chartHint": "Share of habits checked off, last 28 days",
       "layoutHint": "widgets on this variant — hide or move them; changes save immediately",
       "layoutSaved": "layout saved",
       "show": "show {name}",
