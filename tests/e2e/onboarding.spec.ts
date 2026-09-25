@@ -26,9 +26,9 @@ test("onboarding: a new account reaches a populated dashboard in under 60s", asy
 
   expect(Date.now() - started).toBeLessThan(60_000);
 
-  // The account is populated with the sample profile's content.
+  // The account is populated with the selected developer profile's content.
   await page.goto("/tasks");
-  await expect(page.getByText("Write the weekly update").first()).toBeVisible();
+  await expect(page.getByText("Reply to the Northwind recruiter").first()).toBeVisible();
 });
 
 test("templates: the gallery lists board templates and starter profiles", async ({ page }) => {

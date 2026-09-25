@@ -118,7 +118,7 @@ test("axe: signed-in shell passes in every preset", async ({ page }) => {
 
   for (const preset of PRESETS) {
     await page.goto("/settings/appearance");
-    await page.getByRole("radio", { name: preset.label }).click();
+    await page.getByRole("radio", { name: preset.label, exact: true }).click();
     await page.waitForTimeout(400);
 
     for (const route of SHELL_ROUTES) {

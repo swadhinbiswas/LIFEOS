@@ -44,6 +44,9 @@ test("mcp: the four tools run over the wire with a UI-created key", async ({ pag
     "create_card",
     "move_card",
     "get_daily_brief",
+    "list_resumes",
+    "get_resume",
+    "propose_resume_edit",
   ]);
 
   const created = await rpc("tools/call", {
