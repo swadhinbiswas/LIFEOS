@@ -263,9 +263,16 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             </Panel>
           ))}
 
-        <Panel title={t("layout")} hint={t("customize")}>
-          <LayoutControls layout={layout} labels={labels} />
-        </Panel>
+        <details className="group" data-slot="dashboard-customize">
+          <summary className="w-fit cursor-pointer rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 font-mono text-[10px] text-muted-foreground select-none hover:bg-accent hover:text-accent-foreground">
+            {t("customize")}
+          </summary>
+          <div className="mt-2">
+            <Panel title={t("layout")}>
+              <LayoutControls layout={layout} labels={labels} />
+            </Panel>
+          </div>
+        </details>
       </div>
     </>
   );

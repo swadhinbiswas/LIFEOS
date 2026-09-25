@@ -2075,6 +2075,12 @@ workspace`) and `read the docs`. **The "try the demo" button is removed**; `/dem
   landing is a maintained surface with copy in two locales, and `/demo` is discoverable only by URL
   or docs.
 
+**Update (same day):** the page gained a **product band** with two real screenshots of the seeded
+workspace (`public/landing/dashboard.png`, `board.png`, captured from a signed-in account, not
+mockups), a five-question **FAQ**, and a factual **"built with"** strip. The dashboard's widget
+controls moved behind a collapsed `customize` disclosure, so the very screenshot the landing shows
+is an uncluttered dashboard.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

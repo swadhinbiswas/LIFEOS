@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -68,6 +69,18 @@ const STEPS: Array<{ titleKey: string; bodyKey: string }> = [
   { titleKey: "step1Title", bodyKey: "step1Body" },
   { titleKey: "step2Title", bodyKey: "step2Body" },
   { titleKey: "step3Title", bodyKey: "step3Body" },
+];
+
+const FAQS = [1, 2, 3, 4, 5];
+
+const STACK = [
+  "Next.js",
+  "TypeScript",
+  "SQLite / libSQL",
+  "Drizzle ORM",
+  "shadcn/ui",
+  "Recharts",
+  "MCP",
 ];
 
 /** A TUI terminal with window chrome; the lines are illustrative and hidden from assistive tech. */
@@ -172,6 +185,9 @@ export default async function RootPage() {
             <a href="#start" className="hover:text-foreground">
               {t("navStart")}
             </a>
+            <a href="#faq" className="hover:text-foreground">
+              {t("navFaq")}
+            </a>
             <Link href="/docs" className="hover:text-foreground">
               {t("navDocs")}
             </Link>
@@ -226,6 +242,56 @@ export default async function RootPage() {
             </ul>
           </div>
           <TerminalWindow />
+        </section>
+
+        <section className="border-t border-border py-12">
+          <div className="flex max-w-2xl flex-col gap-2">
+            <span className="font-mono text-[10px] tracking-wider text-primary uppercase">
+              {t("productEyebrow")}
+            </span>
+            <h2 className="font-mono text-xl font-semibold tracking-tight">{t("productTitle")}</h2>
+            <p className="font-mono text-xs leading-relaxed text-muted-foreground">
+              {t("productBody")}
+            </p>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3">
+            <div className="overflow-hidden rounded-[var(--radius)] border border-border bg-card">
+              <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+                <span aria-hidden="true" className="size-2 rounded-full bg-destructive" />
+                <span aria-hidden="true" className="size-2 rounded-full bg-warning" />
+                <span aria-hidden="true" className="size-2 rounded-full bg-success" />
+                <span className="ml-2 font-mono text-[10px] text-muted-foreground">
+                  lifeos — dashboard
+                </span>
+              </div>
+              <Image
+                src="/landing/dashboard.png"
+                alt={t("screenshotDashboardAlt")}
+                width={2880}
+                height={1800}
+                className="h-auto w-full"
+              />
+            </div>
+
+            <div className="overflow-hidden rounded-[var(--radius)] border border-border bg-card">
+              <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+                <span aria-hidden="true" className="size-2 rounded-full bg-destructive" />
+                <span aria-hidden="true" className="size-2 rounded-full bg-warning" />
+                <span aria-hidden="true" className="size-2 rounded-full bg-success" />
+                <span className="ml-2 font-mono text-[10px] text-muted-foreground">
+                  lifeos — tasks
+                </span>
+              </div>
+              <Image
+                src="/landing/board.png"
+                alt={t("screenshotBoardAlt")}
+                width={2880}
+                height={1800}
+                className="h-auto w-full"
+              />
+            </div>
+          </div>
         </section>
 
         <section id="modules" className="scroll-mt-20 border-t border-border py-12">
@@ -309,6 +375,23 @@ export default async function RootPage() {
               ))}
             </ul>
           </div>
+        </section>
+
+        <section id="faq" className="scroll-mt-20 border-t border-border py-12">
+          <h2 className="font-mono text-xl font-semibold tracking-tight">{t("faqTitle")}</h2>
+          <dl className="mt-6 grid gap-3 lg:grid-cols-2">
+            {FAQS.map((index) => (
+              <div
+                key={index}
+                className="flex flex-col gap-1.5 rounded-[var(--radius)] border border-border bg-card p-4"
+              >
+                <dt className="font-mono text-sm font-semibold">{t(`faqQ${index}`)}</dt>
+                <dd className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+                  {t(`faqA${index}`)}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </section>
 
         <section id="start" className="scroll-mt-20 border-t border-border py-12">
@@ -409,6 +492,17 @@ export default async function RootPage() {
                 {t("navStart")}
               </Link>
             </nav>
+          </div>
+
+          <div className="flex flex-col gap-2 border-t border-border pt-6">
+            <span className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+              {t("builtWith")}
+            </span>
+            <ul className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[11px] text-muted-foreground">
+              {STACK.map((name) => (
+                <li key={name}>{name}</li>
+              ))}
+            </ul>
           </div>
         </div>
       </footer>
