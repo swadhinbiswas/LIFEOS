@@ -9,7 +9,11 @@ import { getServerSession } from "@/server/auth/session";
 
 import { WakaTimeForm } from "./_components/wakatime-form";
 
-export const metadata = { title: "Activity" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Activity", "title");
+}
 
 /**
  * `/settings/activity` (ADR-110): connect WakaTime, sync on demand, and see exactly which senders

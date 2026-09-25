@@ -13,7 +13,11 @@ import { listIdsByTag, listTags, listTagsForMany } from "@/server/tags";
 import { NewNote } from "./_components/new-note";
 import { NoteRowMenu } from "./_components/note-row-menu";
 
-export const metadata = { title: "Notes" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Notes", "title");
+}
 
 type PageProps = { searchParams: Promise<{ q?: string; tag?: string }> };
 

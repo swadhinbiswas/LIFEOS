@@ -5,7 +5,11 @@ import { Panel } from "@/components/tui/panel";
 import { PageHeader } from "@/components/tui/page-header";
 import { openApiDocument } from "@/server/api/openapi";
 
-export const metadata = { title: "API reference" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Api", "title");
+}
 
 interface Operation {
   summary?: string;

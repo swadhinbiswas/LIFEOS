@@ -26,7 +26,11 @@ import { SubscriptionControls } from "./_components/subscription-controls";
 import { SpendChart } from "./_components/spend-chart";
 import { SpendHistory } from "./_components/spend-history";
 
-export const metadata = { title: "Finance" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Finance", "title");
+}
 
 /**
  * `/finance` (spec §6.6, "finance-lite"): manual accounts, transactions and monthly budgets with

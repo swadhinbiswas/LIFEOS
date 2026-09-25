@@ -10,7 +10,11 @@ import { getSubscription, isFounder } from "@/server/billing/subscriptions";
 
 import { BillingActions } from "./_components/billing-actions";
 
-export const metadata = { title: "Billing" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Billing", "title");
+}
 
 /**
  * `/settings/billing` (spec §11, ADR-082). While billing is off the page is reachable only by URL

@@ -41,7 +41,11 @@ import { TemplatePicker } from "./_components/template-picker";
 import { StaleApplications } from "./_components/stale-applications";
 import { TrendChart } from "./_components/trend-chart";
 
-export const metadata = { title: "Dashboard" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Dashboard", "title");
+}
 
 /**
  * How many days the code variant charts. Matches the window the sync action pulls, so the chart and

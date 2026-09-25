@@ -5,7 +5,11 @@ import { Panel } from "@/components/tui/panel";
 import { PageHeader } from "@/components/tui/page-header";
 import { DOCS, docExists } from "@/server/docs";
 
-export const metadata = { title: "Docs" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Docs", "title");
+}
 
 /**
  * `/docs` (spec §13, ADR-087): an index of the repository documents with a live written/not-yet

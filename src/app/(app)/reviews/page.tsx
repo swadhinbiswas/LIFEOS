@@ -9,7 +9,11 @@ import { listReviews } from "@/server/reviews";
 
 import { ReviewWizard } from "./_components/review-wizard";
 
-export const metadata = { title: "Reviews" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Reviews", "title");
+}
 
 /**
  * `/reviews` (spec §6.2/§6.4): the guided weekly/monthly review. Its output is a note (ADR-045),

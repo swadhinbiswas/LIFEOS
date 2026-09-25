@@ -11,7 +11,11 @@ import { CSV_MODULES } from "@/server/data/export";
 import { DataDelete } from "./_components/data-delete";
 import { DataImport } from "./_components/data-import";
 
-export const metadata = { title: "Data" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Data", "title");
+}
 
 /**
  * `/settings/data` (spec §10, ADR-083): export, import, delete-account and a read-only audit log.

@@ -5,7 +5,11 @@ import type { Locale } from "@/config/i18n";
 
 import { LocaleSwitch } from "./_components/locale-switch";
 
-export const metadata = { title: "About" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("About", "title");
+}
 
 const FEATURES = ["boards", "career", "life", "global"] as const;
 

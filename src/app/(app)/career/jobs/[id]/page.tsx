@@ -8,7 +8,11 @@ import { getJobDetail } from "@/server/career";
 
 import { AddInterviewForm, AddOfferForm } from "../_components/job-detail-forms";
 
-export const metadata = { title: "Job" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Career", "application");
+}
 
 /** Money is stored in minor units (ADR-044); render it back in the job's own currency. */
 const money = (minor: number | null, currency: string | null): string => {

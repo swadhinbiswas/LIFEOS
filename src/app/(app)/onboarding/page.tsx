@@ -7,7 +7,11 @@ import { getServerSession } from "@/server/auth/session";
 
 import { OnboardingWizard } from "./_components/onboarding-wizard";
 
-export const metadata = { title: "Welcome" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Onboarding", "title");
+}
 
 /**
  * `/onboarding` (spec §14 Phase 8, ADR-085): the 60-second setup. Name → profile → starter board,

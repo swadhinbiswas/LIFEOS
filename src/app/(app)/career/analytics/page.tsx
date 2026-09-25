@@ -17,7 +17,11 @@ import { getServerSession } from "@/server/auth/session";
 import { getCareerAnalytics } from "@/server/career/analytics";
 import { getRegionalSettings } from "@/server/settings";
 
-export const metadata = { title: "Career analytics" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Career", "analyticsTitle");
+}
 
 const cell = "border-b border-border px-2 py-1";
 const head =

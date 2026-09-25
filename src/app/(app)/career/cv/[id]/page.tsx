@@ -10,7 +10,11 @@ import { toMarkdown } from "@/server/cv/export";
 
 import { CvEditor } from "./_components/cv-editor";
 
-export const metadata = { title: "CV" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Cv", "title");
+}
 
 /**
  * `/career/cv/[id]` (spec §6.3): the editor, a live text preview, the derived checklist, versions,

@@ -11,7 +11,11 @@ import { CopilotQuickAction } from "../_components/copilot-quick-action";
 import { BoardView } from "../_components/board/board-view";
 import { PlanMyDay } from "../_components/board/plan-my-day";
 
-export const metadata = { title: "Tasks" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Tasks", "title");
+}
 
 /**
  * `/tasks` renders the per-user system board (ADR-042): Inbox / Today / Upcoming / Someday /

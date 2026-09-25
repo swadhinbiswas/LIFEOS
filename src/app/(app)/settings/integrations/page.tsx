@@ -16,7 +16,11 @@ import {
 import { ApiKeys } from "./_components/api-keys";
 import { Webhooks } from "./_components/webhooks";
 
-export const metadata = { title: "Integrations" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Integrations", "title");
+}
 
 /**
  * `/settings/integrations` (spec §9.1, MVP #33, ADR-062): personal API keys for the REST API and

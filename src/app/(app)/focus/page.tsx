@@ -10,7 +10,11 @@ import { getRegionalSettings } from "@/server/settings";
 import { FocusTimer } from "./_components/focus-timer";
 import { FocusChart } from "./_components/focus-chart";
 
-export const metadata = { title: "Focus" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Focus", "title");
+}
 
 /**
  * `/focus` (spec §6.7): the timer, today's and this week's totals, and the recent session log.

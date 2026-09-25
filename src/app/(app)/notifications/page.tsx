@@ -9,7 +9,11 @@ import { getTimeZone } from "@/server/settings";
 
 import { NotificationsList } from "./_components/notifications-list";
 
-export const metadata = { title: "Notifications" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Notifications", "title");
+}
 
 /**
  * `/notifications` (spec §6.9): the in-app centre. The service sweeps the sources on read

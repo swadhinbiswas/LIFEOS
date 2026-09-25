@@ -9,7 +9,11 @@ import { getUserDayKey } from "@/server/settings";
 
 import { HealthForm } from "./_components/health-form";
 
-export const metadata = { title: "Health" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Health", "title");
+}
 
 /**
  * `/health` (spec §6.6, "health-lite"): simple logs for sleep, workouts, water, mood and weight,

@@ -6,7 +6,11 @@ import { getServerSession } from "@/server/auth/session";
 
 import { ThemeCustomizer } from "../_components/theme-customizer";
 
-export const metadata = { title: "Appearance" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Appearance", "title");
+}
 
 /**
  * Appearance (spec §4.2/§13): every customizer axis, live and persisted per user (ADR-024).

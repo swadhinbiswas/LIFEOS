@@ -11,7 +11,11 @@ import { listHabits } from "@/server/habits";
 import { demoUserId } from "@/server/seed";
 import { getTimeZone } from "@/server/settings";
 
-export const metadata = { title: "Demo" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Demo", "title");
+}
 
 /**
  * Public read-only demo (spec §14 Phase 8, ADR-086): the seeded demo account's data, rendered

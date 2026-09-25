@@ -5,7 +5,11 @@ import { Panel } from "@/components/tui/panel";
 import { BOARD_TEMPLATES } from "@/config/board-templates";
 import { SEED_PROFILES } from "@/config/seed-profiles";
 
-export const metadata = { title: "Templates" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Templates", "title");
+}
 
 /**
  * Public template gallery (spec §14 Phase 8, MVP #50/#54, ADR-085): the board templates and the

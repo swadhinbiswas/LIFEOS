@@ -9,7 +9,11 @@ import { listPrep } from "@/server/career/prep";
 
 import { AddQuestionForm, AddStoryForm } from "./_components/prep-forms";
 
-export const metadata = { title: "Interview prep" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Career", "prepTitle");
+}
 
 /**
  * `/career/interview-prep` (spec §6.3): the question bank and STAR stories. Both are the user's

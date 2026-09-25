@@ -21,7 +21,11 @@ import { getTimeZone } from "@/server/settings";
 
 import { AgendaView, MonthView, WeekView } from "./_components/calendar-views";
 
-export const metadata = { title: "Calendar" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Calendar", "title");
+}
 
 /** Plain-token controls only: opacity modifiers make axe sample pixels (ADR-041). */
 const control =

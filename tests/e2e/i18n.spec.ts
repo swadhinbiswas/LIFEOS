@@ -46,3 +46,36 @@ test("i18n: the about page switches to Bangla and persists", async ({ page }) =>
   await page.getByRole("button", { name: "English" }).click();
   await expect(page.getByRole("heading", { name: "About", level: 1 })).toBeVisible();
 });
+
+/**
+ * The browser title is part of the translated surface (ADR-072 follow-up). It used to be a
+ * hardcoded `export const metadata = { title: "Dashboard" }` on every page — the body was Bangla
+ * while the tab still read "Dashboard · LifeOS", which is the kind of half-translation ADR-072
+ * forbids. `generateMetadata` now reads the same catalogue the body does.
+ */
+test("i18n: the document title follows the locale", async ({ page }) => {
+  test.setTimeout(90_000);
+  const email = uniqueEmail("i18n-title");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+
+  await page.goto("/dashboard");
+  await expect(page).toHaveTitle("Dashboard · LifeOS");
+
+  await page.goto("/about");
+  await page.getByRole("button", { name: "বাংলা" }).click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "bn");
+
+  // A handful of surfaces, including a settings page and a detail route, so a regression in any
+  // single page's namespace wiring shows up here.
+  for (const [path, title] of [
+    ["/dashboard", "ড্যাশবোর্ড · LifeOS"],
+    ["/tasks", "কাজ · LifeOS"],
+    ["/career/jobs", "চাকরি · LifeOS"],
+    ["/settings/activity", "অ্যাক্টিভিটি · LifeOS"],
+  ] as const) {
+    await page.goto(path);
+    await expect(page, `${path} title`).toHaveTitle(title);
+  }
+});

@@ -5,7 +5,11 @@ import { getTranslations } from "next-intl/server";
 import { Panel } from "@/components/tui/panel";
 import { docBySlug, DOCS, readDoc } from "@/server/docs";
 
-export const metadata = { title: "Docs" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Docs", "title");
+}
 
 /**
  * One repository document (spec §13, ADR-087). Content is trusted repo text and is rendered as

@@ -9,7 +9,11 @@ import { listBoards } from "@/server/boards";
 
 import { CreateBoardForm } from "./_components/create-board-form";
 
-export const metadata = { title: "Boards" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Boards", "title");
+}
 
 /** `/boards` — the user's boards, plus one-click creation from a template (spec §6.1). */
 export default async function BoardsPage() {

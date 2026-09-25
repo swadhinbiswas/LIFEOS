@@ -14,7 +14,11 @@ import {
   CourseProgress,
 } from "./_components/learning-controls";
 
-export const metadata = { title: "Learning" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Learning", "title");
+}
 
 /**
  * `/learning` (spec §6.6): courses with a learner-set progress and deadlines, and books with a

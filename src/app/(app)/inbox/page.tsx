@@ -9,7 +9,11 @@ import { ensureSystemTasksBoard, getBoard } from "@/server/boards";
 import { CaptureBox } from "../_components/board/capture-box";
 import { InboxList } from "../_components/board/inbox-list";
 
-export const metadata = { title: "Inbox" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Inbox", "title");
+}
 
 /**
  * `/inbox` (spec §6.2): capture with the §4.3 grammar, then triage to Today / Upcoming /

@@ -10,7 +10,11 @@ import { listGrowth, parseProjectTech } from "@/server/career/growth";
 import { AddAchievementForm, AddProjectForm, AddSkillForm } from "./_components/growth-forms";
 import { SampleActions } from "./_components/sample-actions";
 
-export const metadata = { title: "Portfolio" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Career", "portfolioTitle");
+}
 
 /**
  * `/career/portfolio` (spec §6.3 "projects"): the user's repositories and their skills. The

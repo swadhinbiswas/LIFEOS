@@ -13,7 +13,11 @@ import { getAiPrefs } from "@/server/settings";
 import { AiMemory } from "./_components/ai-memory";
 import { AiSettingsForm } from "./_components/ai-settings-form";
 
-export const metadata = { title: "AI" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.AiSettings", "title");
+}
 
 /**
  * `/settings/ai` (spec §8/§10): provider, model, BYO key, auto-approve allowlist, memory and the

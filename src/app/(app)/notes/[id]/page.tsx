@@ -3,13 +3,16 @@ import { notFound, redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
+import { pageMetadata } from "@/lib/page-metadata";
 import { getServerSession } from "@/server/auth/session";
 import { getNote } from "@/server/notes";
 import { getTags } from "@/server/tags";
 
 import { NoteEditor } from "./_components/note-editor";
 
-export const metadata = { title: "Note" };
+export async function generateMetadata() {
+  return pageMetadata("Pages.Notes", "noteTitle");
+}
 
 /** `/notes/[id]`: the editor plus the backlink panel (edges the service rebuilds on save). */
 export default async function NotePage({ params }: { params: Promise<{ id: string }> }) {

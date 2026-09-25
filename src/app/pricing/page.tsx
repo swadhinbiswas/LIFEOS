@@ -4,7 +4,11 @@ import { Panel } from "@/components/tui/panel";
 import { formatLimit, PLANS } from "@/config/plans";
 import { billingEnabled } from "@/env";
 
-export const metadata = { title: "Pricing" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Pricing", "title");
+}
 
 /**
  * Public `/pricing` (spec §11, ADR-082). It renders **from `config/plans.ts`**, so the marketing

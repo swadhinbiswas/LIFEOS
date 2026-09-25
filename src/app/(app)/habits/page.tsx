@@ -9,7 +9,11 @@ import { listHabits } from "@/server/habits";
 
 import { AddHabitForm, HabitToggle } from "./_components/habit-controls";
 
-export const metadata = { title: "Habits" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Habits", "title");
+}
 
 /**
  * `/habits` (spec §6.4): today's check-ins, current streaks and the last four weeks. Streaks are

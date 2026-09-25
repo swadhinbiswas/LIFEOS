@@ -11,7 +11,11 @@ import { listResumes } from "@/server/cv";
 
 import { CvNew } from "./_components/cv-new";
 
-export const metadata = { title: "CV" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Cv", "title");
+}
 
 /**
  * `/career/cv` (spec §6.3): the CV library. Each row links to the editor and offers its exports

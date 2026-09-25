@@ -14,7 +14,11 @@ import {
   KeyResultControls,
 } from "./_components/goals-controls";
 
-export const metadata = { title: "Goals" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Goals", "title");
+}
 
 /**
  * `/goals` (spec §6.4): objectives with key results. Every percentage is derived (key results

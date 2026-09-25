@@ -8,7 +8,11 @@ import { listTrash } from "@/server/trash";
 
 import { TrashList } from "./_components/trash-list";
 
-export const metadata = { title: "Trash" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Trash", "title");
+}
 
 /**
  * `/trash` (spec §6.9, ADR-048): the cross-module route back for deleted cards and notes. The

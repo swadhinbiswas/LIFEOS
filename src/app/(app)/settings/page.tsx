@@ -9,7 +9,11 @@ import { getRegionalSettings } from "@/server/settings";
 import { ProfileForm } from "./_components/profile-form";
 import { RegionalForm } from "./_components/regional-form";
 
-export const metadata = { title: "Profile" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Settings", "title");
+}
 
 /**
  * Profile (spec §13 Phase 1 settings): the fields Better Auth owns today. Locale/timezone/

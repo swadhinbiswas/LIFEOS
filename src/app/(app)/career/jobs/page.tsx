@@ -10,7 +10,11 @@ import { ensureJobBoard, getJobMeta } from "@/server/career";
 import { BoardView } from "../../_components/board/board-view";
 import { NewJobForm } from "./_components/new-job-form";
 
-export const metadata = { title: "Jobs" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Career", "jobsTitle");
+}
 
 /**
  * `/career/jobs` (spec §6.3): the job pipeline *is* the board engine (ADR-044), so the page

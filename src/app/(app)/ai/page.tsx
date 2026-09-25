@@ -11,7 +11,11 @@ import { getAiPrefs } from "@/server/settings";
 
 import { CopilotChat } from "./_components/copilot-chat";
 
-export const metadata = { title: "Copilot" };
+import { pageMetadata } from "@/lib/page-metadata";
+
+export async function generateMetadata() {
+  return pageMetadata("Pages.Copilot", "title");
+}
 
 /**
  * `/ai` (spec §8): the full-page copilot. The server decides whether a provider is usable and

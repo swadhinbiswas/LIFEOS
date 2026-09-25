@@ -30,8 +30,14 @@ items are honest gaps with the reason and the next step.
 - [x] Injection defense: untrusted-data framing, signed approvals, malicious fixtures in `pnpm eval`
 - [x] Rate limits on auth, REST, MCP and AI; fail-open documented (ADR-014)
 - [x] Webhooks: HMAC outbound, Standard Webhooks verification inbound, idempotent by event id
-- [ ] Webhook secrets encrypted at rest — tracked in `docs/SECURITY.md` (known gap 1)
-- [ ] CSP and security headers — tracked in `docs/SECURITY.md` (known gap 2)
+- [x] Webhook secrets encrypted at rest — `createWebhook` encrypts with the ADR-074 helper, with a
+      plaintext read fallback so rows written earlier still verify
+- [x] CSP and security headers — shipped from `next.config.ts`: CSP (same-origin,
+      `form-action 'self'`, `frame-ancestors 'none'`, `object-src 'none'`; `eval` dev-only), plus
+      `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` and
+      `X-DNS-Prefetch-Control`. Asserted against a real response in `security-headers.spec.ts`
+- [x] WakaTime API key encrypted at rest, masked to `••••1234`; the stored activity is durations and
+      labels only (`docs/ACTIVITY.md`)
 
 ## Documentation
 
