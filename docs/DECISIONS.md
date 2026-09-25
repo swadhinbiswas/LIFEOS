@@ -2482,6 +2482,38 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   ever gets checked in one timezone will disagree in every other one. Worth noting that the timezone
   e2e exists and passes; it saved a _preference_ but never asserted a _rendered time_.
 
+## ADR-113 — Migration drift is a first-class signal; dev migrates on start
+
+- **Status:** accepted (2026-09-26)
+- **Context:** adding the WakaTime tables (ADR-110) shipped migration `0015` and a fully green
+  gate — — typecheck, lint, format, 570 unit tests, 75 e2e, build — while `pnpm dev` served
+  `SQLITE_ERROR: no such table: code_activity_daily` on the dashboard. The cause was mundane:
+  `pnpm db:generate` was run and `pnpm db:migrate` was not.
+- **Context, continued:** the reason the gate could not catch it is structural. The unit tests and
+  the acceptance suite each migrate their **own** throwaway database, and `pnpm build` only
+  typechecks — so nothing in CI ever looks at the developer's `.data/lifeos.db`. "Did you remember to migrate
+  your own database" was a step that existed only in one person's memory.
+- **Decision:** three changes, so that the failure cannot be silent and cannot recur:
+  - **`pnpm dev` migrates first** (`scripts/dev-migrate.mjs`), making the two steps impossible to
+    separate. It reads `.env` through Node's built-in loader, the same mechanism `src/env.ts` uses
+    (ADR-027), because the script runs before Next has loaded anything. It acts on **local file
+    databases only**: a `libsql://` or `https://` URL is shared or production, and a developer's
+    `pnpm dev` has no business writing to it. A failure is reported and dev continues, because a
+    broken migration is not a reason to hide the app behind a dead port.
+  - **`/api/health` reports migration drift** and answers 503 when the database is behind. The old
+    probe ran `select 1`, which succeeds against a database three migrations behind — it called a broken
+    deployment healthy. A deploy that forgot to migrate now fails its probe instead of serving 500s.
+  - **Drift is counted from `drizzle/meta/_journal.json`, not from a directory listing.** This was
+    the second, quieter bug: drizzle-kit replays the journal, so a hand-dropped `.sql` file is
+    never applied no matter how many times you migrate, and a schema that exists only in one
+    crashes forever. Counting files would have over-reported drift and missed that case, so orphan
+    files are reported separately with their own fix.
+- **Consequences:** an unapplied migration is now a `pnpm dev` line, a 503 with a reason an
+  operator can act on, and a failing test. A bundle that ships no `drizzle/` reports
+  `unknown: true` rather than a confident zero, so "verified current" stays distinguishable from
+  "could not check". The general lesson is the one worth keeping: a gate that only exercises
+  throwaway state is not evidence about the state you actually run against.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

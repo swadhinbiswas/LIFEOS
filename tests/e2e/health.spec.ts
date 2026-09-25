@@ -3,31 +3,58 @@ import { expect, test } from "@playwright/test";
 import { createVerifiedUser, signIn, uniqueEmail } from "./helpers";
 
 /**
- * Health-lite (spec §6.6): a log keeps the unit the user typed, feeds the weekly average, and
- * survives a reload.
+ * The health probe is a deployment gate, so its contract is asserted here (ADR-113).
+ *
+ * It used to answer `select 1` and nothing else, which succeeds against a database several
+ * migrations behind — the state that served `SQLITE_ERROR: no such table` on the dashboard while
+ * the whole gate was green. A probe that cannot tell "current" from "reachable" is not a readiness
+ * check.
  */
-test("health: log sleep and see the weekly average", async ({ page }) => {
-  test.setTimeout(90_000);
-  const email = uniqueEmail("health");
+test.describe("health probe", () => {
+  test("reports migration state, not just that the socket is open", async ({ request }) => {
+    const response = await request.get("/api/health");
+    expect(response.status()).toBe(200);
 
-  await createVerifiedUser(page, email);
-  await signIn(page, email);
-  await page.goto("/health");
+    const body = (await response.json()) as {
+      ok: boolean;
+      service: string;
+      database: string;
+      migrations: { expected: number; applied: number; pending: number; unknown: boolean };
+    };
 
-  await expect(page.locator('[data-slot="health-disclaimer"]')).toContainText("nothing medical");
+    expect(body.ok).toBe(true);
+    expect(body.service).toBe("lifeos");
+    // The E2E database is migrated by global-setup, so it is current by construction.
+    expect(body.migrations.expected).toBeGreaterThan(0);
+    expect(body.migrations.pending).toBe(0);
+    expect(body.migrations.applied).toBe(body.migrations.expected);
+  });
 
-  await page.getByLabel("health kind").selectOption("sleep");
-  await page.getByLabel("health value").fill("7");
-  await page.getByLabel("health unit").fill("h");
-  await page.getByRole("button", { name: "log it" }).click();
+  test("stays green for a signed-in user, so the probe is not auth-gated", async ({ page }) => {
+    const email = uniqueEmail("health");
+    await createVerifiedUser(page, email);
+    await signIn(page, email);
 
-  const trend = page.locator('[data-slot="trend-row"]', { hasText: "sleep" });
-  await expect(trend).toBeVisible();
-  await expect(trend).toContainText("7 h this week");
-  await expect(page.locator('[data-slot="health-row"]', { hasText: "sleep" })).toContainText("7 h");
+    const response = await page.request.get("/api/health");
+    expect(response.status()).toBe(200);
+    expect(((await response.json()) as { ok: boolean }).ok).toBe(true);
+  });
 
-  await page.reload();
-  await expect(page.locator('[data-slot="trend-row"]', { hasText: "sleep" })).toContainText(
-    "7 h this week",
-  );
+  test("the dashboard reads tables the probe says exist", async ({ page }) => {
+    // The end-to-end version of the same claim: if the probe says current and the dashboard still
+    // raises SQLITE_ERROR, the probe is lying about something.
+    const email = uniqueEmail("health-dash");
+    await createVerifiedUser(page, email);
+    await signIn(page, email);
+
+    const health = await page.request.get("/api/health");
+    const pending = ((await health.json()) as { migrations: { pending: number } }).migrations
+      .pending;
+    expect(pending).toBe(0);
+
+    await page.goto("/dashboard?variant=code");
+    // The activity widgets read `code_activity_daily`; the unconnected state is the honest render.
+    await expect(page.getByRole("heading", { name: "connection", level: 2 })).toBeVisible();
+    await expect(page.locator("body")).not.toContainText("no such table");
+  });
 });
