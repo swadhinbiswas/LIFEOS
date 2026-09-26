@@ -27,7 +27,8 @@
     "cli": "tsx src/cli/index.ts",
     "load": "node scripts/load.mjs",
     "lighthouse": "pnpm dlx @lhci/cli autorun",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:admin": "tsx scripts/create-admin.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "4.0.63",
