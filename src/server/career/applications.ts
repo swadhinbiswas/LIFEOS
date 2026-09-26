@@ -42,6 +42,9 @@ export interface JobRow {
   workMode: string | null;
   visaStatus: string | null;
   reqId: string | null;
+  appId: string | null;
+  progress: number | null;
+  coverLetterNeeded: boolean | null;
   url: string | null;
   applyBy: Date | null;
   applyEmail: string | null;
@@ -84,6 +87,9 @@ export async function listJobApplications(
       workMode: job_applications.work_mode,
       visaStatus: job_applications.visa_status,
       reqId: job_applications.req_id,
+      appId: job_applications.app_id,
+      progress: job_applications.progress,
+      coverLetterNeeded: job_applications.cover_letter_needed,
       url: job_applications.url,
       applyBy: job_applications.apply_by,
       applyEmail: job_applications.apply_email,
@@ -127,6 +133,9 @@ export async function listJobApplications(
     workMode: row.workMode,
     visaStatus: row.visaStatus,
     reqId: row.reqId,
+    appId: row.appId,
+    progress: row.progress,
+    coverLetterNeeded: row.coverLetterNeeded,
     url: row.url,
     applyBy: row.applyBy,
     applyEmail: row.applyEmail,

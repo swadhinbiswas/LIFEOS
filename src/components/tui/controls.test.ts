@@ -97,7 +97,11 @@ describe("control vocabulary (adr-117)", () => {
     for (const file of ["board-toolbar", "inbox-list", "saved-views", "board-utils", "card-tile"]) {
       expect(board(`${file}.tsx`), file).not.toMatch(/const control =/u);
     }
-    const forms = globSync("src/app/**/[a-z]*.tsx").filter((f) => /const field =/u.test(read2(f)));
+    // The quote matters: a `const field = "..."` is a class string, while `const field = "stage"`
+    // in a comparator is a column name. Matching the bare name flagged both.
+    const forms = globSync("src/app/**/[a-z]*.tsx").filter((f) =>
+      /const field = "/u.test(read2(f)),
+    );
     expect(forms, "files still declaring their own field class").toEqual([]);
   });
 });

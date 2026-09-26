@@ -124,6 +124,24 @@ export const job_applications = sqliteTable(
     /** 1–5 (spec §6.3). */
     excitement: integer("excitement"),
     fit_score: integer("fit_score"),
+    /**
+     * The reference tracker keeps a short application id ("6", "REQ-000") that is *not* the
+     * database key, because it is the number quoted to a recruiter, in a spreadsheet export, or in
+     * an email. Nullable and free text: some portals give "R100705", some give nothing, and forcing
+     * a number would reject half of them.
+     */
+    app_id: text("app_id"),
+    /**
+     * How far along this application is, 0–100. Deliberately a *human* judgement, not something
+     * derived from the stage: two applications sitting in "Interview" are not equally far along, and
+     * a number the owner types is the only thing that knows.
+     */
+    progress: integer("progress"),
+    /**
+     * Whether a cover letter is owed, as distinct from `cover_letter` which holds the text. Having
+     * the text without this meant a blank text field and "not needed yet" were indistinguishable.
+     */
+    cover_letter_needed: integer("cover_letter_needed", { mode: "boolean" }),
     archived_at: integer("archived_at", { mode: "timestamp_ms" }),
     ...timestamps(),
   },
