@@ -69,9 +69,22 @@ export default async function JobsPage({ searchParams }: PageProps) {
 
       <div className="grid min-w-0 gap-4">
         {showDatabase ? (
-          <Panel title={t("dbTitle")}>
-            <JobDatabase userId={session.user.id} sort={sort} stage={stage} fit={fit} />
-          </Panel>
+          <>
+            {/* A new row belongs where the rows are. Adding a job from the table and being sent to
+                the board to see it was the one thing the database view could not do. */}
+            <Panel title={t("addJob")}>
+              <NewJobForm boardId={board.id} />
+            </Panel>
+            <Panel title={t("dbTitle")}>
+              <JobDatabase
+                userId={session.user.id}
+                boardId={board.id}
+                sort={sort}
+                stage={stage}
+                fit={fit}
+              />
+            </Panel>
+          </>
         ) : (
           <>
             <Panel title={t("addJob")}>

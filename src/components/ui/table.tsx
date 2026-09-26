@@ -3,13 +3,25 @@
 import * as React from "react";
 import { cn } from "cn";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+function Table({
+  className,
+  containerClassName,
+  ...props
+}: React.ComponentProps<"table"> & { containerClassName?: string }) {
   return (
     // `scrollbar-hidden`: a wide table used to draw the OS scrollbar, which is a light widget with
     // arrow buttons sitting in a dark interface — the loudest thing on the page and information the
     // reader does not need, because the table overflows by a little. The region still scrolls; only
     // the bar is gone. The board's own scroller keeps its bar, which is a real affordance there.
-    <div data-slot="table-container" className="scrollbar-hidden relative w-full overflow-x-auto">
+    //
+    // Hiding the bar is only honest while the overflow is small. A table with eleven columns
+    // overflows by a couple of hundred pixels, and with no bar and no edge the reader concludes the
+    // last columns do not exist. `scroll-shadow-x` is that edge: opt-in, and it shows itself only
+    // when there is genuinely more table in that direction.
+    <div
+      data-slot="table-container"
+      className={cn("scrollbar-hidden relative w-full overflow-x-auto", containerClassName)}
+    >
       <table
         data-slot="table"
         className={cn("w-full caption-bottom text-sm", className)}

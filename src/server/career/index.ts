@@ -28,6 +28,7 @@ import type {
   AddOfferInput,
   CreateJobInput,
   MoveJobStageInput,
+  MoveJobToStageInput,
   UpdateInterviewInput,
   UpdateJobInput,
 } from "./schemas";
@@ -202,6 +203,9 @@ export async function updateJob(userId: string, input: UpdateJobInput): Promise<
   if (input.seniority !== undefined) patch.seniority = input.seniority;
   if (input.applyEmail !== undefined) patch.apply_email = input.applyEmail;
   if (input.reqId !== undefined) patch.req_id = input.reqId;
+  if (input.appId !== undefined) patch.app_id = input.appId;
+  if (input.progress !== undefined) patch.progress = input.progress;
+  if (input.coverLetterNeeded !== undefined) patch.cover_letter_needed = input.coverLetterNeeded;
   if (input.location !== undefined) patch.location = input.location;
   if (input.contactId !== undefined) {
     // A contact belongs to the user; a foreign id is rejected rather than silently linked, so a
@@ -276,6 +280,80 @@ export async function moveJobStage(userId: string, input: MoveJobStageInput): Pr
   });
 
   return card;
+}
+
+/**
+ * Move a job to a stage named rather than a column id, landing at the end of that column.
+ *
+ * The table's stage dropdown and the `move_job_stage` MCP tool both say "this is in Interview now".
+ * Neither knows the target column's id, the card's current version, or which card currently sits at
+ * the bottom — and all three change underneath any client that cached them. Resolving them here,
+ * against the database, at the moment of the call, is the only version that is not a guess.
+ *
+ * Scoped to the *job* board rather than "any column the user owns with this name", because a Tasks
+ * board has a "Done" column too and a job that lands there is invisible on the pipeline.
+ */
+export async function moveJobToStage(
+  userId: string,
+  input: MoveJobToStageInput,
+): Promise<{ cardId: string; stage: string }> {
+  const application = await requireApplication(userId, input.applicationId);
+  const board = await ensureJobBoard(userId);
+
+  const [column] = await db
+    .select({ id: board_columns.id, name: board_columns.name })
+    .from(board_columns)
+    .where(
+      and(
+        eq(board_columns.board_id, board.id),
+        eq(board_columns.user_id, userId),
+        sql`lower(${board_columns.name}) = lower(${input.toStage})`,
+      ),
+    )
+    .limit(1);
+  if (!column) {
+    // Naming the stages that do exist is the difference between a fixable call and a guessing loop.
+    const available = (
+      await db
+        .select({ name: board_columns.name })
+        .from(board_columns)
+        .where(and(eq(board_columns.board_id, board.id), eq(board_columns.user_id, userId)))
+        .orderBy(board_columns.position)
+    ).map((row) => row.name);
+    throw new BoardError(
+      "not_found",
+      `no stage named "${input.toStage}". stages are: ${available.join(", ")}`,
+    );
+  }
+
+  const [current] = await db
+    .select({ columnId: cards.column_id, version: cards.version })
+    .from(cards)
+    .where(and(eq(cards.id, application.card_id), eq(cards.user_id, userId)))
+    .limit(1);
+  if (!current) throw new BoardError("not_found", "job card not found");
+
+  // Already there: say so and do nothing. `moveCard` would still succeed and append a duplicate
+  // history entry, which would make "time in stage" count a transition that never happened.
+  if (current.columnId === column.id) return { cardId: application.card_id, stage: column.name };
+
+  // Append to the end of the target column, so the optimistic version the caller never had to read
+  // is still the one `moveCard` checks (ADR-009).
+  const [last] = await db
+    .select({ id: cards.id })
+    .from(cards)
+    .where(and(eq(cards.column_id, column.id), eq(cards.user_id, userId)))
+    .orderBy(desc(cards.position))
+    .limit(1);
+
+  const card = await moveJobStage(userId, {
+    applicationId: input.applicationId,
+    version: current.version,
+    toColumnId: column.id,
+    prevCardId: last?.id ?? null,
+    nextCardId: null,
+  });
+  return { cardId: card.id, stage: column.name };
 }
 
 /** Chip data for the job board's card faces, keyed by card id (the tasks board passes none). */

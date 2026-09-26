@@ -1085,7 +1085,15 @@
       "fit_strong_fit": "খুব উপযুক্ত",
       "fit_worth_applying": "আবেদন করার মতো",
       "fit_long_shot": "সম্ভাবনা কম",
-      "fit_not_a_fit": "উপযুক্ত নয়"
+      "fit_not_a_fit": "উপযুক্ত নয়",
+      "dbAppId": "আবেদন আইডি",
+      "dbPosting": "পোস্টিং",
+      "dbCoverLetter": "কভার লেটার দরকার",
+      "seniority_junior": "জুনিয়র",
+      "seniority_mid": "মিড",
+      "seniority_senior": "সিনিয়র",
+      "seniority_not_stated": "উল্লেখ নেই",
+      "dbUnset": "সেট করা নেই"
     },
     "Copilot": {
       "title": "কোপাইলট",

@@ -111,6 +111,10 @@ describe("MCP with the official SDK client (spec 9.2, adr-071)", () => {
       "list_resumes",
       "get_resume",
       "propose_resume_edit",
+      "list_job_applications",
+      "create_job_application",
+      "update_job_application",
+      "move_job_stage",
     ]);
 
     const resources = await client.listResources();

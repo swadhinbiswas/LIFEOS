@@ -1085,7 +1085,15 @@
       "fit_strong_fit": "strong fit",
       "fit_worth_applying": "worth applying",
       "fit_long_shot": "long shot",
-      "fit_not_a_fit": "not a fit"
+      "fit_not_a_fit": "not a fit",
+      "dbAppId": "app id",
+      "dbPosting": "posting",
+      "dbCoverLetter": "cover letter needed",
+      "seniority_junior": "junior",
+      "seniority_mid": "mid",
+      "seniority_senior": "senior",
+      "seniority_not_stated": "not stated",
+      "dbUnset": "not set"
     },
     "Copilot": {
       "title": "Copilot",

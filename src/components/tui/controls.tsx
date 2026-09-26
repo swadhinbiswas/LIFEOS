@@ -75,6 +75,39 @@ export const controlBoxed = cn(
 );
 
 /**
+ * The table-cell tier (ADR-127): a dense grid's worth of inputs, none of them boxed.
+ *
+ * The applications table made eleven columns editable, which is thirty-three bordered boxes on
+ * screen at once — the same failure {@link controlGhost} was written to fix on a toolbar, arrived at
+ * through a different door, and a grid of it is worse than a row of it because the boxes are what
+ * makes a table read as a table. Take the border away and the row reads as data with four things
+ * in it that happen to be editable; the border comes back on hover and on focus, so the control is
+ * still discoverable by mouse and still obvious to a keyboard user.
+ *
+ * `min-h-7` rather than `min-h-6`: this is the *only* tier that has to clear 24px as a tap target
+ * (spec §4.4), because a cell is the target, not the row.
+ */
+export const controlCell = cn(
+  "min-h-7 rounded-[var(--radius)] border border-transparent bg-transparent px-1.5 py-0.5",
+  "font-mono text-xs text-foreground",
+  "outline-none placeholder:text-muted-foreground",
+  "hover:border-border hover:bg-background",
+  "focus-visible:border-ring focus-visible:bg-background",
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+  "disabled:cursor-not-allowed disabled:opacity-50",
+);
+
+/**
+ * {@link controlCell} for a `<select>`.
+ *
+ * `appearance-none` removes the platform arrow, which draws at a different size and colour on every
+ * OS and cannot be given the app's tokens, and `pr-5` reserves the room it left. The replacement is
+ * a `▾` glyph in a sibling span, as `TuiSelect` already does it — drawn rather than gradient-
+ * assembled, so it lines up on the text baseline like every other glyph in the interface.
+ */
+export const controlCellSelect = cn(controlCell, "cursor-pointer appearance-none pr-5");
+
+/**
  * A group of related controls inside a toolbar, optionally divided from the group before it.
  *
  * The divider started as a `│` text span between groups, which looked right until the bar was

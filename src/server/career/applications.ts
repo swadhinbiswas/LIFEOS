@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/server/db";
-import { board_columns, boards, cards, companies, job_applications } from "@/server/db/schema";
+import { board_columns, cards, companies, job_applications } from "@/server/db/schema";
 
 import { fitBandFor } from "./schemas";
 
@@ -150,11 +150,21 @@ export async function listJobApplications(
 }
 
 /** The stage names in pipeline order, for a filter control that lists them as they actually are. */
-export async function listJobStages(userId: string): Promise<Array<{ id: string; name: string }>> {
+/**
+ * The columns of one board, in order — the stages of the job pipeline.
+ *
+ * The board id is a parameter rather than looked up here because a user owns several boards, and
+ * their Tasks board has columns called "Inbox", "Today" and "Done". Returning every column the user
+ * owns offered a job a move to "Done" that put its card on the wrong board, and it did so silently
+ * enough to look like a working dropdown.
+ */
+export async function listJobStages(
+  userId: string,
+  boardId: string,
+): Promise<Array<{ id: string; name: string }>> {
   return db
     .select({ id: board_columns.id, name: board_columns.name })
     .from(board_columns)
-    .innerJoin(boards, eq(board_columns.board_id, boards.id))
-    .where(eq(board_columns.user_id, userId))
+    .where(and(eq(board_columns.board_id, boardId), eq(board_columns.user_id, userId)))
     .orderBy(asc(board_columns.position));
 }

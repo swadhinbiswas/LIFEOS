@@ -1,5 +1,6 @@
 import { getCard } from "@/server/api/v1/cards";
 import { getDailyBrief } from "@/server/boards/brief";
+import { listJobApplications } from "@/server/career/applications";
 import { getNote } from "@/server/notes";
 import { getTimeZone } from "@/server/settings";
 
@@ -28,6 +29,8 @@ export interface McpResourceTemplate {
 export const MCP_RESOURCE_TEMPLATES: McpResourceTemplate[] = [
   { uriTemplate: "lifeos://cards/{id}", name: "A card", mimeType: "application/json" },
   { uriTemplate: "lifeos://notes/{id}", name: "A note", mimeType: "text/markdown" },
+  { uriTemplate: "lifeos://jobs", name: "Every job application", mimeType: "application/json" },
+  { uriTemplate: "lifeos://jobs/{id}", name: "One job application", mimeType: "application/json" },
 ];
 
 export interface McpContent {
@@ -66,6 +69,23 @@ export async function readResource(
       contents: [
         { uri, mimeType: "text/markdown", text: `# ${detail.note.title}\n\n${detail.note.body}` },
       ],
+    };
+  }
+
+  if (uri === "lifeos://jobs" || uri.startsWith("lifeos://jobs/")) {
+    const rows = await listJobApplications(userId);
+    // The whole set as one JSON document rather than a per-application resource, because an agent
+    // asking "what is in the pipeline" wants the pipeline, not 40 round trips it has to reassemble.
+    if (uri === "lifeos://jobs") {
+      return {
+        contents: [{ uri, mimeType: "application/json", text: JSON.stringify(rows, null, 2) }],
+      };
+    }
+    const id = uri.slice("lifeos://jobs/".length);
+    const row = rows.find((candidate) => candidate.applicationId === id || candidate.cardId === id);
+    if (!row) return { error: `job application not found: ${id}` };
+    return {
+      contents: [{ uri, mimeType: "application/json", text: JSON.stringify(row, null, 2) }],
     };
   }
 

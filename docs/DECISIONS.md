@@ -2933,6 +2933,82 @@ message out of all of them: `Pages.Activity.sender_opencode_code`, whose value i
     tracker listing withdrawn roles beside live ones is noise, and leaving the filter to each caller
     makes forgetting it a decision nobody should make twice.
 
+## ADR-127 — The applications table is editable in place, and its controls are a third tier
+
+- **Context:**
+  The database view shipped in `9ed73e8` with eleven read-only columns. Two things were wrong with
+  that, and only one of them was visible in a screenshot.
+
+  The visible one: eleven columns of permanently bordered inputs is thirty-three boxes on screen at
+  once. That is the same failure ADR-117 fixed on a board toolbar — a control drawn at full weight
+  whether or not it is being used — reached through a different door, and worse in a grid, because
+  the boxes are what make a table stop reading as a table.
+
+  The one that was not: **a column you can only read is a report, not a tracker.** The moment the
+  data changed you had to leave for the job's own page, which is the habit the table existed to
+  remove. And the three fields added in `0017` — `app_id`, `progress`, `cover_letter_needed` — were
+  not writable at all, so a column nobody can edit is a column nobody fills in.
+
+  A fourth problem surfaced only once the writes existed: `listJobStages` returned _every column the
+  user owns_. The Tasks board has columns called Inbox, Today and Done, so the stage dropdown
+  offered a move to "Done" that would put the job's card on the wrong board entirely.
+
+- **Decision:**
+  - **Every column is editable in place**, writing through the existing `updateJobAction` /
+    `moveJobToStageAction`. One shared hook (`useInline`) owns the rule the cells share: value is
+    local, the write fires on intent (blur, Enter, pointer-release), and `router.refresh()`
+    reconciles against the read model so a row cannot drift from the database. A failed write turns
+    the cell's border amber and says why.
+  - **`controlCell` is a third tier in the shared vocabulary** (ADR-118): no border until hover or
+    focus. The row reads as data with a few editable things in it, and the control is still
+    discoverable by mouse and obvious to a keyboard user. `min-h-7`, because in a cell the target is
+    the cell, not the row.
+  - **Columns state a `min-w`, never a `w`.** Eleven `w-32` columns do not fit in 1240px, and a
+    fixed width is a _maximum_ the table honours by squashing — which clipped every value
+    mid-word ("Applie", "Wishi", "Lume"). A minimum states what a column needs to be legible and
+    lets the table be as wide as it must be.
+  - **The table scrolls, and says so.** `scroll-shadow-x` is a pure-CSS scroll shadow: cover layers
+    in the background colour attached `local`, edge layers attached `scroll`. No measurement, no
+    reflow, and it appears only when there is genuinely more table in that direction. Hiding the
+    scrollbar is only honest while the overflow is small.
+  - **An unset number is blank, not zero.** `progress` and `fitScore` are nullable because "I have
+    not judged this" and "I judged this a zero" are different facts, and the second is a much louder
+    claim. A range input has no empty state, so the _readout_ carries the distinction: `not set`
+    until there is something to report, and the slider only writes once it is actually moved.
+  - **Stage is resolved by name, at the moment of the call.** `moveJobToStage` takes the stage
+    _name_, looks up the column on the **job** board, reads the card's current version and appends to
+    the end of the target column. A drag is a placement and the client knows the ordering; a dropdown
+    in a table row says only "this is in Interview now". Resolving the column, the version and the
+    neighbour in the service is the only version that is not a guess, and the error names the real
+    stages so a bad name is fixable rather than a guessing loop.
+  - **A move to the stage the card is already in is a no-op**, not a redundant write: `moveCard`
+    would succeed and append a duplicate history entry, which would make time-in-stage count a
+    transition that never happened.
+  - **The tracker is reachable over MCP**, as four tools (`list_job_applications`,
+    `create_job_application`, `update_job_application`, `move_job_stage`) under `write:jobs`, and
+    two resources (`lifeos://jobs`, `lifeos://jobs/{id}`). Partial patches forward only the keys the
+    caller actually sent: spreading a defaulted object would overwrite every nullable column with
+    null on each write. An unparseable date is dropped rather than coerced, because a date the agent
+    guessed at should not land as a silently wrong instant.
+  - **A `BoardError` from any service becomes a tool error, not a JSON-RPC failure.** The dispatcher
+    catches it. `BoardError` is a classified outcome — "no such stage", "not your card" — and the one
+    response shape an agent cannot read a reason out of is a transport failure. An _unexpected_ throw
+    still becomes a tool error, but without its message.
+
+- **Consequences:**
+  - The applications table is now a working surface rather than a report, and the `write:jobs` scope
+    means an agent can fill it in the same shape a person does.
+  - `useInline`'s dedupe on `committed` is load-bearing: the slider's pointer-up and then blur are
+    one edit, and without it every drag wrote twice.
+  - `listJobStages` takes a `boardId` rather than looking the board up itself, because "the stages"
+    is only meaningful relative to one board.
+  - Salary and apply-by remain read-only in the table. Each is two or three stored fields
+    (`salary_min`, `salary_max`, `currency`) and a range needs a different control from a single
+    value; they are edited on the job's own page.
+  - Eleven columns do not fit a laptop, so the table scrolls. That is the reference tracker's own
+    behaviour and the shadow makes it honest, but a future pass could collapse the set-once columns
+    behind a column picker if it becomes tiresome.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

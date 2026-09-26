@@ -3,12 +3,19 @@ import { getTranslations } from "next-intl/server";
 
 import { Table } from "@/components/ui/table";
 import { EmptyState } from "@/components/tui/empty-state";
-import { AsciiMeter } from "@/components/tui/ascii-meter";
-import { listJobApplications, type JobRow } from "@/server/career/applications";
+import { listJobApplications, listJobStages, type JobRow } from "@/server/career/applications";
+import {
+  InlineCoverLetter,
+  InlineEnum,
+  InlineFit,
+  InlineProgress,
+  InlineStage,
+  InlineText,
+} from "./inline-cells";
 
 /**
- * The applications database (ADR-126): every field, one row each, sortable and filterable — the view
- * the reference tracker is actually good at, and the one the pipeline board cannot be.
+ * The applications database (ADR-126): every field, one row each, sortable, filterable **and
+ * editable in place** (ADR-127).
  *
  * The board answers "what needs moving"; this answers "what do I have". Those are different
  * questions and the columns here are chosen for the second one: the identifying fields you would
@@ -19,17 +26,23 @@ import { listJobApplications, type JobRow } from "@/server/career/applications";
  */
 export async function JobDatabase({
   userId,
+  boardId,
   sort,
   stage,
   fit,
 }: {
   userId: string;
+  /** The job pipeline's board. Its columns are the stages; another board's are not. */
+  boardId: string;
   sort: string | undefined;
   stage: string | undefined;
   fit: string | undefined;
 }) {
   const t = await getTranslations("Pages.Career");
-  const all = await listJobApplications(userId);
+  const [all, boardStages] = await Promise.all([
+    listJobApplications(userId),
+    listJobStages(userId, boardId),
+  ]);
 
   // Filtering here rather than in SQL keeps the column list readable and the stage list honest: the
   // stages are board columns, and a stage that no longer exists should simply filter to nothing.
@@ -38,7 +51,11 @@ export async function JobDatabase({
     .filter((row) => (fit ? (row.fit ?? "unset") === fit : true))
     .sort(comparator(sort));
 
-  const stages = [...new Set(all.map((row) => row.stage))].sort();
+  // The filter chips are the stages that *have* rows — a chip that filters to nothing is noise. The
+  // dropdown needs the opposite: every column on the board, including "Offer" on the day nothing is
+  // there, or a row could only ever be moved to a stage something else already occupies.
+  const stagesPresent = [...new Set(all.map((row) => row.stage))].sort();
+  const stageNames = boardStages.map((column) => column.name);
   const link = (next: Record<string, string | undefined>) => {
     const params = new URLSearchParams({ view: "database" });
     const merged: Record<string, string | undefined> = { sort, stage, fit, ...next };
@@ -54,7 +71,7 @@ export async function JobDatabase({
         <Chip href={link({ stage: undefined })} active={!stage}>
           {t("dbAllStages")}
         </Chip>
-        {stages.map((name) => (
+        {stagesPresent.map((name) => (
           <Chip key={name} href={link({ stage: name })} active={stage === name}>
             {name}
           </Chip>
@@ -63,7 +80,7 @@ export async function JobDatabase({
         <Chip href={link({ fit: undefined })} active={!fit}>
           {t("dbAnyFit")}
         </Chip>
-        {(["strong_fit", "worth_applying", "long_shot", "not_a_fit"] as const).map((band) => (
+        {FIT_BANDS.map((band) => (
           <Chip key={band} href={link({ fit: band })} active={fit === band}>
             {t(`fit_${band}`)}
           </Chip>
@@ -79,7 +96,10 @@ export async function JobDatabase({
           hint={all.length === 0 ? t("dbEmptyHint") : t("dbNoMatchHint")}
         />
       ) : (
-        <Table className="font-mono text-xs [&_td]:px-2 [&_td]:py-1 [&_td]:align-top">
+        <Table
+          containerClassName="scroll-shadow-x"
+          className="font-mono text-xs [&_td]:px-2 [&_td]:py-1 [&_td]:align-top"
+        >
           <caption className="sr-only">{t("dbCaption")}</caption>
           <thead>
             <tr>
@@ -139,7 +159,7 @@ export async function JobDatabase({
           <tbody>
             {rows.map((row) => (
               <tr key={row.applicationId} data-slot="job-row">
-                <td className="max-w-56">
+                <td className="max-w-48 min-w-44">
                   <Link
                     href={`/career/jobs/${row.cardId}`}
                     className="block truncate hover:underline"
@@ -148,61 +168,101 @@ export async function JobDatabase({
                     {row.position}
                   </Link>
                 </td>
-                <td className="text-muted-foreground">{row.company ?? t("dbNone")}</td>
-                <td>{row.stage}</td>
-                <td className="text-muted-foreground">{row.seniority ?? t("dbNone")}</td>
+                <td className="min-w-32">
+                  <InlineText
+                    applicationId={row.applicationId}
+                    field="companyName"
+                    value={row.company}
+                    label={t("dbCompany")}
+                    placeholder={t("dbNone")}
+                  />
+                </td>
+                <td className="min-w-32">
+                  <InlineStage
+                    applicationId={row.applicationId}
+                    value={row.stage}
+                    stages={stageNames}
+                  />
+                </td>
+                <td className="min-w-28">
+                  <InlineEnum
+                    applicationId={row.applicationId}
+                    field="seniority"
+                    value={row.seniority}
+                    label={t("dbSeniority")}
+                    options={[
+                      ["junior", t("seniority_junior")],
+                      ["mid", t("seniority_mid")],
+                      ["senior", t("seniority_senior")],
+                      ["not_stated", t("seniority_not_stated")],
+                    ]}
+                  />
+                </td>
                 <td className="whitespace-nowrap tabular-nums">{salary(row, t("dbNotStated"))}</td>
-                <td>
-                  {row.fit ? (
-                    <span className={FIT_CLASS[row.fit]}>{t(`fit_${row.fit}`)}</span>
-                  ) : (
-                    <span className="text-muted-foreground">{t("dbNone")}</span>
-                  )}
-                </td>
-                <td className="w-28">
-                  {row.progress === null ? (
-                    <span className="text-muted-foreground">{t("dbNone")}</span>
-                  ) : (
-                    <AsciiMeter
-                      value={row.progress / 100}
-                      label={t("dbProgressOf", { count: row.progress })}
-                      cells={10}
-                      showValue
-                      className="text-[10px]"
-                    />
-                  )}
-                </td>
-                <td className="max-w-64">
-                  <span className="block truncate" title={row.nextAction ?? undefined}>
-                    {row.nextAction ?? t("dbNone")}
+                <td className="min-w-24">
+                  <span className="grid gap-0.5">
+                    <InlineFit applicationId={row.applicationId} value={row.fitScore} />
+                    {row.fit ? (
+                      <span className={`text-[10px] ${FIT_CLASS[row.fit]}`}>
+                        {t(`fit_${row.fit}`)}
+                      </span>
+                    ) : null}
                   </span>
+                </td>
+                <td className="min-w-32">
+                  <InlineProgress applicationId={row.applicationId} value={row.progress} />
+                </td>
+                <td className="min-w-48">
+                  <InlineText
+                    applicationId={row.applicationId}
+                    field="nextAction"
+                    value={row.nextAction}
+                    label={t("dbNextAction")}
+                    placeholder={t("dbNone")}
+                  />
                   {row.nextActionDue ? (
-                    <span className="text-[10px] text-warning">
+                    <span className="block text-[10px] text-warning">
                       {row.nextActionDue.toISOString().slice(0, 10)}
                     </span>
                   ) : null}
                 </td>
-                <td className="text-muted-foreground">{row.location ?? t("dbNone")}</td>
+                <td className="min-w-32">
+                  <InlineText
+                    applicationId={row.applicationId}
+                    field="location"
+                    value={row.location}
+                    label={t("dbLocation")}
+                    placeholder={t("dbNone")}
+                  />
+                </td>
                 <td className="whitespace-nowrap tabular-nums text-muted-foreground">
                   {row.applyBy ? row.applyBy.toISOString().slice(0, 10) : t("dbNone")}
                 </td>
-                <td className="whitespace-nowrap text-[10px] text-muted-foreground">
-                  {row.appId ? <span>{row.appId} </span> : null}
-                  {row.reqId ? <span>{row.reqId}</span> : null}
-                  {!row.appId && !row.reqId ? t("dbNone") : null}
-                  {row.coverLetterNeeded ? (
-                    <span className="ml-1 text-warning">{t("dbClNeeded")}</span>
-                  ) : null}
-                  {row.url ? (
-                    <a
-                      href={row.url}
-                      rel="noreferrer noopener"
-                      target="_blank"
-                      className="ml-1 text-primary hover:underline"
-                    >
-                      ↗
-                    </a>
-                  ) : null}
+                <td className="min-w-28 whitespace-nowrap text-[10px] text-muted-foreground">
+                  <span className="grid gap-0.5">
+                    <InlineText
+                      applicationId={row.applicationId}
+                      field="appId"
+                      value={row.appId}
+                      label={t("dbAppId")}
+                      placeholder={t("dbNone")}
+                    />
+                    {row.reqId ? <span>{row.reqId}</span> : null}
+                    <InlineCoverLetter
+                      applicationId={row.applicationId}
+                      value={row.coverLetterNeeded}
+                    />
+                    {row.url ? (
+                      <a
+                        href={row.url}
+                        rel="noreferrer noopener"
+                        target="_blank"
+                        className="text-primary hover:underline"
+                      >
+                        ↗ {t("dbPosting")}
+                      </a>
+                    ) : null}
+                  </span>
                 </td>
               </tr>
             ))}
@@ -213,7 +273,10 @@ export async function JobDatabase({
   );
 }
 
-/** Fit is a judgement, so the band is the headline and the score stays in the tooltip. */
+/** The bands `fitBandFor` can return, in the order that reads as descending fit. */
+const FIT_BANDS = ["strong_fit", "worth_applying", "long_shot", "not_a_fit"] as const;
+
+/** Fit is a judgement, so the band is the headline and the score stays in the input beside it. */
 const FIT_CLASS: Record<string, string> = {
   strong_fit: "text-success",
   worth_applying: "text-info",
@@ -302,12 +365,16 @@ function Th({
 }: {
   href: string;
   label: string;
+  /** Empty means "not a sort column" — the ids column, which is a bag of values, not an ordering. */
   field: string;
   sort: string | undefined;
 }) {
   if (field === "") {
     return (
-      <th className="px-2 py-1 text-left text-[10px] font-normal text-muted-foreground uppercase">
+      <th
+        scope="col"
+        className="px-2 py-1 text-left text-[10px] font-normal text-muted-foreground uppercase"
+      >
         {label}
       </th>
     );

@@ -89,6 +89,25 @@ export const updateJobInput = z.object({
   reqId: optionalText(80),
   location: optionalText(200),
   contactId: z.string().min(1).nullable().optional(),
+  // The three fields the reference tracker has and the table now shows. Writable for the same reason
+  // the table shows them: a column nobody can edit is a column nobody fills in.
+  appId: optionalText(80),
+  progress: z.number().int().min(0).max(100).nullable().optional(),
+  coverLetterNeeded: z.boolean().nullable().optional(),
+});
+
+/**
+ * Move a job to a stage *by name*, appending to the end of that column.
+ *
+ * A separate input from `moveJobStageInput` because the two callers want different things. Dragging
+ * a card is a placement: the client knows the neighbouring cards and the version it last saw. A
+ * dropdown in a table row is a destination: "this one is in Interview now" says nothing about where
+ * in the column it lands. Resolving the name, reading the current version and appending are three
+ * things the caller would otherwise repeat in the UI, the MCP tool and the AI tool.
+ */
+export const moveJobToStageInput = z.object({
+  applicationId: z.string().min(1),
+  toStage: z.string().trim().min(1).max(80),
 });
 
 export const moveJobStageInput = z.object({
@@ -140,6 +159,7 @@ export const addOfferInput = z.object({
 export type CreateJobInput = z.infer<typeof createJobInput>;
 export type UpdateJobInput = z.infer<typeof updateJobInput>;
 export type MoveJobStageInput = z.infer<typeof moveJobStageInput>;
+export type MoveJobToStageInput = z.infer<typeof moveJobToStageInput>;
 export type AddInterviewInput = z.infer<typeof addInterviewInput>;
 export type UpdateInterviewInput = z.infer<typeof updateInterviewInput>;
 export type AddOfferInput = z.infer<typeof addOfferInput>;

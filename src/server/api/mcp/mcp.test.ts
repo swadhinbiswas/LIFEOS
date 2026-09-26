@@ -20,6 +20,8 @@ const mcp = await import("@/app/api/mcp/route");
 const USER = "01HMCP000000000000000000001";
 let fullKey = "";
 let readOnlyKey = "";
+/** The tracker writes are gated on `write:jobs`, which `fullKey` deliberately does not hold. */
+let jobsKey = "";
 
 interface RpcBody {
   jsonrpc: string;
@@ -61,6 +63,86 @@ describe("MCP server /api/mcp (spec 9.2, adr-064)", () => {
     fullKey = (await createApiKey(USER, { name: "agent", scopes: ["read:*", "write:tasks"] }))
       .plaintext;
     readOnlyKey = (await createApiKey(USER, { name: "readonly", scopes: ["read:*"] })).plaintext;
+    jobsKey = (await createApiKey(USER, { name: "agent-jobs", scopes: ["read:*", "write:jobs"] }))
+      .plaintext;
+  });
+
+  const callTool = async (name: string, args: unknown, token = jobsKey) => {
+    const res = await rpc("tools/call", { name, arguments: args }, token, 2);
+    const content = res.body.result?.content as Array<{ text: string }> | undefined;
+    return { isError: res.body.result?.isError === true, text: content?.[0]?.text ?? "" };
+  };
+
+  it("adds, reads, updates and moves an application through the tracker tools", async () => {
+    const created = await callTool("create_job_application", {
+      title: "Senior Data Engineer",
+      companyName: "Northwind Analytics",
+      location: "Kolkata",
+      fitScore: 80,
+      salaryMin: 3_000_000,
+      currency: "INR",
+      nextAction: "ask Ravi for a referral",
+      // A string date, because that is all JSON Schema's `string` gives an MCP client.
+      applyBy: "2026-11-01",
+    });
+    expect(created.isError).toBe(false);
+    const applicationId = /application (\w+)/.exec(created.text)?.[1];
+    expect(applicationId).toBeTruthy();
+
+    const listed = await callTool("list_job_applications", {});
+    expect(listed.text).toContain("Senior Data Engineer");
+    expect(listed.text).toContain("Northwind Analytics");
+    expect(listed.text).toContain("fit strong_fit");
+    // Salary is stored in minor units and said so, rather than printed as a bare 3000000.
+    expect(listed.text).toContain("INR3000000");
+
+    // A filter that matches nothing says so, instead of returning an empty string the caller has to
+    // interpret as either "no applications" or "no matches".
+    const filtered = await callTool("list_job_applications", { company: "Nobody Ltd" });
+    expect(filtered.text).toContain("no applications match");
+
+    const updated = await callTool("update_job_application", {
+      applicationId,
+      progress: 65,
+      appId: "R100705",
+    });
+    expect(updated.isError).toBe(false);
+    expect(updated.text).toContain("progress 65");
+
+    // A patch with nothing in it is a read, not a write: saying so beats silently succeeding.
+    const empty = await callTool("update_job_application", { applicationId });
+    expect(empty.isError).toBe(true);
+
+    const moved = await callTool("move_job_stage", { applicationId, toStage: "interview" });
+    expect(moved.isError).toBe(false);
+    expect(moved.text).toContain("now in Interview");
+
+    // A stage that does not exist must not silently file the job somewhere plausible, and the error
+    // has to name the real stages or the agent can only guess again.
+    const wrong = await callTool("move_job_stage", { applicationId, toStage: "Hired" });
+    expect(wrong.isError).toBe(true);
+    expect(wrong.text).toContain("Offer");
+
+    const after = await callTool("list_job_applications", { stage: "Interview" });
+    expect(after.text).toContain("Senior Data Engineer");
+
+    // A read-only key must not be able to add a row.
+    const denied = await callTool("create_job_application", { title: "nope" }, readOnlyKey);
+    expect(denied.isError).toBe(true);
+
+    const noTitle = await callTool("create_job_application", { companyName: "Nameless" });
+    expect(noTitle.isError).toBe(true);
+  });
+
+  it("serves the tracker as a resource", async () => {
+    const res = await rpc("resources/read", { uri: "lifeos://jobs" }, readOnlyKey, 3);
+    const contents = res.body.result?.contents as Array<{ text: string }> | undefined;
+    const parsed = JSON.parse(contents?.[0]?.text ?? "[]") as Array<{ position: string }>;
+    expect(parsed.map((row) => row.position)).toContain("Senior Data Engineer");
+
+    const missing = await rpc("resources/read", { uri: "lifeos://jobs/nope" }, readOnlyKey, 4);
+    expect(missing.body.error?.code).toBe(-32602);
+    expect(missing.body.error?.message).toContain("not found");
   });
 
   it("requires a bearer key and rejects a foreign origin", async () => {
@@ -89,6 +171,10 @@ describe("MCP server /api/mcp (spec 9.2, adr-064)", () => {
       "list_resumes",
       "get_resume",
       "propose_resume_edit",
+      "list_job_applications",
+      "create_job_application",
+      "update_job_application",
+      "move_job_stage",
     ]);
 
     const created = await rpc(

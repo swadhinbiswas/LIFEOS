@@ -11,6 +11,7 @@ import {
   addOffer,
   createJob,
   getJobMeta,
+  moveJobToStage,
   updateJob,
   type JobCardMeta,
 } from "@/server/career";
@@ -32,6 +33,7 @@ import {
   createJobInput,
   createProjectInput,
   createSkillInput,
+  moveJobToStageInput,
   updateJobInput,
 } from "@/server/career/schemas";
 
@@ -69,6 +71,16 @@ export async function updateJobAction(input: unknown): Promise<ActionResult<null
   return run(async (userId) => {
     await updateJob(userId, updateJobInput.parse(input));
     return null;
+  });
+}
+
+/** The table's stage dropdown: name the stage, let the service resolve the column and the version. */
+export async function moveJobToStageAction(
+  input: unknown,
+): Promise<ActionResult<{ cardId: string; stage: string }>> {
+  return run(async (userId) => {
+    const parsed = moveJobToStageInput.parse(input);
+    return moveJobToStage(userId, parsed);
   });
 }
 
