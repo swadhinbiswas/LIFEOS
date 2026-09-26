@@ -19,6 +19,12 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY . .
+# `/data` has to exist *here* as well as in the runner. The placeholder URL below is opened at
+# import time by any route that reaches the database, and `next build` collects those routes to
+# gather their config — so a path whose directory does not exist fails the build with
+# `ConnectionFailed: Unable to open connection to local database /data/lifeos.db`. Only the runner
+# stage created it, which made the build depend on a directory it was responsible for making.
+RUN mkdir -p /data
 ENV DATABASE_URL="file:/data/lifeos.db" \
     BETTER_AUTH_SECRET="build-time-placeholder-not-used-at-runtime" \
     NEXT_TELEMETRY_DISABLED=1

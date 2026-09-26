@@ -3251,6 +3251,48 @@ only a _measurement_ or a _screenshot_ could show.
     future series that is a percentage of something unbounded — a ratio against a moving target —
     would need a real maximum instead, and the rule would have to become a prop rather than a guess.
 
+## ADR-131 — Self-hosting is verified by running it, and running it found two defects
+
+- **Context:** asked to "make sure it can be self-hosted". `docs/SELF_HOSTING.md` was 119 lines and
+  read well, and the `Dockerfile` existed. Both were **wrong**, and neither fact was discoverable by
+  reading them.
+
+- **Decision:**
+  - **`.dockerignore` now excludes `.env` and every local-environment variant.** It existed, and it
+    listed `node_modules`, `.next`, `.git`, `.data` — but not `.env`. The runner stage does
+    `COPY --from=build /app ./`, so anything the build stage copied is in the published image, which
+    meant a developer's `.env` — `TURSO_AUTH_TOKEN`, `BETTER_AUTH_SECRET`, every AI key they had set —
+    went into a build layer and would have shipped. The `!.env.example` / `!.env.selfhost.example`
+    negations keep the documented examples.
+  - **The build stage creates `/data`.** Its placeholder `DATABASE_URL=file:/data/lifeos.db` is opened
+    at import time by any route that reaches the database, and `next build` collects those routes to
+    gather their config — so a path whose directory does not exist fails the build with
+    `ConnectionFailed`. Only the runner stage ran `mkdir -p /data`, which made the build depend on a
+    directory the build itself was responsible for creating.
+  - **`docker-compose.yml` and `.env.selfhost.example`, and the compose path is the documented
+    default.** Named volume, a health check against `/api/health`, and the environment already
+    written out. The env file is deliberately _not_ `.env`: compose reads `.env` for interpolation and
+    would otherwise silently pick up a developer's local file, so the stack could end up pointed at
+    their database. `BETTER_AUTH_SECRET` uses compose's `:?` form, so an unset secret fails at
+    `config` time with a message rather than at first request.
+  - **The in-memory Redis fallback is named for what it is, in every environment.** The boot line read
+    `[redis] in-memory stub (dev, adr-021)`, which is true in development and actively misleading on
+    a self-hosted box: the stub is the fallback in production too, so a production log saying "dev"
+    reads as "this is a development build" when in fact the operator has a working system whose
+    sessions and rate limits live in a `Map` — lost on restart, unshared between replicas. The line
+    now says both, and the doc has a table of what each fallback costs.
+  - **`/api/cron/activity` added to the cron table**, which the previous commit left listing three
+    routes when there were four.
+
+- **Consequences:**
+  - The self-host path is now a claim with evidence: built, started, health-checked, page-rendered,
+    `down`/`up` cycled against the same named volume, and the image checked for a leaked `.env`.
+  - The image is large — it copies the whole workspace including the `docs/` tree and every
+    `drizzle/` migration, which is deliberate (migrations run on start) but unoptimised. A
+    `pnpm deploy` standalone output would be a real improvement and is not done.
+  - `AI_ENCRYPTION_KEY` is called out in both env files as generate-once-and-keep: rotating it makes
+    every stored WakaTime key and AI credential unreadable and there is no re-encryption path.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

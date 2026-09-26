@@ -69,6 +69,9 @@ or a bounded request rather than a multi-second retry hang (ADR-099).
 
 ## Docker
 
+Prefer Docker Compose, below — it is this plus a volume, a health check and the environment spelled
+out. The raw form, for reference:
+
 ```bash
 docker build -t lifeos .
 docker run --rm -p 3000:3000 \
@@ -80,6 +83,53 @@ docker run --rm -p 3000:3000 \
 
 The image runs migrations on start (`pnpm db:migrate`) then `pnpm start`. Mount a volume at `/data`
 so the SQLite file survives restarts.
+
+### Without Redis: what you are actually trading
+
+Upstash is optional and nothing breaks without it. The fallback is an in-memory `Map`, and it is
+the fallback in **every** environment — including production. Being concrete about what that costs,
+because "optional" should not have to mean "and you will not notice":
+
+| What              | With the in-memory fallback                                               |
+| ----------------- | ------------------------------------------------------------------------- |
+| Sessions          | Signed cookies still work; Better Auth's secondary storage is per-process |
+| Rate limits       | Per-process, and reset by a restart                                       |
+| Idempotency keys  | Per-process, so a retry across a restart is not deduplicated              |
+| Multiple replicas | Each keeps its own — needs sticky sessions, or set Upstash                |
+
+So for **one container on one box** — the normal self-host — the only real cost is that a restart
+signs everybody out and empties the rate-limit counters. That is usually fine. For **two or more
+replicas** it is not: set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`, or pin traffic to
+one replica.
+
+The boot log says which of the two you got and what the fallback costs, so nobody has to infer it
+from a string that says "dev" on a production box.
+
+### Docker Compose
+
+The short path, and the one to use. It is the `Dockerfile` plus a named volume, a health check and
+the environment already spelled out.
+
+**Verified, not asserted.** The stack was built and run: `docker compose build` succeeds,
+`up -d` starts, `/api/health` answers `200` with `{"ok":true,"database":"file"}` and 19/19
+migrations applied, `/` and `/sign-up` both render, `down` leaves the named volume in place, and
+`up` again comes back healthy on the same database. Two real defects were found by doing that and
+would not have been found by reading the Dockerfile — see the ADR.
+
+```bash
+cp .env.selfhost.example .env.selfhost
+$EDITOR .env.selfhost          # set BETTER_AUTH_SECRET at minimum
+docker compose --env-file .env.selfhost up -d
+```
+
+Two things it does that the raw `docker run` above does not. The volume is **named**, not anonymous,
+so `docker compose down` keeps the database — an anonymous layer is deleted with the container,
+which is a very quiet way to lose a year of habit history. And there is a health check against
+`/api/health`, so `depends_on: condition: service_healthy` and an orchestrator's readiness probe both
+have something real to ask.
+
+`NEXT_PUBLIC_APP_URL` and `LIFEOS_PORT` must agree, or sign-in returns `403 INVALID_ORIGIN`
+(ADR-092). Change the host port in `LIFEOS_PORT` and the URL to match.
 
 ### Local SQLite: WAL and the lock
 
@@ -98,11 +148,16 @@ for a self-hosted box:
 
 Three `CRON_SECRET`-guarded routes expect a scheduler (Vercel Cron, QStash, or plain cron):
 
-| Route                 | Recommended cadence | What it does                              |
-| --------------------- | ------------------- | ----------------------------------------- |
-| `/api/cron/webhooks`  | every 5 minutes     | Retries due webhook deliveries            |
-| `/api/cron/proactive` | daily (review Fri)  | Generates opted-in AI briefs/reviews      |
-| `/api/cron/purge`     | daily               | Purges accounts past their deletion grace |
+| Route                 | Recommended cadence  | What it does                                       |
+| --------------------- | -------------------- | -------------------------------------------------- |
+| `/api/cron/webhooks`  | every 5 minutes      | Retries due webhook deliveries                     |
+| `/api/cron/activity`  | hourly (`0 * * * *`) | Refreshes each WakaTime connection, at most hourly |
+| `/api/cron/proactive` | daily (review Fri)   | Generates opted-in AI briefs/reviews               |
+| `/api/cron/purge`     | daily                | Purges accounts past their deletion grace          |
+
+`/api/cron/activity` throttles **per account** against `last_synced_at`, so calling it more often
+than hourly costs nothing extra (ADR-129). It is the only one of the four that is optional in
+practice: without it, a WakaTime connection is refreshed by the button on `/settings/activity`.
 
 Call them with `Authorization: Bearer $CRON_SECRET`; without the secret the routes return 404.
 

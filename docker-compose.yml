@@ -1,0 +1,71 @@
+# LifeOS, self-hosted, one command.
+#
+#   cp .env.selfhost.example .env.selfhost && $EDITOR .env.selfhost
+#   docker compose --env-file .env.selfhost up -d
+#
+# Two variables are required and both live in the env file. Everything else is optional and the app
+# degrades to a documented fallback — see docs/SELF_HOSTING.md, which is the authority on what each
+# optional service buys you and what you lose without it.
+#
+# Why the env file rather than a `.env`: `docker compose` reads `.env` for *interpolation* and would
+# silently pick up a developer's local file. A distinct name makes it impossible to run the stack
+# against somebody's Turso database by accident.
+
+services:
+  lifeos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: lifeos:local
+    container_name: lifeos
+    restart: unless-stopped
+    ports:
+      # Host:container. Change the left side to serve on another port; leave the right alone.
+      - "${LIFEOS_PORT:-3000}:3000"
+    environment:
+      # A file inside the mounted volume, so the database survives `down` and `up`. Relative paths
+      # resolve from the repo root, not from here, which is why this one is absolute.
+      DATABASE_URL: "file:/data/lifeos.db"
+      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in the env file - openssl rand -base64 32}"
+      # Must match how the browser reaches the app, or sign-in returns 403 INVALID_ORIGIN
+      # (ADR-092). The port here is the *host* port.
+      NEXT_PUBLIC_APP_URL: "${LIFEOS_URL:-http://localhost:3000}"
+      BETTER_AUTH_URL: "${LIFEOS_URL:-http://localhost:3000}"
+      CRON_SECRET: "${CRON_SECRET:-}"
+      BILLING_ENABLED: "false"
+      # Everything below is optional; see .env.example for the full, commented list.
+      TURSO_AUTH_TOKEN: "${TURSO_AUTH_TOKEN:-}"
+      UPSTASH_REDIS_REST_URL: "${UPSTASH_REDIS_REST_URL:-}"
+      UPSTASH_REDIS_REST_TOKEN: "${UPSTASH_REDIS_REST_TOKEN:-}"
+      RESEND_API_KEY: "${RESEND_API_KEY:-}"
+      EMAIL_FROM: "${EMAIL_FROM:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      GOOGLE_GENERATIVE_AI_API_KEY: "${GOOGLE_GENERATIVE_AI_API_KEY:-}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      AI_DEFAULT_PROVIDER: "${AI_DEFAULT_PROVIDER:-}"
+      AI_DEFAULT_MODEL: "${AI_DEFAULT_MODEL:-}"
+      # Generate once and keep it: rotating it makes every stored WakaTime key and AI credential
+      # unreadable, and there is no re-encryption path.
+      AI_ENCRYPTION_KEY: "${AI_ENCRYPTION_KEY:-}"
+    volumes:
+      # The named volume is the whole point. A SQLite file on an anonymous layer is deleted with the
+      # container, which is a very quiet way to lose a year of habit history.
+      - lifeos-data:/data
+    healthcheck:
+      # The image ships no curl, so the check is node's own http client against the route the
+      # self-hosting doc tells people to point a probe at.
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  lifeos-data:

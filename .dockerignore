@@ -1,8 +1,44 @@
+# Docker build context exclusions.
+#
+# `.env` is the important one, and it was missing until this was caught by actually running
+# `docker compose build` rather than reading the Dockerfile. Two consequences of leaving it in:
+#
+#   1. **Secrets in an image.** The runner stage does `COPY --from=build /app ./`, so anything the
+#      build stage copied is in the published image. A developer's `.env` carries their
+#      `TURSO_AUTH_TOKEN`, `BETTER_AUTH_SECRET` and every AI key they had set.
+#   2. **The build fails.** The build stage sets `DATABASE_URL=file:/data/lifeos.db` as a placeholder,
+#      but a copied `.env` with `TURSO_AUTH_TOKEN` set makes `env.ts` reject the pair at import time
+#      — `TURSO_AUTH_TOKEN requires a libsql:// DATABASE_URL, not a file: URL` — so `next build` dies
+#      collecting page data. The build was never hermetic; it depended on what happened to be in the
+#      working directory.
+#
+# Ignore every local-environment variant, not just `.env`, so a stray file cannot reintroduce it.
+
+.env
+.env.*
+!.env.example
+!.env.selfhost.example
+
+# Build output and dependencies: rebuilt inside the image, and `node_modules` from the host is the
+# wrong platform's.
 node_modules
 .next
 .git
 .github
+
+# Local databases. The image creates its own at /data.
 .data
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Test and inspection output, none of which belongs in a runtime image.
 tests/e2e/.e2e.db*
+test-results
+playwright-report
+visual-shots
+
+# Docs assets and logs.
 docs/reference
 *.log

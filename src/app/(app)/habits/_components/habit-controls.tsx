@@ -35,6 +35,16 @@ export function HabitToggle({
 
   if (kind === "binary") {
     return (
+      // A toggle button, and the label must not change with the state (ADR-130).
+      //
+      // It used to read "mark done" and then "done today". That is the classic toggle-button
+      // anti-pattern: a screen reader user who activates it and then looks for the same control
+      // cannot find it, because the name they memorised no longer exists anywhere on the page. The
+      // state belongs to `aria-pressed`, which is already here, and the visible affordance already
+      // differs — `default` when done, `outline` when not.
+      //
+      // Found while probing for a way to check habits off in a browser, which is the sort of thing
+      // that only shows up when somebody tries to *use* the page rather than look at it.
       <Button
         type="button"
         size="sm"
@@ -43,7 +53,7 @@ export function HabitToggle({
         aria-pressed={value > 0}
         onClick={() => void log(value > 0 ? 0 : 1)}
       >
-        {value > 0 ? t("doneToday") : t("markDone")}
+        {t("doneToday")}
       </Button>
     );
   }

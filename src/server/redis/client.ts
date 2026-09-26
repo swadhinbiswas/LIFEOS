@@ -134,4 +134,20 @@ export const redis: RedisClient =
       )
     : new MemoryClient();
 
-console.log(hasUpstash ? "[redis] upstash (REST)" : "[redis] in-memory stub (dev, adr-021)");
+/**
+ * One line, at boot, saying which of the two it is — and saying what the second one costs.
+ *
+ * It used to read `[redis] in-memory stub (dev, adr-021)`, which is true in development and
+ * actively misleading on a self-hosted box: the stub is the fallback in **every** environment, not
+ * only dev, so a production log claiming "dev" reads as "this is a development build" when in fact
+ * the operator has a working system whose sessions and rate limits live in a `Map`. They are lost
+ * on restart, and on a second replica they are not shared. Upstash is not required and nothing
+ * breaks without it; the operator is simply trading durability for one fewer service, which is a
+ * reasonable trade that has to be a decision rather than an accident of wording.
+ */
+console.log(
+  hasUpstash
+    ? "[redis] upstash (REST)"
+    : "[redis] in-memory fallback — sessions, rate limits and idempotency keys are lost on restart " +
+        "and not shared between replicas. Set UPSTASH_REDIS_REST_URL/TOKEN to make them durable.",
+);
