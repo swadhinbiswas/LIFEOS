@@ -476,7 +476,18 @@
       "ariaWins": "রিভিউ যেভাবে এগোলো",
       "ariaLessons": "রিভিউ শিক্ষা",
       "ariaNext": "রিভিউ পরবর্তী",
-      "ariaCadence": "রিভিউ ছন্দ"
+      "ariaCadence": "রিভিউ ছন্দ",
+      "stepClear": "ডেক পরিষ্কার",
+      "stepReflect": "ভাবুন",
+      "stepFinish": "শেষ করুন",
+      "streakTitle": "ধারা",
+      "weekStreakShort": "সাপ্তাহিক ধারা",
+      "streakMeter": "{count} সাপ্তাহিক ধারা",
+      "streakHint": "একটি রিভিউই সংখ্যাকে সৎ রাখে",
+      "draftWithAi": "এআই দিয়ে খসড়া",
+      "redraft": "আবার খসড়া",
+      "drafting": "খসড়া হচ্ছে",
+      "noNote": "নোট মুছে গেছে"
     },
     "Focus": {
       "title": "ফোকাস",

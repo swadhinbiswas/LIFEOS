@@ -476,7 +476,18 @@
       "ariaWins": "review wins",
       "ariaLessons": "review lessons",
       "ariaNext": "review next",
-      "ariaCadence": "review cadence"
+      "ariaCadence": "review cadence",
+      "stepClear": "clear the decks",
+      "stepReflect": "reflect",
+      "stepFinish": "finish",
+      "streakTitle": "streak",
+      "weekStreakShort": "week streak",
+      "streakMeter": "{count} week streak",
+      "streakHint": "one review keeps the numbers honest",
+      "draftWithAi": "draft with ai",
+      "redraft": "draft again",
+      "drafting": "drafting",
+      "noNote": "note removed"
     },
     "Focus": {
       "title": "Focus",
