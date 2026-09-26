@@ -35,7 +35,7 @@ import { createNote } from "@/server/notes";
 
 export const DEMO_USER = {
   id: "01HDEMO00000000000000000001",
-  email: "demo@lifeos.local",
+  email: "you@lifeos.local",
   name: "Demo user",
 };
 
