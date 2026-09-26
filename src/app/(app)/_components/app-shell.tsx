@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, LogOut, Menu, Search, X } from "lucide-react";
+import { Bell, LogOut, Menu, PanelLeft, Search, UserRound, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { StatusLine } from "@/components/tui/status-line";
 import { Button } from "@/components/ui/button";
+import { controlGhost } from "@/components/tui/controls";
 import { APP_NAME } from "@/config/app";
 import { NAV_SECTIONS, NAV_ITEMS } from "@/config/nav";
 import { Kbd } from "@/components/tui/kbd";
 import { SHELL_HINTS } from "@/config/shortcuts";
 import { stopFocusAction } from "@/server/focus/actions";
 import { authClient } from "@/lib/auth-client";
+import { useCollapsedSections } from "./use-collapsed-nav";
 import { useThemeStore } from "@/lib/theme-store";
 import { MOBILE_QUERY, useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
@@ -32,6 +34,44 @@ const SIDEBAR_MODES: readonly string[] = ["expanded", "icon", "full"];
  * header, scrollable main column and the spec §4.1 status line. Client-side because it owns
  * the keyboard bindings, the sidebar overlay and sign-out.
  */
+/**
+ * The rail's fold control, in the footer tier rather than boxed like a toolbar button (ADR-117).
+ *
+ * A real `<button>` with `aria-controls` and `aria-expanded` pointing at the nav it folds, because on
+ * a phone it is also the drawer's only close control. The scrim works too, but a scrim is not
+ * something a keyboard or a screen reader can operate.
+ */
+function SidebarControl({
+  onClick,
+  label,
+  children,
+  expanded,
+  controls,
+  slot = "sidebar-toggle",
+}: {
+  onClick: () => void;
+  label: string;
+  children: React.ReactNode;
+  expanded: boolean | undefined;
+  controls: string;
+  /** Two of these exist below the breakpoint, so a test must be able to say which it means. */
+  slot?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-controls={controls}
+      aria-expanded={expanded}
+      aria-label={label}
+      data-slot={slot}
+      className={cn(controlGhost, "shrink-0 px-2")}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function AppShell({
   user,
   focus,
@@ -55,6 +95,7 @@ export function AppShell({
   const tShortcut = useTranslations("Shortcuts");
   const sidebarMode = useThemeStore((state) => state.overrides.sidebarMode);
   const setOverride = useThemeStore((state) => state.set);
+  const { collapsed: collapsedSections, toggle: toggleSection } = useCollapsedSections();
   const [overlayDismissed, setOverlayDismissed] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -248,38 +289,175 @@ export function AppShell({
                 (item) => section.hrefs.includes(item.href) && (!item.requiresBilling || billing),
               );
               if (items.length === 0) return null;
+              // A section holding the page you are on is never foldable: hiding `/career/jobs`
+              // behind a label you must click to find again is worse than a long sidebar.
+              const holdsCurrentPage = items.some((item) => item.href === pathname);
+              const expanded = holdsCurrentPage || !collapsedSections.has(section.id);
               return (
                 <div key={section.id} className="flex flex-col gap-0.5" data-slot="nav-section">
-                  <p className="nav-label px-2 pb-0.5 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-                    {tNav(section.key)}
-                  </p>
-                  {items.map(({ href, key, icon: Icon }) => {
-                    const label = tNav(key);
-                    const active = pathname === href;
-                    return (
-                      <Link
-                        key={href}
-                        href={href}
-                        aria-current={active ? "page" : undefined}
-                        title={label}
-                        className={cn(
-                          "flex items-center gap-2 rounded-[var(--radius)] px-2 py-1.5 font-mono text-xs",
-                          "hover:bg-accent hover:text-accent-foreground",
-                          active && "bg-accent text-accent-foreground",
-                        )}
-                      >
-                        <Icon aria-hidden="true" className="size-4 shrink-0" />
-                        <span className="nav-label truncate">{label}</span>
-                      </Link>
-                    );
-                  })}
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(section.id)}
+                    disabled={holdsCurrentPage}
+                    aria-expanded={expanded}
+                    aria-controls={`nav-section-${section.id}`}
+                    data-slot="nav-section-toggle"
+                    className={cn(
+                      "group flex min-h-6 w-full items-center gap-1 rounded-[var(--radius)] px-2 py-0.5",
+                      "font-mono text-[10px] tracking-wider text-muted-foreground uppercase",
+                      "hover:text-foreground",
+                      "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                      // Disabled rather than hidden, so the row keeps its place and its height, and
+                      // the reason it cannot fold is discoverable instead of mysterious.
+                      holdsCurrentPage && "cursor-default",
+                    )}
+                    title={
+                      holdsCurrentPage
+                        ? tNav(section.key)
+                        : `${tNav(section.key)} — ${expanded ? tShell("collapseSection") : tShell("expandSection")}`
+                    }
+                  >
+                    {/* A chevron that points the way the section opens. `aria-hidden` because the
+                        accessible state is `aria-expanded` on the button itself. */}
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "text-[9px] transition-transform",
+                        expanded ? "rotate-90" : "rotate-0",
+                        !holdsCurrentPage && "group-hover:text-foreground",
+                      )}
+                    >
+                      ›
+                    </span>
+                    <span className="truncate">{tNav(section.key)}</span>
+                  </button>
+                  {/* Not unmounted when folded: a folded section keeps its links in the DOM, so
+                      `Cmd-K` and a screen reader's link list still find them. `hidden` is what takes
+                      them out of the tab order and the accessibility tree. */}
+                  <div
+                    id={`nav-section-${section.id}`}
+                    hidden={!expanded}
+                    className="flex flex-col gap-0.5"
+                  >
+                    {items.map(({ href, key, icon: Icon }) => {
+                      const label = tNav(key);
+                      const active = pathname === href;
+                      return (
+                        <Link
+                          key={href}
+                          href={href}
+                          aria-current={active ? "page" : undefined}
+                          title={label}
+                          className={cn(
+                            "flex min-h-7 items-center gap-2 rounded-[var(--radius)] px-2 py-1.5 font-mono text-xs",
+                            "hover:bg-accent hover:text-accent-foreground",
+                            active && "bg-accent text-accent-foreground",
+                          )}
+                        >
+                          <Icon aria-hidden="true" className="size-4 shrink-0" />
+                          <span className="nav-label truncate">{label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               );
             })}
           </nav>
-          <p className="nav-label truncate border-t border-border px-3 py-2 font-mono text-xs text-muted-foreground">
-            {user.name}
-          </p>
+          {/*
+            The account and session controls live here, at the bottom of the rail, beside Profile —
+            not in the top bar (ADR-130). The top bar's job is to say where you are; these four are
+            about *you* and about getting out, and a row of them beside the page title meant the
+            sidebar had one job and the header had two.
+
+            Order is deliberate and follows the frequency ladder: the fold and the search are used
+            constantly, the bell occasionally, the session almost never.
+          */}
+          <div
+            className="flex flex-col gap-1 border-t border-border px-2 py-2"
+            data-slot="sidebar-footer"
+          >
+            <div className="flex items-center gap-1">
+              <SidebarControl
+                onClick={toggleSidebar}
+                label={sidebarButtonLabel}
+                expanded={isMobile ? drawerOpen : sidebarMode === "full" ? overlayOpen : undefined}
+                controls="primary-nav"
+                slot={isMobile ? "drawer-close" : "sidebar-toggle"}
+              >
+                {isMobile ? (
+                  <X aria-hidden="true" className="size-4" />
+                ) : (
+                  <PanelLeft aria-hidden="true" className="size-4" />
+                )}
+              </SidebarControl>
+              <button
+                type="button"
+                onClick={() => setPaletteOpen(true)}
+                data-slot="sidebar-search"
+                aria-label={tShell("search")}
+                className={cn(controlGhost, "flex-1 justify-start gap-2")}
+              >
+                <Search aria-hidden="true" className="size-3.5 shrink-0" />
+                <span className="nav-label truncate">{tShell("search")}</span>
+                <Kbd aria-hidden="true" className="ml-auto hidden lg:inline">
+                  Ctrl
+                </Kbd>
+                <Kbd aria-hidden="true" className="hidden lg:inline">
+                  K
+                </Kbd>
+              </button>
+            </div>
+            <div className="flex items-center gap-1">
+              <Link
+                href="/notifications"
+                data-slot="notification-bell"
+                aria-label={
+                  unread > 0
+                    ? tShell("notificationsUnread", { count: unread })
+                    : tShell("notifications")
+                }
+                className={cn(controlGhost, "flex-1 justify-start gap-2")}
+              >
+                <Bell aria-hidden="true" className="size-3.5 shrink-0" />
+                <span className="nav-label truncate">{tShell("notifications")}</span>
+                {unread > 0 ? (
+                  <span
+                    data-slot="notification-count"
+                    className="tabular-nums text-warning"
+                    aria-hidden="true"
+                  >
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                ) : null}
+              </Link>
+              <button
+                type="button"
+                onClick={() => void signOut()}
+                disabled={signingOut}
+                data-slot="sign-out"
+                aria-label={signingOut ? tShell("signingOut") : tShell("signOut")}
+                className={cn(controlGhost, "shrink-0")}
+              >
+                <LogOut aria-hidden="true" className="size-3.5" />
+              </button>
+            </div>
+            {/* The Profile row, which the controls sit beside: the one place that is about the
+                person rather than the session. `/settings` is where the profile actually lives. */}
+            <Link
+              href="/settings"
+              data-slot="profile-row"
+              aria-current={pathname === "/settings" ? "page" : undefined}
+              className={cn(
+                "flex min-h-7 items-center gap-2 rounded-[var(--radius)] px-2 py-1 font-mono text-xs",
+                "hover:bg-accent hover:text-accent-foreground",
+                pathname === "/settings" && "bg-accent text-accent-foreground",
+              )}
+            >
+              <UserRound aria-hidden="true" className="size-4 shrink-0" />
+              <span className="nav-label truncate">{user.name}</span>
+            </Link>
+          </div>
         </div>
       </aside>
 
@@ -293,92 +471,40 @@ export function AppShell({
           <p className="nav-label min-w-0 flex-1 truncate font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
             {pageTitle}
           </p>
-          <button
-            type="button"
-            onClick={() => setPaletteOpen(true)}
-            data-slot="header-search"
-            aria-label={tShell("search")}
-            className="nav-label ml-auto flex w-10 shrink-0 items-center justify-center gap-2 rounded-[var(--radius)] border border-border bg-background px-2 py-1 font-mono text-[10px] text-muted-foreground hover:bg-accent hover:text-accent-foreground sm:w-auto sm:min-w-40 sm:flex-1 sm:justify-start"
-          >
-            <Search aria-hidden="true" className="size-3.5 shrink-0" />
-            <span className="hidden truncate sm:inline">{tShell("search")}</span>
-            {/* The key caps are a visual hint; the accessible name is the visible word, so
-                they are hidden from assistive tech (axe label-content-name-mismatch). */}
-            <Kbd aria-hidden="true" className="ml-auto hidden sm:inline">
-              Ctrl
-            </Kbd>
-            <Kbd aria-hidden="true" className="hidden sm:inline">
-              K
-            </Kbd>
-          </button>
-          {focus ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={stoppingFocus}
-              onClick={() => void stopFocus()}
-              data-slot="ambient-focus-stop"
-            >
-              {tShell("stopFocus")}
-            </Button>
-          ) : null}
-          <OfflineCapture />
-          <Link
-            href="/notifications"
-            data-slot="notification-bell"
-            aria-label={
-              unread > 0
-                ? tShell("notificationsUnread", { count: unread })
-                : tShell("notifications")
-            }
-            className="inline-flex items-center gap-1 rounded-[var(--radius)] px-2 py-1 font-mono text-xs hover:bg-accent hover:text-accent-foreground"
-          >
-            <Bell aria-hidden="true" className="size-4" />
-            <span className="nav-label hidden sm:inline">{tShell("notifications")}</span>
-            {unread > 0 ? (
-              <span
-                data-slot="notification-count"
-                className="tabular-nums text-warning"
-                aria-hidden="true"
-              >
-                {unread > 99 ? "99+" : unread}
-              </span>
-            ) : null}
-          </Link>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={toggleSidebar}
-            aria-controls="primary-nav"
-            aria-expanded={isMobile ? drawerOpen : sidebarMode === "full" ? overlayOpen : undefined}
-            aria-label={sidebarButtonLabel}
-            data-slot="sidebar-toggle"
-          >
+          <div className="ml-auto flex items-center gap-2">
+            {/* The nav opener, on a phone only (ADR-130).
+                Everywhere else the rail is always on screen and its fold control lives in the footer
+                with the rest. Below the breakpoint the rail is off-canvas, so a control that lived
+                inside it would be inside the thing it opens — the drawer could be closed by its
+                scrim and opened by nothing. `mobile.spec.ts` caught exactly that. */}
             {isMobile ? (
-              drawerOpen ? (
-                <X aria-hidden="true" className="size-4" />
-              ) : (
-                <Menu aria-hidden="true" className="size-4" />
-              )
-            ) : (
-              tShell("sidebar")
-            )}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={signOut}
-            disabled={signingOut}
-            aria-label={signingOut ? tShell("signingOut") : tShell("signOut")}
-          >
-            <LogOut aria-hidden="true" className="size-4 sm:hidden" />
-            <span className={cn(signingOut ? "" : "hidden sm:inline")}>
-              {signingOut ? tShell("signingOut") : tShell("signOut")}
-            </span>
-          </Button>
+              <SidebarControl
+                onClick={toggleSidebar}
+                label={sidebarButtonLabel}
+                expanded={drawerOpen}
+                controls="primary-nav"
+              >
+                {drawerOpen ? (
+                  <X aria-hidden="true" className="size-4" />
+                ) : (
+                  <Menu aria-hidden="true" className="size-4" />
+                )}
+              </SidebarControl>
+            ) : null}
+            {focus ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={stoppingFocus}
+                onClick={() => void stopFocus()}
+                data-slot="ambient-focus-stop"
+              >
+                {tShell("stopFocus")}
+              </Button>
+            ) : null}
+            <OfflineCapture />
+          </div>
         </header>
 
         <main className="min-w-0 flex-1 p-4">

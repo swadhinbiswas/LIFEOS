@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { constellationRows, habitConsistencySeries } from "./habits";
+import { constellationRows, habitConsistencyDetails, habitConsistencySeries } from "./habits";
 
 /** Hand-checkable fixture: the spec wants a derived number to match a fixture, not the UI. */
 const days = (...keys: Array<[string, boolean, number?]>) =>
@@ -100,5 +100,66 @@ describe("constellationRows (spec 6.8)", () => {
     const [row] = constellationRows([{ id: "h1", name: "new", streak: 0, days: [] }]);
     expect(row?.week).toEqual([]);
     expect(row?.ratio).toBe(0);
+  });
+});
+
+/**
+ * The day-by-day breakdown (ADR-130). The claim that matters is that it is the *same* arithmetic as
+ * the chart, over the same rows, so the two can never disagree — a second calculation would.
+ */
+describe("habitConsistencyDetails (adr-130)", () => {
+  const habits = [
+    {
+      id: "h1",
+      name: "Run",
+      streak: 3,
+      days: days(["2026-09-20", true], ["2026-09-21", true], ["2026-09-22", false]),
+    },
+    {
+      id: "h2",
+      name: "Read",
+      streak: 1,
+      days: days(["2026-09-20", true], ["2026-09-21", false], ["2026-09-22", false]),
+    },
+    {
+      id: "h3",
+      name: "Write",
+      streak: 0,
+      days: days(["2026-09-20", false], ["2026-09-21", false], ["2026-09-22", false]),
+    },
+  ];
+
+  it("agrees with the series it sits under, and adds the names", () => {
+    const details = habitConsistencyDetails(habits, 14);
+    const series = habitConsistencySeries(habits, 14);
+    expect(details.map((row) => row.value)).toEqual(series.map((row) => row.value));
+    expect(details.map((row) => row.day)).toEqual(series.map((row) => row.day));
+    expect(details[0]).toMatchObject({ index: 1, done: 2, names: ["Run", "Read"] });
+    expect(details[2]).toMatchObject({ index: 3, done: 0, names: [] });
+  });
+
+  it("numbers from 1 at the oldest day, so the label means the same thing tomorrow", () => {
+    // Counting back from today would renumber every row each day and mean nothing on its own.
+    const details = habitConsistencyDetails(habits, 14);
+    expect(details.map((row) => row.index)).toEqual([1, 2, 3]);
+  });
+
+  it("reports an empty day as zero with no names, not as a missing day", () => {
+    const details = habitConsistencyDetails(habits, 14);
+    expect(details).toHaveLength(3);
+    expect(details[2]).toMatchObject({ day: "2026-09-22", value: 0, done: 0, names: [] });
+  });
+
+  it("returns nothing without habits, so the panel shows an empty state rather than zeroes", () => {
+    expect(habitConsistencyDetails([], 14)).toEqual([]);
+  });
+
+  it("honours the window", () => {
+    expect(habitConsistencyDetails(habits, 2).map((row) => row.day)).toEqual([
+      "2026-09-21",
+      "2026-09-22",
+    ]);
+    // Still numbered from 1, not from the start of the shortened window's own history.
+    expect(habitConsistencyDetails(habits, 2).map((row) => row.index)).toEqual([1, 2]);
   });
 });

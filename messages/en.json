@@ -18,7 +18,9 @@
     "synced": "synced",
     "saving": "saving",
     "offline": "offline",
-    "focusLabel": "focus"
+    "focusLabel": "focus",
+    "collapseSection": "collapse",
+    "expandSection": "expand"
   },
   "Palette": {
     "title": "Command palette",
@@ -356,7 +358,18 @@
       "scheduleBlockLabel": "{time} — {title} ({state})",
       "scheduleStatePast": "done",
       "scheduleStateNow": "happening now",
-      "scheduleStateNext": "still to come"
+      "scheduleStateNext": "still to come",
+      "dayListSummary": "{count} days, one by one",
+      "dayListCaption": "Habits completed on each day of the window",
+      "dayListDay": "day",
+      "dayListDone": "done",
+      "dayListPercent": "share",
+      "dayListDate": "date",
+      "dayListDayN": "Day {n}",
+      "dayListOf": "{done} of {total}",
+      "dayListEmptyTitle": "no habit history yet",
+      "dayListEmptyHint": "check a habit off and the days start here",
+      "dayListOpenHabits": "open habits"
     },
     "Trash": {
       "title": "Trash",

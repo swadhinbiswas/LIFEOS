@@ -18,7 +18,9 @@
     "synced": "সিঙ্ক হয়েছে",
     "saving": "সেভ হচ্ছে",
     "offline": "অফলাইন",
-    "focusLabel": "ফোকাস"
+    "focusLabel": "ফোকাস",
+    "collapseSection": "গুটান",
+    "expandSection": "খুলুন"
   },
   "Palette": {
     "title": "কমান্ড প্যালেট",
@@ -356,7 +358,18 @@
       "scheduleBlockLabel": "{time} — {title} ({state})",
       "scheduleStatePast": "শেষ",
       "scheduleStateNow": "এখন চলছে",
-      "scheduleStateNext": "এখনও হয়নি"
+      "scheduleStateNext": "এখনও হয়নি",
+      "dayListSummary": "{count} দিন, একটি একটি করে",
+      "dayListCaption": "প্রতিটি দিনে সম্পন্ন হওয়া অভ্যাস",
+      "dayListDay": "দিন",
+      "dayListDone": "সম্পন্ন",
+      "dayListPercent": "অংশ",
+      "dayListDate": "তারিখ",
+      "dayListDayN": "দিন {n}",
+      "dayListOf": "{total} টির মধ্যে {done}",
+      "dayListEmptyTitle": "এখনো কোনো অভ্যাসের ইতিহাস নেই",
+      "dayListEmptyHint": "একটি অভ্যাস সম্পন্ন করলে দিনগুলো এখানে দেখা যাবে",
+      "dayListOpenHabits": "অভ্যাস খুলুন"
     },
     "Trash": {
       "title": "ট্র্যাশ",

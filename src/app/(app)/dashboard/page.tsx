@@ -22,7 +22,11 @@ import { briefEnabled, latestBrief } from "@/server/ai/brief";
 import { getDashboardKpis, KPI_DEFINITIONS } from "@/server/dashboard";
 import { completedDailySeries } from "@/server/dashboard/completion";
 import { templatesForVariant } from "@/config/dashboard-templates";
-import { constellationRows, habitConsistencySeries } from "@/server/dashboard/habits";
+import {
+  constellationRows,
+  habitConsistencyDetails,
+  habitConsistencySeries,
+} from "@/server/dashboard/habits";
 import { getLayout } from "@/server/dashboard/widgets";
 import { focusDailySeries } from "@/server/focus";
 import { listHabits } from "@/server/habits";
@@ -42,6 +46,7 @@ import { LayoutControls } from "./_components/layout-controls";
 import { DashboardTabs } from "./_components/dashboard-tabs";
 import { FunnelChart } from "./_components/funnel-chart";
 import { HabitConstellation } from "./_components/habit-constellation";
+import { HabitDayList } from "./_components/habit-day-list";
 import { partitionQueue, QueueSplit } from "./_components/queue-split";
 import { SignalTiles } from "./_components/signal-tiles";
 import { TemplatePicker } from "./_components/template-picker";
@@ -230,18 +235,19 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   // Chart series, each derived from the module that owns the rows behind it (ADR-101/ADR-104).
   const chartData = habitConsistencySeries(habits, 28);
+  // The same rows and the same window as `chartData`, with the habit names the bars cannot carry.
+  const habitStreaks = habits.map((row) => ({
+    id: row.habit.id,
+    name: row.habit.name,
+    streak: row.streak,
+    days: row.days,
+  }));
+  const habitDayRows = habitConsistencyDetails(habitStreaks, 28);
   const pulseData = habitConsistencySeries(habits, 14);
   const focusData = focusSeries.map((row) => ({ day: row.day, value: row.minutes }));
   const doneData = doneSeries.map((row) => ({ day: row.day, value: row.count }));
   const reviewWeeks = reviewStreak(reviews, now, timeZone, weekStart);
-  const constellation = constellationRows(
-    habits.map((row) => ({
-      id: row.habit.id,
-      name: row.habit.name,
-      streak: row.streak,
-      days: row.days,
-    })),
-  );
+  const constellation = constellationRows(habitStreaks);
   const queue = partitionQueue({
     overdue: brief?.overdue ?? [],
     dueToday: brief?.dueToday ?? [],
@@ -912,6 +918,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               emptyAction={{ href: "/habits", label: t("openList") }}
               isEmpty={habits.length === 0}
             />
+            {/* Directly under the chart it explains, and inside the same panel, because the bar and
+                the row it expands to are two views of one number (ADR-130). */}
+            <HabitDayList rows={habitDayRows} totalHabits={habits.length} />
           </Panel>
         ) : null}
 

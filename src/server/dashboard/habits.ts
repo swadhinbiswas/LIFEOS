@@ -47,6 +47,49 @@ export function habitConsistencySeries(
   });
 }
 
+export interface HabitDayDetail extends HabitDayShare {
+  /** 1-based from the *oldest* day in the window, so the first row is "Day 1" (ADR-130). */
+  index: number;
+  /** How many habits were checked off. `0` is a real answer: the day came and went. */
+  done: number;
+  /** The habit names checked off that day, so a bar can be read rather than guessed at. */
+  names: string[];
+}
+
+/**
+ * The same series, with the per-day detail a bar chart throws away (ADR-130).
+ *
+ * A bar says "60%" and the only way to find out which two of four habits that was is to go and
+ * count them again. This is the same arithmetic as {@link habitConsistencySeries} over the same
+ * rows, so the two can never disagree — it is the chart's data plus the names, not a second
+ * calculation.
+ *
+ * **Oldest first, numbered from 1.** "Day 2" means the second day of the window being shown, which
+ * is the only reading that stays true as the window slides; numbering from today backwards would
+ * renumber every row every day and mean nothing on its own.
+ */
+export function habitConsistencyDetails(
+  habits: readonly StreakSource[],
+  days = 14,
+): HabitDayDetail[] {
+  if (habits.length === 0) return [];
+  const window = Math.max(1, Math.round(days));
+  const keys = habits[0]!.days.slice(-window).map((day) => day.key);
+
+  return keys.map((key, offset) => {
+    const names = habits
+      .filter((habit) => habit.days.some((row) => row.key === key && row.done))
+      .map((habit) => habit.name);
+    return {
+      day: key,
+      index: offset + 1,
+      done: names.length,
+      names,
+      value: Math.round((names.length / habits.length) * 100),
+    };
+  });
+}
+
 /**
  * One constellation row per habit: the last `weekDays` days for the dot strip and sparkline, and
  * the share of the whole 28-day window for the ASCII meter.

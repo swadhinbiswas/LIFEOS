@@ -3190,6 +3190,67 @@ app had got wrong, the second about data that was only as fresh as somebody's me
   claimed as fine. The activity page's manual button stays: a refresh you can ask for is still
   useful, and it is the only way to recover an account whose key just changed.
 
+## ADR-130 — The rail folds, the session lives at the bottom, and a percentage axis says so
+
+Four changes to the shell and the habit chart, from one report. They do not belong together
+architecturally, and the reason they are in one entry is that three of the four were wrong in a way
+only a _measurement_ or a _screenshot_ could show.
+
+- **Context:**
+  - The sidebar is 25+ destinations in six sections and scrolls, so reaching "Prep" means scrolling
+    past Inbox, Finance and Health. Six flat headings is a list you traverse rather than one you scan.
+  - The top bar carried search, the bell, the fold and sign-out beside the page title. So the header
+    had two jobs and the rail had one, and the four controls in question are all about _the person_
+    rather than _the place_.
+  - The habit chart's value axis was `<YAxis hide width={0} />` — there was no left-hand scale at
+    all, and 28 date labels were spread under the bars as a picket fence.
+  - Nothing below the chart said which habits any given day had been done.
+
+- **Decision:**
+  - **Sections fold, and the state is read through `useSyncExternalStore`.** Not `useState` plus an
+    effect: `localStorage` does not exist on the server, so a first client render would disagree with
+    the server's and React would report a hydration mismatch, and setting state synchronously in an
+    effect is the cascading-render case the React compiler lint exists to catch. The server snapshot
+    is "nothing folded", which is also what a first-time visitor expects. The snapshot is a **string**,
+    because `useSyncExternalStore` compares by identity and a fresh array every call loops forever.
+  - **A section holding the current page cannot be folded.** Hiding `/career/jobs` behind a label you
+    must click to find again is worse than a long sidebar. The control is `disabled` rather than
+    hidden, so it keeps its place and the reason is discoverable.
+  - **A folded section's links stay in the DOM**, behind `hidden`. `Cmd-K` and a screen reader's link
+    list still find them; `hidden` is what takes them out of the tab order.
+  - **The four controls move to the rail's footer, beside Profile**, in frequency order: fold and
+    search, bell and sign-out, then the profile row. The header keeps the location indicator, the
+    focus stop and the offline capture — none of which are about the person.
+  - **Except the nav opener, which stays in the header below the breakpoint.** A control that lives
+    inside the thing it opens cannot open it: on a phone the drawer could be closed by its scrim and
+    opened by nothing. `mobile.spec.ts` failed on exactly that and the fix is a rule rather than a
+    patch — in the header when the rail is off-canvas, in the footer when it is on screen. Two toggles
+    exist below the breakpoint, so they carry different `data-slot`s and a test can say which it means.
+  - **The value axis is visible, in the unit the series already declares.** Showing an axis is only
+    worth it if its numbers are the numbers in the caption. A habit chart reading `0.25` on the left
+    and `25 %` in the table is two scales for one quantity.
+  - **A percentage series tops out at 100.** The old `Math.max(1, …)` floor existed only to stop an
+    all-zero series getting a zero-height domain, and it did that by drawing an axis whose _top_ was
+    1% — a scale, not a measurement, implying 1% was the best the chart could show. Counts and
+    durations still take the data's own maximum.
+  - **The dates thin to what fits** (`preserveStartEnd` plus a gap), and 28 labels in a 128px plot is
+    a picket fence. `preserveStartEnd` alone does not thin: without a gap to respect, Recharts draws
+    all of them.
+  - **The day list is the chart's own arithmetic plus the names**, via `habitConsistencyDetails` over
+    the same rows and the same window — not a second calculation, so the two cannot disagree.
+    `Day N` counts from the oldest day in the window, which is the only numbering that stays stable as
+    the window slides; newest first, because the question is almost always about recent days. An
+    empty day is `0 of 3`, not a bare `0`: a zero alone reads like a missing value.
+
+- **Consequences:**
+  - Fold state is per browser, not per account, and not synced. It is a view preference about a
+    layout, which is the same class of thing as the dashboard's own layout picker.
+  - The habit day list is 28 rows. It is a `<details>`, so it costs one collapsed line until asked
+    for, but a longer window would want paging or a cap.
+  - The percentage ceiling is keyed on `unit === "%"`, which is currently only the habit series. A
+    future series that is a percentage of something unbounded — a ratio against a moving target —
+    would need a real maximum instead, and the rule would have to become a prop rather than a guess.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

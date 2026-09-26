@@ -140,12 +140,36 @@ export function TrendChart({
         Number((point as unknown as Record<string, unknown>)[secondary.dataKey] ?? 0),
       )
     : [];
-  const ceiling = Math.max(1, ...data.map((point) => point.value), ...secondaryValues);
+  /**
+   * The top of the scale.
+   *
+   * A percentage series tops out at 100, and saying so is the whole point of showing the axis: with
+   * the old `Math.max(1, …)` floor, a week where nothing was checked off drew an axis reading
+   * `0% … 1%`, which is a *scale*, not a measurement — the top of it implied 1% was the best the
+   * chart could show. The `1` floor exists so an all-zero series does not get a zero-height domain,
+   * and 100 serves that job just as well for a percentage. Every other unit here is a count or a
+   * duration, where the data's own maximum is the honest ceiling.
+   */
+  const values = data.map((point) => point.value);
+  const ceiling = unit === "%" ? 100 : Math.max(1, ...values, ...secondaryValues);
   // A net-change series can go below zero (more deleted than added), so the floor follows the data
   // rather than being pinned at 0 — a clipped bar would misstate the value.
-  const floor = Math.min(0, ...data.map((point) => point.value), ...secondaryValues);
+  const floor = Math.min(0, ...values, ...secondaryValues);
   const domain: [number, number] = [floor, ceiling];
   const withSecondary = secondary !== undefined && series === "bar";
+
+  /**
+   * The value axis, in the unit the series already declares (ADR-130).
+   *
+   * Showing the axis at all is only worth it if the numbers on it are the numbers in the caption: a
+   * habit chart whose left axis read `0.25` while its table read `25 %` would be two scales for one
+   * quantity. Integers stay integers (`100`, not `100.0`); a fractional value keeps one decimal,
+   * because rounding a real 0.5 tick to `1` would be a different number.
+   */
+  const axisTick = (value: number): string => {
+    const text = Number.isInteger(value) ? String(value) : value.toFixed(1);
+    return unit ? `${text}${unit}` : text;
+  };
 
   return (
     <div data-slot="trend-chart" className={cn("flex min-w-0 flex-col gap-2", className)}>
@@ -164,15 +188,37 @@ export function TrendChart({
         {series === "bar" ? (
           <BarChart accessibilityLayer data={data} barCategoryGap={1} margin={{ top: 4 }}>
             <CartesianGrid vertical={false} />
+            {/* Dates run left to right but the *newest* one anchors to the right edge (ADR-130), so
+                the axis reads as a timeline ending at today rather than starting at a month-old
+                date. `align="right"` on the ticks, with a right margin, is what puts the label
+                there; the plot itself is untouched. */}
+            {/* Dates: only the two ends. Twenty-eight labels in a 128px-tall plot is a picket fence,
+                and `preserveStartEnd` leaves the two that actually orient a reader — where the
+                window starts and where it ends. */}
             <XAxis
               dataKey="day"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
-              minTickGap={16}
+              tickMargin={6}
+              interval="preserveStartEnd"
+              minTickGap={28}
               className="font-mono"
+              tick={{ fill: "var(--muted-foreground)", fontSize: 9 }}
+              height={18}
             />
-            <YAxis hide domain={domain} width={0} />
+            {/* The value axis, which used to be `hide width={0}`. The plot had no left-hand scale
+                at all, so every bar's height had to be judged against the average line alone. */}
+            <YAxis
+              orientation="left"
+              domain={domain}
+              width={38}
+              tickLine={false}
+              axisLine={false}
+              tickMargin={4}
+              tickFormatter={axisTick}
+              className="font-mono"
+              tick={{ fill: "var(--muted-foreground)", fontSize: 9 }}
+            />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             {/* One series has a meaningful average line; two grouped bars do not — a line at the
                 first series' mean would be read as a threshold for the pair. */}
@@ -191,15 +237,31 @@ export function TrendChart({
         ) : (
           <AreaChart accessibilityLayer data={data} margin={{ top: 4 }}>
             <CartesianGrid vertical={false} />
+            {/* Dates: only the two ends. Twenty-eight labels in a 128px-tall plot is a picket fence,
+                and `preserveStartEnd` leaves the two that actually orient a reader — where the
+                window starts and where it ends. */}
             <XAxis
               dataKey="day"
               tickLine={false}
               axisLine={false}
-              tickMargin={8}
-              minTickGap={16}
+              tickMargin={6}
+              interval="preserveStartEnd"
+              minTickGap={28}
               className="font-mono"
+              tick={{ fill: "var(--muted-foreground)", fontSize: 9 }}
+              height={18}
             />
-            <YAxis hide domain={domain} width={0} />
+            <YAxis
+              orientation="left"
+              domain={domain}
+              width={38}
+              tickLine={false}
+              axisLine={false}
+              tickMargin={4}
+              tickFormatter={axisTick}
+              className="font-mono"
+              tick={{ fill: "var(--muted-foreground)", fontSize: 9 }}
+            />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <ReferenceLine y={average} stroke="var(--muted-foreground)" strokeDasharray="2 4" />
             <Area
