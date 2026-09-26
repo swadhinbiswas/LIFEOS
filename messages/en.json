@@ -85,7 +85,8 @@
     "appearance": "Appearance",
     "aiSettings": "AI settings",
     "data": "Data",
-    "about": "About"
+    "about": "About",
+    "contacts": "Contacts"
   },
   "Shortcuts": {
     "groupGlobal": "Global",
@@ -210,7 +211,8 @@
     "codeConnection": "connection",
     "todaySchedule": "schedule",
     "todayCapture": "quick capture",
-    "todayTimer": "focus timer"
+    "todayTimer": "focus timer",
+    "signalsTitle": "how was today"
   },
   "Pages": {
     "Dashboard": {
@@ -369,7 +371,26 @@
       "dayListOf": "{done} of {total}",
       "dayListEmptyTitle": "no habit history yet",
       "dayListEmptyHint": "check a habit off and the days start here",
-      "dayListOpenHabits": "open habits"
+      "dayListOpenHabits": "open habits",
+      "signalsTitle": "How was today",
+      "signalSleep": "sleep",
+      "signalMood": "mood",
+      "signalHabits": "habits",
+      "signalFocus": "focus",
+      "signalSpend": "spent",
+      "signalNoHabits": "no habits",
+      "signalNone": "nothing",
+      "signalSleepPick": "hours slept",
+      "signalMoodPick": "mood, 1 to 5",
+      "signalUnrecorded": "not recorded",
+      "signalHabitsMeter": "{pct}% of habits kept",
+      "signalHabitsPct": "{pct}%",
+      "signalCoverageFull": "{count} of 5 signals recorded",
+      "signalCoveragePartial": "{count} of {total} signals recorded — the rest are blank, not zero",
+      "weatherTitle": "weather",
+      "weatherNotSet": "no place set — weather needs one",
+      "weatherSetPlace": "set a place",
+      "weatherStale": "last reading, the provider did not answer"
     },
     "Trash": {
       "title": "Trash",
@@ -1444,6 +1465,20 @@
       "sender_phone_hint": "wakatime's own mobile app reports from the same account, so phone sessions land here with no extra setup.",
       "privacy": "what is stored",
       "privacyHint": "one row per day: total seconds, ai and human line counts, the estimated ai cost, and the top languages, editors and projects. never the files you edited, the code itself, or the keystrokes."
+    },
+    "Contacts": {
+      "title": "Contacts",
+      "owedTitle": "Owed a reply",
+      "owedEmptyTitle": "nobody is waiting on you",
+      "owedEmptyHint": "promises you make to people show up here when they come round",
+      "owedOpenContacts": "open contacts",
+      "owedDueToday": "due today",
+      "owedDaysOverdue": "{count}d late",
+      "followUpDoneShort": "done",
+      "followUpDone": "Mark the promise to {name} as kept",
+      "followUpRemindShort": "remind",
+      "followUpRemind": "Set a new reminder for {name}",
+      "followUpInDays": "in {count}d"
     }
   },
   "About": {

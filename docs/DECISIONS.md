@@ -3293,6 +3293,74 @@ only a _measurement_ or a _screenshot_ could show.
   - `AI_ENCRYPTION_KEY` is called out in both env files as generate-once-and-keep: rotating it makes
     every stored WakaTime key and AI credential unreadable and there is no re-encryption path.
 
+## ADR-132 — One day, read across every domain; and the three gaps that made it necessary
+
+Five features, one reason: **every signal was already stored and nothing put two of them on the
+same screen.** A person who cannot answer "was today bad because I slept five hours or because I was
+on the laptop?" does not change anything — they conclude the tracking is not working, and they are
+right about the tracking.
+
+- **Context:** the app had a health page with sleep, mood, water, workout and weight; a habit log; a
+  focus timer; a finance ledger; a code-activity cache; and a contacts table reachable only from a job
+  application. Five tables, five routes, no row.
+
+- **Decision:**
+  - **`src/server/day` is a read model, not a sixth source of truth.** It composes the services that
+    own each table and stores nothing, so every number in the strip is the same number the page that
+    owns it shows. Reads per domain, not per day: a seven-day review is four queries, not twenty-eight.
+  - **`null` means "not recorded", never `0`.** A day with no sleep entry has _unknown_ sleep, and a
+    rendered `0h` is a fabricated reading that also destroys the information you came for — which of
+    your signals are missing. The strip ends with a coverage line naming that, and the meter draws
+    only for a signal that exists.
+  - **Sleep and mood are logged on the dashboard, one tap each.** Both were modelled and both lived
+    behind a form on `/health` — a dropdown, a number input and a submit. That is a reasonable UI and
+    a completely unreliable habit: the friction is the whole reason a signal you care about stops
+    being recorded, and a signal you do not record cannot be correlated with anything. Mood is five
+    buttons rather than a slider, because tapping "2" is one gesture and a drag is two.
+  - **The review's Signals section prints coverage beside every mean.** A sleep average over three
+    nights is a number about three nights, and `7h` alone claims a week. A signal that was never
+    recorded gets a line saying so, because "you did not log your mood" is the most actionable line
+    in a review and a silently absent line is indistinguishable from a signal that does not exist.
+  - **A correlation needs four overlapping days and is reported with `n`.** Below that the sentence is
+    omitted rather than softened: any two points fit a line exactly, so `r = 1` from three days is an
+    artefact, and "sleep doesn't seem to matter" from three data points is worse than no advice.
+  - **The correlation sentence names the signals and never quotes a value.** The first version
+    interpolated "7h" and a habit score that were never recorded — a finding assembled from a
+    correlation coefficient and two guesses. Naming the signals and the day count is the whole of what
+    the data supports.
+  - **`follow_up_at` is a promise; `last_contacted_at` is a fact.** `contacts` moved out of
+    `/career/jobs` to `/contacts`, because "a person you owe a reply to" is a person, whatever they
+    are to you professionally. The owed queue reads **only** the promise: "you have not spoken to
+    Ravi in 19 days" is true of nearly everyone you know and is therefore not information, while "you
+    told Ravi you would send the portfolio by Friday" is a debt you created and can discharge.
+    Absence of a promise is not a debt. `last_contacted_at` is separate from `updated_at` because a
+    note added today does not mean you talked to them today.
+  - **`lte`, not `lt`, on the promise.** A promise made for today is due today, and a "you are late"
+    list that starts tomorrow is a list that is wrong when you read it. `0 days overdue` on something
+    promised for this morning is a lie you would read as a scolding.
+  - **Weather is Open-Meteo, which needs no API key, and cached for half an hour.** Every other
+    provider wants a signup, and a personal OS that will not run without an account is not this repo
+    (spec §1). A forecast on a dashboard people open several times a day, against a free service, is
+    how you get somebody's IP throttled. A failed refresh keeps the last good reading and marks it
+    **stale** rather than blanking the widget — a widget that renders nothing on a network error is a
+    widget that teaches people to ignore it.
+  - **The place is never guessed from the timezone.** A timezone is a hundred square miles of nowhere
+    in particular, and a forecast for the wrong city is worse than no forecast. Until it is set the
+    widget says so and links to the setting.
+
+- **Consequences:**
+  - Two migrations. `0019` adds `last_contacted_at`, `follow_up_at` and an index to `contacts`;
+    `0020` adds `weather_cache` and three columns to `user_settings`.
+  - The strip is the **Today** tab's first widget, not the default tab. The dashboard opens on
+    `overview`; the strip is about today, and `today` is the tab about today. Two days of probes went
+    to the wrong URL before that was noticed.
+  - `summariseWeek` and `correlation` are pure and unit-tested over hand-checked fixtures, because the
+    failure mode of a correlation is a confident sentence, and a confident sentence is not caught by a
+    type checker.
+  - Weather is the only outbound call in the app that is neither an AI provider nor a payment
+    provider, and the only one with no key. If Open-Meteo's terms or availability change, the service
+    is the single place to swap.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

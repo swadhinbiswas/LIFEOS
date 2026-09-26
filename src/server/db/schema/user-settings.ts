@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { users } from "./identity";
 
@@ -28,6 +28,15 @@ export const user_settings = sqliteTable("user_settings", {
   locale: text("locale"),
   timezone: text("timezone"),
   week_start: text("week_start"),
+  /**
+   * Where the weather widget reads from, as decimal degrees (ADR-132). Null until the user sets it,
+   * and the widget says so rather than guessing from the timezone: a timezone is a hundred square
+   * miles of nowhere in particular, and a forecast for the wrong city is worse than no forecast.
+   */
+  weather_lat: real("weather_lat"),
+  weather_lon: real("weather_lon"),
+  /** What to call the place, since coordinates mean nothing to the person who set them. */
+  weather_place: text("weather_place"),
   /** provider, model, auto-approve allowlist, morning-brief opt-in (spec §10). */
   ai_prefs: text("ai_prefs"),
   created_at: integer("created_at", { mode: "timestamp_ms" })

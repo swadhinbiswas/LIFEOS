@@ -31,6 +31,15 @@ export const DASHBOARD_WIDGETS: DashboardWidget[] = [
     defaultSize: "l",
   },
   {
+    // The day's five signals on one row, plus the one-tap logging and the weather. Registered
+    // before `today.pulse` because it is the row that makes the rest legible (ADR-132).
+    id: "today.signals",
+    variant: "today",
+    label: "how was today",
+    key: "signalsTitle",
+    defaultSize: "l",
+  },
+  {
     id: "today.pulse",
     variant: "today",
     label: "habit pulse",

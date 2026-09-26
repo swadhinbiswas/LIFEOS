@@ -30,7 +30,15 @@ export const DASHBOARD_TEMPLATES: DashboardTemplate[] = [
     variant: "today",
     key: "day",
     hintKey: "dayHint",
-    widgets: ["today.brief", "today.counts", "today.top3", "today.queue", "today.planned"],
+    // The strip leads: it is the row that makes the other rows mean anything (ADR-132).
+    widgets: [
+      "today.signals",
+      "today.brief",
+      "today.counts",
+      "today.top3",
+      "today.queue",
+      "today.planned",
+    ],
   },
   {
     id: "balanced",
@@ -38,6 +46,7 @@ export const DASHBOARD_TEMPLATES: DashboardTemplate[] = [
     key: "balanced",
     hintKey: "balancedHint",
     widgets: [
+      "today.signals",
       "today.brief",
       "today.pulse",
       "today.counts",

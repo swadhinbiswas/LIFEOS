@@ -30,6 +30,8 @@ describe("starter dashboard layouts (ADR-108)", () => {
     expect(layout).not.toBeNull();
     const visible = layout!.widgets.filter((widget) => widget.visible).map((widget) => widget.id);
     expect(visible).toEqual([
+      // The day's signals lead: the row that makes the rest legible (ADR-132).
+      "today.signals",
       "today.brief",
       "today.counts",
       "today.top3",

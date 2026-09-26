@@ -77,3 +77,34 @@ export const code_activity_daily = sqliteTable(
     index("code_activity_daily_user_day_idx").on(t.user_id, t.day),
   ],
 );
+
+/**
+ * The last weather reading for an account (ADR-132).
+ *
+ * A cache of a remote source, like `code_activity_daily` and for the same reason (ADR-110): the
+ * provider cannot be queried offline, and a dashboard that fetched a forecast on every render would
+ * make a page render depend on somebody else's uptime. **Storing it is the point** — the alternative
+ * is a network call on a page people open many times a day, against a free service we would rather
+ * not hammer.
+ *
+ * One row per user, not per place: a person has one place, and a second row for the same user would
+ * be a cache with no eviction and a UI to explain it.
+ */
+export const weather_cache = sqliteTable("weather_cache", {
+  user_id: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** Degrees, echoed back so the reading can be attributed to where it came from. */
+  latitude: real("latitude").notNull(),
+  longitude: real("longitude").notNull(),
+  place: text("place"),
+  temperature_c: real("temperature_c"),
+  /** The provider's WMO weather code. Null when the provider sent something unrecognised. */
+  code: integer("code"),
+  is_day: integer("is_day", { mode: "boolean" }),
+  /** When the reading was taken, so a stale cache can say it is stale. */
+  observed_at: integer("observed_at", { mode: "timestamp_ms" }).notNull(),
+  /** The failure from the last attempt, or null when the last one worked. */
+  last_error: text("last_error"),
+  ...timestamps(),
+});

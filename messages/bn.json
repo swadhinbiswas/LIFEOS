@@ -85,7 +85,8 @@
     "appearance": "চেহারা",
     "aiSettings": "এআই সেটিংস",
     "data": "ডেটা",
-    "about": "পরিচিতি"
+    "about": "পরিচিতি",
+    "contacts": "পরিচিত"
   },
   "Shortcuts": {
     "groupGlobal": "গ্লোবাল",
@@ -210,7 +211,8 @@
     "codeConnection": "সংযোগ",
     "todaySchedule": "সময়সূচি",
     "todayCapture": "দ্রুত ধরা",
-    "todayTimer": "ফোকাস টাইমার"
+    "todayTimer": "ফোকাস টাইমার",
+    "signalsTitle": "আজ কেমন ছিল"
   },
   "Pages": {
     "Dashboard": {
@@ -369,7 +371,26 @@
       "dayListOf": "{total} টির মধ্যে {done}",
       "dayListEmptyTitle": "এখনো কোনো অভ্যাসের ইতিহাস নেই",
       "dayListEmptyHint": "একটি অভ্যাস সম্পন্ন করলে দিনগুলো এখানে দেখা যাবে",
-      "dayListOpenHabits": "অভ্যাস খুলুন"
+      "dayListOpenHabits": "অভ্যাস খুলুন",
+      "signalsTitle": "আজ কেমন ছিল",
+      "signalSleep": "ঘুম",
+      "signalMood": "মেজাপ",
+      "signalHabits": "অভ্যাস",
+      "signalFocus": "ফোকাস",
+      "signalSpend": "খরচ",
+      "signalNoHabits": "কোনো অভ্যাস নেই",
+      "signalNone": "কিছু নয়",
+      "signalSleepPick": "ঘুমানো ঘণ্টা",
+      "signalMoodPick": "মেজাপ, ১ থেকে ৫",
+      "signalUnrecorded": "রেকর্ড করা নেই",
+      "signalHabitsMeter": "অভ্যাসের {pct}% সম্পন্ন",
+      "signalHabitsPct": "{pct}%",
+      "signalCoverageFull": "৫ টির মধ্যে {count} টি সংকেত রেকর্ড",
+      "signalCoveragePartial": "{total} টির মধ্যে {count} টি রেকর্ড — বাকিগুলো শূন্য নয়, খালি",
+      "weatherTitle": "আবহাওয়া",
+      "weatherNotSet": "কোনো জায়গা সেট করা নেই — আবহাওয়ার জন্য প্রয়োজন",
+      "weatherSetPlace": "জায়গা সেট করুন",
+      "weatherStale": "শেষ রিডিং, সার্ভিস সাড়া দেয়নি"
     },
     "Trash": {
       "title": "ট্র্যাশ",
@@ -1444,6 +1465,20 @@
       "sender_phone_hint": "ওয়াকাটাইমের নিজস্ব মোবাইল অ্যাপ একই অ্যাকাউন্ট থেকে রিপোর্ট করে, তাই ফোনের সেশনও এখানে আসে — বাড়তি সেটআপ লাগে না।",
       "privacy": "যা রাখা হয়",
       "privacyHint": "প্রতিদিন একটি সারি: মোট সেকেন্ড, এআই ও মানুষের লাইন সংখ্যা, আনুমানিক এআই খরচ, এবং সেরা ভাষা, এডিটর ও প্রজেক্ট। কখনো তুমি যে ফাইল এডিট করেছ, সেই কোড বা কী-স্ট্রোক নয়।"
+    },
+    "Contacts": {
+      "title": "পরিচিত",
+      "owedTitle": "উত্তর দেওয়া বাকি",
+      "owedEmptyTitle": "কেউ আপনার জন্য অপেক্ষা করছে না",
+      "owedEmptyHint": "মানুষকে দেওয়া প্রতিশ্রুতি এলে এখানে দেখা যাবে",
+      "owedOpenContacts": "পরিচিত খুলুন",
+      "owedDueToday": "আজকের দিন",
+      "owedDaysOverdue": "{count} দিন দেরি",
+      "followUpDoneShort": "হয়েছে",
+      "followUpDone": "{name} এর প্রতিশ্রুতি সম্পন্ন হিসেবে চিহ্নিত করুন",
+      "followUpRemindShort": "মনে করিয়ে দিন",
+      "followUpRemind": "{name} এর জন্য নতুন রিমাইন্ডার ঠিক করুন",
+      "followUpInDays": "{count} দিনে"
     }
   },
   "About": {

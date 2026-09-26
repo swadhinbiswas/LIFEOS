@@ -25,6 +25,8 @@ export const WEBHOOK_EVENTS = [
   "job.stage_changed",
   "habit.logged",
   "note.created",
+  // A promise kept or made, so an external system can keep a CRM in step with the people queue.
+  "contact.follow_up_changed",
 ] as const;
 export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];
 

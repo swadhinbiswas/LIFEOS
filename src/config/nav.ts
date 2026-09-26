@@ -28,6 +28,7 @@ import {
   Trash2,
   type LucideIcon,
   UserRound,
+  Users,
   Wallet,
 } from "lucide-react";
 
@@ -66,7 +67,18 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     id: "life",
     key: "sectionLife",
-    hrefs: ["/habits", "/goals", "/notes", "/focus", "/finance", "/health", "/learning"],
+    // `/contacts` sits under Life, not Career. The module used to be reachable only from a job
+    // application, which made "people" a synonym for "recruiters" (ADR-132).
+    hrefs: [
+      "/habits",
+      "/goals",
+      "/notes",
+      "/focus",
+      "/finance",
+      "/health",
+      "/learning",
+      "/contacts",
+    ],
   },
   { id: "build", key: "sectionBuild", hrefs: ["/boards", "/trash"] },
   {
@@ -104,6 +116,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/reviews", key: "reviews", icon: ClipboardCheck },
   { href: "/tasks", key: "tasks", icon: ListTodo },
   { href: "/habits", key: "habits", icon: Repeat },
+  { href: "/contacts", key: "contacts", icon: Users },
   { href: "/goals", key: "goals", icon: Target },
   { href: "/notes", key: "notes", icon: NotebookPen },
   { href: "/focus", key: "focus", icon: Timer },

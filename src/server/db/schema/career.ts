@@ -62,9 +62,26 @@ export const contacts = sqliteTable(
     phone: text("phone"),
     linkedin_url: text("linkedin_url"),
     notes: text("notes"),
+    /**
+     * When you last actually spoke, as an instant (ADR-132). Distinct from `updated_at`, which moves
+     * whenever the row is edited — a note added today does not mean you talked to them today, and
+     * using the wrong one makes every contact look stale the moment you type anything about them.
+     */
+    last_contacted_at: integer("last_contacted_at", { mode: "timestamp_ms" }),
+    /**
+     * When you said you would get back to them, or null for no promise. This is the field the
+     * "owed a reply" view reads; `last_contacted_at` alone can only tell you who you have *not*
+     * spoken to recently, which is a different and much weaker claim.
+     */
+    follow_up_at: integer("follow_up_at", { mode: "timestamp_ms" }),
     ...timestamps(),
   },
-  (t) => [index("contacts_user_idx").on(t.user_id, t.name)],
+  (t) => [
+    index("contacts_user_idx").on(t.user_id, t.name),
+    // The owed-reply view is "follow_up_at is set and in the past", so the index is on the
+    // predicate's column rather than on the user, or every read scans the whole table.
+    index("contacts_user_follow_up_idx").on(t.user_id, t.follow_up_at),
+  ],
 );
 
 export const job_applications = sqliteTable(

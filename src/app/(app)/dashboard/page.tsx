@@ -47,6 +47,10 @@ import { DashboardTabs } from "./_components/dashboard-tabs";
 import { FunnelChart } from "./_components/funnel-chart";
 import { HabitConstellation } from "./_components/habit-constellation";
 import { HabitDayList } from "./_components/habit-day-list";
+import { DaySignalsStrip } from "./_components/day-signals-strip";
+import { QuickSignals } from "./_components/quick-signals";
+import { WeatherWidget } from "./_components/weather-widget";
+import { readDaySignals } from "@/server/day";
 import { partitionQueue, QueueSplit } from "./_components/queue-split";
 import { SignalTiles } from "./_components/signal-tiles";
 import { TemplatePicker } from "./_components/template-picker";
@@ -234,6 +238,11 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const kpiById = new Map((kpis?.values ?? []).map((kpi) => [kpi.id, kpi]));
 
   // Chart series, each derived from the module that owns the rows behind it (ADR-101/ADR-104).
+  // One row for the whole day: sleep, mood, habits, focus and spend, together for the first time
+  // (ADR-132). Composed from the services that own each table, so every number here is the same
+  // number the page that owns it shows.
+  const todaySignals = variant === "today" ? await readDaySignals(session.user.id) : null;
+
   const chartData = habitConsistencySeries(habits, 28);
   // The same rows and the same window as `chartData`, with the habit names the bars cannot carry.
   const habitStreaks = habits.map((row) => ({
@@ -330,6 +339,15 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         isEmpty={habits.length === 0}
       />
     ),
+    "today.signals": todaySignals ? (
+      <div className="grid gap-3">
+        <DaySignalsStrip signals={todaySignals} />
+        {/* Logging lives beside the reading. The strip is the reason to record; a separate page four
+            clicks away is not, which is why both signals were modelled and neither was used. */}
+        <QuickSignals sleepHours={todaySignals.sleepHours} mood={todaySignals.mood} />
+        <WeatherWidget userId={session.user.id} />
+      </div>
+    ) : null,
     "today.counts": brief ? (
       <SignalTiles
         items={[
