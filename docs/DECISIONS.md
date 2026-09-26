@@ -2809,6 +2809,40 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   about local development changes: a `file:` URL with no token is the same hermetic setup as before,
   and the remote path is unreachable from tests by construction rather than by convention.
 
+## ADR-122 — A session whose user row is gone is a signed-out session, not a foreign key error
+
+- **Status:** accepted (2026-09-26)
+- **Context:** after pointing the app at a fresh Turso database, every write 500'd with a raw
+  `SQLITE_CONSTRAINT: FOREIGN KEY constraint failed` and a dump of the statement and its bound
+  parameters. The settings toggle, a board insert, anything. Diagnosis took two queries: Turso
+  had **zero** users, and the user id in every failing insert existed in no database at all — not
+  even the local one, which holds only the seeded demo account.
+
+  The cause is structural. Better Auth keeps sessions in **secondary storage** (Upstash Redis,
+  ADR-037), and that store is **not scoped to a database**. So the session cookie kept resolving
+  perfectly while the `users` row it points at lived in whichever database was connected at
+  sign-in time. Change `DATABASE_URL` and the two halves diverge: the session is genuine, the
+  user is gone. Nothing is wrong with the session and nothing is wrong with the schema.
+
+- **Decision:**
+  - **`getServerSession` verifies the user still exists** and returns `null` when it does not.
+    Every page already redirects to `/sign-in` on a null session, so the whole app now presents
+    the state it actually is — signed out — instead of a stack trace per write. The cost is one
+    indexed primary-key lookup per request, next to a secondary-storage round trip that already
+    happened.
+  - **The stale session is left in Redis rather than deleted.** Invalidating it needs a write
+    from what is otherwise a read path, and it expires on its own TTL; signing in again replaces
+    it. Deleting it here would also mean a `getServerSession` call could fail, which is a much
+    worse trade than a cookie that outlives its row for a few days.
+  - **The foreign key stays enforced.** The obvious cheaper fix — drop the constraint, or ignore the
+    error — is wrong: the constraint is correct, and it is the only thing that noticed. The session
+    layer was the thing that had gone quiet. A test asserts the constraint still fires, so nobody
+    later "fixes" this by removing it.
+- **Consequences:** switching databases, restoring a dump, or deleting a user by hand degrades to
+  a sign-in prompt rather than a wall of SQL. The test covers the database half directly, because
+  faking a Better Auth session in Redis is not what broke — the divergence between a valid session and a
+  missing row is, and that is the part worth pinning.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs
