@@ -1,9 +1,9 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNotNull } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
 import { DEFAULT_SEED_PROFILE, type SeedProfileId } from "@/config/seed-profiles";
 import { db } from "@/server/db";
-import { users } from "@/server/db/schema";
+import { cards, focus_sessions, users } from "@/server/db/schema";
 import {
   createBoard,
   createCard,
@@ -277,6 +277,11 @@ const FREELANCER_HABITS = [
 ];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+
+/** Midnight UTC of the day containing `at`. The seed only needs day boundaries, not a timezone. */
+const startOfDay = (at: Date): Date =>
+  new Date(Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate()));
 
 const recentDays = (count: number): string[] =>
   Array.from({ length: count }, (_, index) =>
@@ -311,6 +316,10 @@ export interface SeedSummary {
   skillsAdded: number;
   questions: number;
   stories: number;
+  /** Focus blocks written, so the dashboard has a month of rhythm to draw. */
+  focusSessions: number;
+  /** Completed cards whose timestamp was moved into the past. */
+  backdatedCompletions: number;
 }
 
 const emptySummary = (profile: SeedProfileId): SeedSummary => ({
@@ -335,6 +344,8 @@ const emptySummary = (profile: SeedProfileId): SeedSummary => ({
   skillsAdded: 0,
   questions: 0,
   stories: 0,
+  focusSessions: 0,
+  backdatedCompletions: 0,
 });
 
 async function addHabits(
@@ -362,6 +373,38 @@ async function addHabits(
   }
 }
 
+/**
+ * A month of already-finished work.
+ *
+ * The board's own tasks carry two completions, which is right for the *board* — a board demo wants
+ * actionable work in Today and Upcoming, not a Done column swallowing the view. But two completion
+ * timestamps cannot demonstrate a completions-over-time chart, and that trend is the thing a task
+ * app is actually selling. So the history lives here instead: fifteen finished items that all land
+ * in Done, which is also what a genuinely used board looks like at the bottom of the column.
+ */
+const HISTORICAL_TASKS: SeedTask[] = [
+  { title: "Ship the billing webhook retry", column: "Done", complete: true, priority: "p1" },
+  { title: "Fix the flaky board drag test", column: "Done", complete: true, priority: "p1" },
+  {
+    title: "Migrate auth to the new session store",
+    column: "Done",
+    complete: true,
+    priority: "p0",
+  },
+  { title: "Add rate limiting to the REST API", column: "Done", complete: true, priority: "p1" },
+  { title: "Write the onboarding email sequence", column: "Done", complete: true, priority: "p2" },
+  { title: "Cut the p95 on the dashboard query", column: "Done", complete: true, priority: "p1" },
+  { title: "Replace the seed with real fixtures", column: "Done", complete: true, priority: "p2" },
+  { title: "Add keyboard help overlay", column: "Done", complete: true, priority: "p2" },
+  { title: "Audit the API key scopes", column: "Done", complete: true, priority: "p1" },
+  { title: "Fix the timezone drift on due dates", column: "Done", complete: true, priority: "p0" },
+  { title: "Document the release process", column: "Done", complete: true, priority: "p3" },
+  { title: "Drop the unused card fields", column: "Done", complete: true, priority: "p3" },
+  { title: "Add the habit streak calculation", column: "Done", complete: true, priority: "p1" },
+  { title: "Cache the dashboard widgets", column: "Done", complete: true, priority: "p2" },
+  { title: "Fix the note search ranking", column: "Done", complete: true, priority: "p1" },
+];
+
 /** Cards spread across the tasks board with real detail; `Done` cards are moved so the service
  *  timestamps them. */
 async function addDeveloperTasks(userId: string, summary: SeedSummary): Promise<void> {
@@ -371,7 +414,7 @@ async function addDeveloperTasks(userId: string, summary: SeedSummary): Promise<
   const inbox = byName.get("Inbox") ?? payload.columns[0]?.id;
   const done = byName.get("Done");
 
-  for (const task of DEVELOPER_TASKS) {
+  for (const task of [...DEVELOPER_TASKS, ...HISTORICAL_TASKS]) {
     const target = task.complete ? inbox : byName.get(task.column);
     const columnId = target ?? inbox;
     if (!columnId) continue;
@@ -856,6 +899,10 @@ export async function seedUser(
 
   if (profile === "developer") {
     await addDeveloperTasks(userId, summary);
+    // After the tasks, because a focus block points at a card; before the rest, so the charts
+    // this exists for are populated by the time anything reads them.
+    await backdateCompletions(userId, summary);
+    await addFocusHistory(userId, summary);
 
     const growth = await importSamplePortfolio(userId);
     summary.projectsAdded = growth.projectsAdded;
@@ -980,6 +1027,98 @@ export async function ensureDemoUser(): Promise<string> {
 }
 
 /** Reset the demo by removing its account (cascade) and rebuilding it. */
+/**
+ * A month of focus sessions, because the dashboard's productivity variant charts are drawn from
+ * `focus_sessions` and the seed wrote none: every focus chart rendered empty and `focusTotals`
+ * reported a hard zero. The seed's stated goal is a workspace that looks *used* (its own header),
+ * and a person who has never run a timer is not that.
+ *
+ * Written straight to the table rather than through `startSession`/`stopSession`, because those
+ * stamp `new Date()` on both ends and the whole point here is a *history* — thirty days of sessions
+ * that happened in the past. Weekdays only, with a plausible length and a mostly-kept promise, so
+ * the completion rate is a number a person could recognise as theirs.
+ */
+async function addFocusHistory(userId: string, summary: SeedSummary): Promise<void> {
+  // `existing`, not `cards`: the table is imported under that name.
+  const existing = await db
+    .select({ id: cards.id })
+    .from(cards)
+    .where(eq(cards.user_id, userId))
+    .limit(40);
+  const cardIds = existing.map((card) => card.id);
+
+  const rows: Array<typeof focus_sessions.$inferInsert> = [];
+  const today = startOfDay(new Date());
+
+  for (let daysAgo = 30; daysAgo >= 1; daysAgo -= 1) {
+    const day = new Date(today.getTime() - daysAgo * DAY_MS);
+    // A weekday-shaped week: no sessions at the weekend, which is what makes the "rhythm" chart
+    // look like a working week rather than seven identical bars.
+    const weekday = day.getUTCDay();
+    if (weekday === 0 || weekday === 6) continue;
+
+    // One to four blocks a day, so the daily bars vary instead of being flat.
+    const blocks = 1 + ((daysAgo * 7) % 4);
+    for (let block = 0; block < blocks; block += 1) {
+      // Start mid-morning, stepping through the day, and never before 08:00 local-ish.
+      const start = new Date(day.getTime() + (9 + block * 2) * HOUR_MS);
+      const planned = [25, 50, 50, 90][(daysAgo + block) % 4]!;
+      // Most blocks run to plan; some do not, or the completion rate reads as a lie.
+      const ran = (daysAgo + block) % 5 === 0 ? Math.round(planned * 0.5) : planned;
+      rows.push({
+        id: seedId(),
+        user_id: userId,
+        card_id: cardIds[(daysAgo * 3 + block) % Math.max(1, cardIds.length)] ?? null,
+        started_at: start,
+        ended_at: new Date(start.getTime() + ran * 60_000),
+        planned_min: planned,
+        kind: block === 0 ? "deep" : "focus",
+        completed: ran >= planned,
+      });
+    }
+  }
+
+  if (rows.length === 0) return;
+  // Chunked: a single 60-row insert is fine, but batching keeps the statement small and the
+  // failure mode obvious if the shape ever changes.
+  for (let i = 0; i < rows.length; i += 30) {
+    await db.insert(focus_sessions).values(rows.slice(i, i + 30));
+  }
+  summary.focusSessions += rows.length;
+}
+
+/**
+ * Spread the completion timestamps over the month.
+ *
+ * `moveCard` stamps `completed_at` when a card lands in Done, and it stamps *now* — correctly, since
+ * that is what the UI does. The consequence for a seeded board is that every completed card carries
+ * the same instant, so a completions-over-time chart is one spike on today and no trend at all.
+ * Thirty days of finishing work is the single most-requested thing a demo of a task app has to show.
+ *
+ * Deliberately a post-pass over the rows the service already wrote, not a change to `moveCard`:
+ * the service is right, and a seed-only adjustment must never be able to reach real usage.
+ */
+async function backdateCompletions(userId: string, summary: SeedSummary): Promise<void> {
+  const done = await db
+    .select({ id: cards.id, createdAt: cards.created_at })
+    .from(cards)
+    .where(and(eq(cards.user_id, userId), isNotNull(cards.completed_at)));
+
+  if (done.length === 0) return;
+  const today = startOfDay(new Date());
+
+  for (const [index, card] of done.entries()) {
+    // Spread evenly across the window rather than one day per card, so the trend chart has points
+    // on most days instead of one dense cluster. Ends yesterday: work that completed "today" would
+    // put a completion in the current, still-unfinished day. The offset keeps them off midnight, so
+    // a day-key grouping by timezone cannot split one day's work across two.
+    const daysAgo = 1 + Math.round((index * 29) / Math.max(1, done.length));
+    const at = new Date(today.getTime() - daysAgo * DAY_MS + 16 * HOUR_MS);
+    await db.update(cards).set({ completed_at: at, updated_at: at }).where(eq(cards.id, card.id));
+  }
+  summary.backdatedCompletions += done.length;
+}
+
 export async function seedDemo(options: { reset?: boolean } = {}): Promise<SeedSummary> {
   if (options.reset) {
     await db.delete(users).where(eq(users.email, DEMO_USER.email));
