@@ -3002,12 +3002,29 @@ message out of all of them: `Pages.Activity.sender_opencode_code`, whose value i
     one edit, and without it every drag wrote twice.
   - `listJobStages` takes a `boardId` rather than looking the board up itself, because "the stages"
     is only meaningful relative to one board.
+  - **The slider is a 24px input with a 6px line painted inside it**, and it lives in `globals.css`
+    as `.tui-slider` rather than as ten Tailwind arbitrary variants. Two defects, one fix. Styled as
+    utility classes it was `h-1` — a **4px pointer target**, against this project's own 24px floor
+    (spec §4.4), and invisible besides, because `bg-muted` on the midnight panel is `#272937` on
+    `#1a1b26`. The track and thumb are UA pseudo-elements whose `-webkit-`/`-moz-` pairs have to be
+    kept in step by hand, which is not a job for a class string. `--tui-slider-pct` paints the filled
+    portion from one inline custom property, so the bar reads as a value instead of a dim line with a
+    dot on it somewhere.
+
   - Salary and apply-by remain read-only in the table. Each is two or three stored fields
     (`salary_min`, `salary_max`, `currency`) and a range needs a different control from a single
     value; they are edited on the job's own page.
   - Eleven columns do not fit a laptop, so the table scrolls. That is the reference tracker's own
     behaviour and the shadow makes it honest, but a future pass could collapse the set-once columns
     behind a column picker if it becomes tiresome.
+  - **The target-size guard now measures `/career/jobs?view=database`, and seeds rows first.** It
+    listed `/career/jobs`, so it reported the board clean while the view holding every inline editor
+    went unmeasured — and these specs run against a _fresh empty account_, so adding the URL alone
+    would have measured an empty state and still found nothing. Widening the guard immediately found
+    eleven more violations: the filter chips and the view tabs were 19–21px and the position links
+    16px, all because the table declared its own chip class instead of using `chipState` from the
+    shared vocabulary. The one thing that class carries is `min-h-6`. Re-implementing a control the
+    repo already had is how a size floor gets lost.
 
 ---
 

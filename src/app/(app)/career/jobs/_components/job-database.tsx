@@ -3,6 +3,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Table } from "@/components/ui/table";
 import { EmptyState } from "@/components/tui/empty-state";
+import { chipState } from "@/components/tui/controls";
 import { listJobApplications, listJobStages, type JobRow } from "@/server/career/applications";
 import {
   InlineCoverLetter,
@@ -162,7 +163,7 @@ export async function JobDatabase({
                 <td className="max-w-48 min-w-44">
                   <Link
                     href={`/career/jobs/${row.cardId}`}
-                    className="block truncate hover:underline"
+                    className="flex min-h-6 items-center truncate hover:underline"
                     title={row.position}
                   >
                     {row.position}
@@ -332,6 +333,15 @@ function comparator(sort: string | undefined) {
   };
 }
 
+/**
+ * A filter chip.
+ *
+ * `chipState` rather than a class string written here. The first version of this file declared its
+ * own `px-1.5 py-0.5 text-[10px]` chip and re-implemented the active/inactive colours, which is two
+ * kinds of wrong at once: it bypassed the shared vocabulary (ADR-118) *and* it came out 19px tall,
+ * under the 24px floor, because the one thing the shared class carries is `min-h-6`. Ten chips at
+ * 19px is ten targets the size guard would reject.
+ */
 function Chip({
   href,
   active,
@@ -342,15 +352,7 @@ function Chip({
   children: React.ReactNode;
 }) {
   return (
-    <Link
-      href={href}
-      aria-current={active ? "true" : undefined}
-      className={
-        active
-          ? "rounded-[var(--radius)] bg-primary px-1.5 py-0.5 text-primary-foreground"
-          : "rounded-[var(--radius)] border border-border px-1.5 py-0.5 text-muted-foreground hover:text-foreground"
-      }
-    >
+    <Link href={href} aria-current={active ? "true" : undefined} className={chipState(active)}>
       {children}
     </Link>
   );

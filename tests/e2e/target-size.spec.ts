@@ -19,22 +19,45 @@ import { createVerifiedUser, signIn, uniqueEmail } from "./helpers";
  *   sentence), which is why this looks at standalone controls in a control row.
  * - **Zero-size** elements, which are `hidden` and cannot be targeted at all.
  */
-const PAGES = [
-  "/dashboard",
-  "/tasks",
-  "/inbox",
-  "/notes",
-  "/calendar",
-  "/habits",
-  "/goals",
-  "/career/jobs",
-  "/focus",
-  "/finance",
+/**
+ * Pages to measure, and what has to exist on them first.
+ *
+ * `seed` exists because these specs run against a *fresh, empty* account, and a view whose controls
+ * only render when there is data renders nothing at all. The applications table is the case in
+ * point: `/career/jobs` was in this list, the database view was not, and the database view is where
+ * every inline editor lives — including a progress slider styled at `h-1`, a 4px pointer target that
+ * passed this guard for the whole of ADR-127 because the guard never went looking for it. The hole
+ * was found by reading a screenshot, not by the test.
+ */
+interface GuardedPage {
+  path: string;
+  /** Rows to create through the UI before measuring, for views that render empty without them. */
+  seed?: Array<[string, string]>;
+}
+
+const PAGES: GuardedPage[] = [
+  { path: "/dashboard" },
+  { path: "/tasks" },
+  { path: "/inbox" },
+  { path: "/notes" },
+  { path: "/calendar" },
+  { path: "/habits" },
+  { path: "/goals" },
+  { path: "/career/jobs" },
+  {
+    path: "/career/jobs?view=database",
+    seed: [
+      ["Senior Data Engineer", "Northwind Analytics"],
+      ["Platform Engineer", "Harbour Labs"],
+    ],
+  },
+  { path: "/focus" },
+  { path: "/finance" },
   // Settings is where the raw 13x13 checkboxes lived, so a guard that skipped it would have
   // reported "clean" while the defect was still on screen. The hole was found by grepping for
   // `type="checkbox"` after the first run passed, not by the test.
-  "/settings/integrations",
-  "/settings/ai",
+  { path: "/settings/integrations" },
+  { path: "/settings/ai" },
 ];
 
 /** 24 CSS px: WCAG 2.2 SC 2.5.8, level AA. */
@@ -43,12 +66,21 @@ const WCAG_MIN = 24;
 test.describe("target size (wcag 2.2 sc 2.5.8)", () => {
   test.setTimeout(180_000);
 
-  for (const path of PAGES) {
+  for (const { path, seed } of PAGES) {
     test(`${path}: interactive controls are at least ${WCAG_MIN}px tall`, async ({ page }) => {
       await page.setViewportSize({ width: 1280, height: 900 });
       const email = uniqueEmail(`target-${path.replace(/\W+/gu, "")}`);
       await createVerifiedUser(page, email);
       await signIn(page, email);
+
+      for (const [title, company] of seed ?? []) {
+        await page.goto("/career/jobs");
+        await page.getByLabel("job title").fill(title);
+        await page.getByLabel("company").fill(company);
+        await page.getByRole("button", { name: "add job" }).click();
+        await page.waitForTimeout(1200);
+      }
+
       await page.goto(path);
       await page.waitForLoadState("networkidle").catch(() => {});
 

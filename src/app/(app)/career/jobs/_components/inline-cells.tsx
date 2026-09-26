@@ -205,25 +205,17 @@ export function InlineProgress({
         value={current}
         disabled={busy}
         aria-label={t("dbProgress")}
+        // The filled portion of the track is pure CSS driven by this one custom property, so the bar
+        // reads as a value at a glance instead of a uniform dim line with a dot somewhere on it.
+        style={{ "--tui-slider-pct": `${current}%` } as React.CSSProperties}
         onChange={(event) => setValue(Number(event.target.value))}
         onPointerUp={() => void commit(current)}
         onKeyUp={() => void commit(current)}
         onBlur={() => void commit(current)}
-        // The track is drawn thin and muted with a `primary` thumb, because the default range input
-        // on this theme is a thick grey slab that sat directly under the ASCII meter and the two
-        // read as one mark rather than a readout and a control. Both pseudo-elements are styled
-        // because the track and thumb are UA-drawn and unstyleable with `accent-color` alone.
-        className={cn(
-          "h-1 w-full cursor-pointer appearance-none rounded-full bg-muted",
-          "[&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none",
-          "[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary",
-          "[&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background",
-          "[&::-moz-range-thumb]:size-3 [&::-moz-range-thumb]:rounded-full",
-          "[&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-primary",
-          "[&::-moz-range-thumb]:bg-primary",
-          "focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring",
-          cellState(busy, error),
-        )}
+        // `.tui-slider` (globals.css) owns the box: a 24px hit area with a 6px track painted inside
+        // it. The thumb and track are UA pseudo-elements, so their styling cannot live in a class
+        // string — see the note there.
+        className={cn("tui-slider", cellState(busy, error))}
       />
       {error ? (
         <span role="alert" className="text-[10px] text-warning">

@@ -472,6 +472,88 @@ html[data-text-weight] :is(h1, h2, h3, h4, h5, h6, strong, b, th) {
  * 14px gradient that has to be noticed across the room. Decorative paint, so it does not run into
  * the axe/`color-mix` caveat that applies to text (ADR-041).
  */
+/**
+ * The progress slider (ADR-127).
+ *
+ * Written here rather than as Tailwind arbitrary variants because the track and thumb are UA-drawn
+ * pseudo-elements: `::-webkit-slider-runnable-track` and `::-moz-range-track` need real rule bodies,
+ * and the `-webkit-`/`-moz-` pairs have to be kept in step by hand. Ten inline variant strings is not
+ * a place to keep two engines in agreement.
+ *
+ * **The input is 24px tall and the line you see is 6px.** Those are different boxes on purpose. The
+ * first version styled the input itself at `h-1`, which made the whole control a 4px pointer target
+ * — a WCAG 2.5.8 failure against this project's own 24px floor (spec §4.4), and invisible besides,
+ * because `bg-muted` on the midnight panel is `#272937` on `#1a1b26`. So the input keeps a 24px hit
+ * area with a transparent background and only the track is painted. A thin line you can actually hit.
+ *
+ * The track is a `muted-foreground` mix rather than `--border`, for the same reason `.scroll-shadow-x`
+ * is: a border token is drawn to sit almost invisibly beside the surface, which is right for a 1px
+ * rule and useless for the one thing in the cell the reader is meant to find. Decorative paint, so
+ * the ADR-041 `color-mix` caveat — which is about text — does not apply.
+ *
+ * `--tui-slider-pct` is set inline by the component, and paints the filled portion. Without it the
+ * track is a uniform dim line and the thumb is a 14px dot on it, which at a glance says "empty"
+ * whether the value is 0 or 70.
+ */
+.tui-slider {
+  --tui-slider-track: color-mix(in srgb, var(--muted-foreground) 26%, transparent);
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 1.5rem;
+  background: transparent;
+  cursor: pointer;
+}
+.tui-slider:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.tui-slider::-webkit-slider-runnable-track {
+  height: 0.375rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--color-primary) 0 var(--tui-slider-pct, 0%),
+    var(--tui-slider-track) var(--tui-slider-pct, 0%) 100%
+  );
+}
+.tui-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  /* Centres a 14px thumb on a 6px track: (6 - 14) / 2. */
+  margin-top: -0.25rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  /* A ring in the surface colour, so the thumb stays legible on top of its own fill. */
+  border: 2px solid var(--color-background);
+}
+.tui-slider::-moz-range-track {
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--tui-slider-track);
+}
+.tui-slider::-moz-range-progress {
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+.tui-slider::-moz-range-thumb {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  border: 2px solid var(--color-background);
+}
+/* The ring is never removed: spec §4.1 requires a visible focus ring for keyboard users. */
+.tui-slider:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+  border-radius: 999px;
+}
+
 .scroll-shadow-x {
   --edge: color-mix(in srgb, var(--muted-foreground) 38%, transparent);
   background-image:

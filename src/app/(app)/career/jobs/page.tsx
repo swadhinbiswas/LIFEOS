@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
+import { chipState } from "@/components/tui/controls";
 import { Panel } from "@/components/tui/panel";
 import { PageHeader } from "@/components/tui/page-header";
 import { getServerSession } from "@/server/auth/session";
@@ -109,15 +110,7 @@ function ViewTab({
   children: React.ReactNode;
 }) {
   return (
-    <Link
-      href={href}
-      aria-current={active ? "page" : undefined}
-      className={
-        active
-          ? "rounded-[var(--radius)] bg-primary px-1.5 py-0.5 text-primary-foreground"
-          : "rounded-[var(--radius)] border border-border px-1.5 py-0.5 text-muted-foreground hover:text-foreground"
-      }
-    >
+    <Link href={href} aria-current={active ? "page" : undefined} className={chipState(active)}>
       {children}
     </Link>
   );
