@@ -2875,6 +2875,37 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   sweep loses `/demo` and the acceptance run no longer seeds, which also makes it faster and
   means no test can pass by depending on invented data.
 
+## ADR-124 — Code snippets do not live in the message catalogue
+
+- **Status:** accepted (2026-09-26)
+- **Context:** `/settings/activity` failed to render with `INVALID_MESSAGE: MALFORMED_ARGUMENT`,
+  pointing at `t(\`sender_${sender}_code\`)`. The message existed, so it was not a missing key.
+Parsing the whole catalogue with the parser next-intl itself uses found **exactly one** malformed
+message out of all of them: `Pages.Activity.sender_opencode_code`, whose value is the OpenCode
+  plugin's config, i.e. JSON.
+
+  A message is an ICU MessageFormat template, so a `{` opens a placeholder. JSON is nothing but
+  braces. The parser walked into `\n  "$schema": "https://opencode.ai/config.json"` and
+  rejected the lot as an argument name.
+
+- **Decision:**
+  - **The three install snippets move out of the catalogue into a typed `SENDERS` const** beside the
+    component. A shell command and a JSON document are not translatable prose, and this is the
+    second bug of that shape waiting to happen.
+  - **Quoting the braces was rejected as the fix, on evidence.** `{'{'}` is the usual escape, and
+    it still fails here: the parser keeps scanning the quoted region for a closing brace and the
+    JSON's own `}` ends it early. Escaping fights the format; removing the code from it does not.
+  - **A repository-wide test parses every message in every locale with the parser next-intl uses.**
+    The existing `messages.test.ts` checked parity, placeholders and emptiness — all things a _valid_
+    message can violate. Nothing checked validity, so a malformed template was invisible until a
+    browser hit it. Verified by re-introducing the snippet: the guard fails with the same
+    `MALFORMED_ARGUMENT`.
+  - The parser is resolved from the installed copy rather than added as a direct dependency: this
+    asserts what _this_ version accepts, so a new version is a new question and not a silent change.
+- **Consequences:** the failure mode that started this was a 500 on a settings page from a string
+  nobody would think to check. Now the whole catalogue is parsed on every test run, so any future
+  snippet, JSON blob or template literal pasted into a message fails the build instead of a page.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

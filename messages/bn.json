@@ -1384,13 +1384,10 @@
       "senders": "অ্যাক্টিভিটি আসে কোথা থেকে",
       "sender_cli_name": "ওয়াকাটাইম ক্লাই",
       "sender_cli_hint": "ক্লাই ইনস্টল করা যেকোনো এডিটর বা শেল থেকে হার্টবিট পাঠায়, হেডলেস কাজও।",
-      "sender_cli_code": "pipx install wakatime\nwakatime --api-key waka_…",
       "sender_opencode_name": "ওপেনকোড প্লাগইন",
       "sender_opencode_hint": "ওয়াকাটাইমের নিজস্ব ওপেনকোড প্লাগইন, তাই এজেন্ট সেশনও কোডিং সময় ও এআই লাইন হিসেবে গোনা হয়।",
-      "sender_opencode_code": "{\n  \"$schema\": \"https://opencode.ai/config.json\",\n  \"plugin\": [\"@wakatime/opencode-wakatime\"]\n}\n\n# এবং ~/.wakatime.cfg\n[settings]\napi_key = waka_…",
       "sender_phone_name": "ফোন",
       "sender_phone_hint": "ওয়াকাটাইমের নিজস্ব মোবাইল অ্যাপ একই অ্যাকাউন্ট থেকে রিপোর্ট করে, তাই ফোনের সেশনও এখানে আসে — বাড়তি সেটআপ লাগে না।",
-      "sender_phone_code": "ওয়াকাটাইম অ্যাপ ইনস্টল করো\n→ একই অ্যাকাউন্টে সাইন ইন করো",
       "privacy": "যা রাখা হয়",
       "privacyHint": "প্রতিদিন একটি সারি: মোট সেকেন্ড, এআই ও মানুষের লাইন সংখ্যা, আনুমানিক এআই খরচ, এবং সেরা ভাষা, এডিটর ও প্রজেক্ট। কখনো তুমি যে ফাইল এডিট করেছ, সেই কোড বা কী-স্ট্রোক নয়।"
     }

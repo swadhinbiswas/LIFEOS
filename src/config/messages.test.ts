@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
 
+import { createRequire } from "node:module";
+
 import { describe, expect, it } from "vitest";
 
 /**
@@ -10,6 +12,11 @@ import { describe, expect, it } from "vitest";
  */
 
 const locales = ["en", "bn"] as const;
+
+// The exact parser next-intl uses. Resolved from the installed copy rather than added as a direct
+// dependency: this asserts what *this* version accepts, so a different version would be a different
+// test, and adding a package to observe someone else's would be the wrong fix.
+const require = createRequire(import.meta.url);
 
 const read = (locale: (typeof locales)[number]): unknown =>
   JSON.parse(readFileSync(`messages/${locale}.json`, "utf8")) as unknown;
@@ -73,6 +80,32 @@ describe("message catalogues", () => {
         .filter(([, text]) => text.trim() === "")
         .map(([path]) => path);
       expect({ locale, blank }).toEqual({ locale, blank: [] });
+    }
+  });
+  it("is valid ICU MessageFormat in every locale", () => {
+    // The bug this exists for: a message is an ICU MessageFormat template, so a `{` in it opens a
+    // placeholder. The OpenCode plugin's install snippet is JSON — nothing but braces — and it
+    // shipped as a message, so `/settings/activity` failed to render with `MALFORMED_ARGUMENT` from
+    // the parser. A missing key fails loudly and nobody noticed; a malformed one fails at runtime on
+    // a real page, which is why it took a browser to find.
+    //
+    // Every message is parsed, not just the ones with braces: that is the check next-intl performs,
+    // so it is the check that has to pass. Code snippets do not belong in a message catalogue at
+    // all (ADR-124) — quoting the braces does not make the parser accept them.
+    const { parse } = require("@formatjs/icu-messageformat-parser") as {
+      parse: (message: string) => unknown;
+    };
+
+    for (const locale of locales) {
+      const malformed: Array<{ path: string; error: string }> = [];
+      for (const [path, text] of flatten(read(locale))) {
+        try {
+          parse(text);
+        } catch (error) {
+          malformed.push({ path, error: error instanceof Error ? error.message : String(error) });
+        }
+      }
+      expect({ locale, malformed }).toEqual({ locale, malformed: [] });
     }
   });
 });

@@ -1384,13 +1384,10 @@
       "senders": "where the activity comes from",
       "sender_cli_name": "wakatime cli",
       "sender_cli_hint": "sends a heartbeat from any editor or shell that has the cli installed, including headless work.",
-      "sender_cli_code": "pipx install wakatime\nwakatime --api-key waka_…",
       "sender_opencode_name": "opencode plugin",
       "sender_opencode_hint": "wakatime's official opencode plugin, so agent sessions count as coding time and ai lines.",
-      "sender_opencode_code": "{\n  \"$schema\": \"https://opencode.ai/config.json\",\n  \"plugin\": [\"@wakatime/opencode-wakatime\"]\n}\n\n# and ~/.wakatime.cfg\n[settings]\napi_key = waka_…",
       "sender_phone_name": "phone",
       "sender_phone_hint": "wakatime's own mobile app reports from the same account, so phone sessions land here with no extra setup.",
-      "sender_phone_code": "install the wakatime app\n→ sign in with the same account",
       "privacy": "what is stored",
       "privacyHint": "one row per day: total seconds, ai and human line counts, the estimated ai cost, and the top languages, editors and projects. never the files you edited, the code itself, or the keystrokes."
     }
