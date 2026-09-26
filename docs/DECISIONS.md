@@ -2750,6 +2750,65 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   which is a design decision about how the whole thing should read and is deliberately not
   changed here on the strength of a passing test.
 
+## ADR-121 — Turso is configured as two secrets, and migrations are applied by the migrator, not the CLI
+
+- **Status:** accepted (2026-09-26)
+- **Context:** pointing the app at a real Turso database. The runtime was already prepared for it
+  (ADR-020 uses `@libsql/client` + `drizzle-orm/libsql` throughout, and the local-only pragmas are
+  swallowed on failure so a remote host is not disturbed), so the interesting part was everything
+  _around_ the driver. Two things did not work, and both were found by running the command rather
+  than reading the code.
+
+  First, `pnpm db:migrate` is `drizzle-kit migrate`, and against Turso it **exits 1 and prints no
+  error at all** — the progress spinner overwrites whatever it emitted. The same command against a local file
+  database succeeds, so it is not a broken install. The database was reachable and authenticated
+  the whole time (`select 1` returned, auth via the token succeeded), so the failure was drizzle-kit's
+  own reporting, not connectivity. A migration step for the one database that needs migrating, which
+  cannot say why it failed, is not usable — especially since `scripts/dev-migrate.mjs` deliberately skips remote
+  URLs, making this command the _only_ sanctioned way to migrate a shared database.
+
+  Second, and more dangerous: `src/env.ts` _rejects_ `TURSO_AUTH_TOKEN` alongside a `file:` URL, and
+  `tests/e2e/global-setup.ts` sets exactly that URL while leaving the token in the environment. Once
+  a developer's `.env` pointed at Turso, the acceptance suite would fail to boot and the error would
+  name a variable most contributors have never heard of. The same function already clears the Upstash
+  keys for precisely this reason, so the fix is the established pattern rather than a new idea.
+
+- **Decision:**
+  - **The token is a separate variable from the URL**, which is what `env.ts` and
+    `src/server/db/index.ts` already assumed. The host is not sensitive and the token is, so the
+    split means `DATABASE_URL` can be printed, diffed and put in a runbook — and `pnpm db:migrate` prints
+    the host it is about to write to. `drizzle.config.ts` gained the matching `authToken` so
+    drizzle-kit would have worked too; it turned out not to be the deciding factor, but the config
+    was wrong before this and would have failed anyone using the split form with a different tool.
+  - **`db:migrate` now runs `drizzle-orm/libsql/migrator` directly** (`src/server/db/migrate-cli.ts`),
+    which is the migrator drizzle-kit itself calls. Verified to apply the identical `./drizzle`
+    journal to both a local file and the remote database, with the real error message on failure.
+    `db:generate` stays on drizzle-kit: producing a migration is local authoring that never touches a
+    database, and it works.
+  - **No test harness can reach a remote database**, and it took three attempts to get right, which
+    is worth recording because the first two were confidently wrong. Both `.env` loaders
+    (`process.loadEnvFile()` in `src/env.ts`, and Next's own loader for the web server) refill any
+    variable that is not already set, so `delete` is undone before validation runs; an empty string
+    is the only value that survives, and `configuredEnv()` in `env.ts` then treats empty as "not
+    configured". Three separate call sites need it, and they are now built from one value:
+    `e2eEnv()` for the web server, the child env for the migrate and seed steps in
+    `global-setup.ts`, and the vitest `globalSetup` for unit tests. One of the three was missed
+    twice, because a `String.replace` whose anchor did not match printed a success message anyway.
+  - **A `process.env` assignment in a vitest `setupFiles` entry does not reach the test module.**
+    Verified by setting a probe variable in `vitest.setup.ts` and reading it from a test, in both
+    the default `jsdom` environment and the `node` environment several suites opt into:
+    `undefined` in both. Vitest hands each test file its own environment object. So the two
+    `UPSTASH_REDIS_REST_URL`/`_TOKEN` assignments that file had carried as a hermeticity guarantee
+    had not been doing anything, and a developer's real Upstash database was reachable from
+    `pnpm test` despite the comment saying otherwise. Both now live in a new `globalSetup` entry,
+    which runs in the parent process before any worker forks; a probe confirms a test worker now
+    sees `""` for all three keys.
+- **Consequences:** the remote database is migrated and reports zero drift, so `/api/health` answers
+  200 with `database: remote`. Applying a migration to a shared database is now a command whose
+  output names its target and explains its failures, which is the property that was missing. Nothing
+  about local development changes: a `file:` URL with no token is the same hermetic setup as before,
+  and the remote path is unreachable from tests by construction rather than by convention.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

@@ -20,6 +20,18 @@ export function e2eEnv(): Record<string, string> {
   // reads or writes a real Upstash database, whatever a developer has in .env.
   env.UPSTASH_REDIS_REST_URL = "";
   env.UPSTASH_REDIS_REST_TOKEN = "";
+  // Same reasoning for Turso, and it is not optional. `src/env.ts` *rejects* TURSO_AUTH_TOKEN
+  // alongside a `file:` URL, and this function sets exactly that URL above. The token reaches the
+  // test server either way — copied from the runner's environment, or loaded from `.env` by
+  // `next start` — so without this line a developer pointing the app at Turso makes the whole
+  // acceptance suite fail to boot, and the error names a variable most contributors have never
+  // heard of. A remote database must be unreachable from a test run.
+  //
+  // Empty string, NOT `delete`, and the distinction is the whole fix. `delete` only removes the key
+  // from the object handed to Playwright; the web server is `pnpm build && next start`, and Next
+  // loads `.env` itself, so the token is put straight back and validation fails again. An empty
+  // string survives that load, and `configuredEnv()` in `env.ts` treats empty as "not configured".
+  env.TURSO_AUTH_TOKEN = "";
   // ADR-039: raise the auth rate-limit ceiling — the suite signs in several times within one
   // window from a single localhost IP, which Better Auth's per-IP defaults treat as abuse.
   env.AUTH_RATE_LIMIT_MAX = "100";
@@ -45,16 +57,17 @@ export default function globalSetup(): void {
   rmSync(outbox, { recursive: true, force: true });
   mkdirSync(outbox, { recursive: true });
 
+  // Every child process that ends up importing `src/env` needs the same pair: a local DATABASE_URL
+  // and no Turso token. `src/env.ts` rejects that combination outright, and its loader refills the
+  // token from `.env` for any variable that is not already set — so the token has to be blanked
+  // here as well, not just in the web server's environment. One helper so the three call sites
+  // cannot drift apart again, which is how this was missed twice.
+  const childEnv = { ...process.env, DATABASE_URL: E2E_DB_URL, TURSO_AUTH_TOKEN: "" };
+
   // drizzle.config.ts resolves DATABASE_URL through src/env.ts, whose loader never
   // overrides an already-set variable — so this migrates the E2E database, not the dev one.
-  execSync("pnpm exec drizzle-kit migrate", {
-    env: { ...process.env, DATABASE_URL: E2E_DB_URL },
-    stdio: "inherit",
-  });
+  execSync("pnpm exec drizzle-kit migrate", { env: childEnv, stdio: "inherit" });
 
   // Seed the public demo workspace so /demo shows real sample data (spec §12, ADR-084).
-  execSync("pnpm db:seed -- --reset", {
-    env: { ...process.env, DATABASE_URL: E2E_DB_URL },
-    stdio: "inherit",
-  });
+  execSync("pnpm db:seed -- --reset", { env: childEnv, stdio: "inherit" });
 }

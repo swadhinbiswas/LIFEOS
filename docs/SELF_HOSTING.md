@@ -31,6 +31,24 @@ Only two variables are required:
 | `DATABASE_URL`       | `file:.data/lifeos.db` or `libsql://…` |
 | `BETTER_AUTH_SECRET` | ≥16 chars; `openssl rand -base64 32`   |
 
+### Turso
+
+Two variables, not one. Keep the token out of the URL:
+
+```bash
+DATABASE_URL=libsql://<your-database>.turso.io
+TURSO_AUTH_TOKEN=<the token from `turso db tokens issue`>
+```
+
+The host is not a secret and the token is, so splitting them means `DATABASE_URL` can be printed,
+diffed and pasted into a runbook, and `env.ts` can reject the one genuinely broken combination
+(`TURSO_AUTH_TOKEN` next to a `file:` URL). A `?authToken=` embedded in the URL also works, but
+then the URL itself is a credential.
+
+Then apply the schema. `pnpm db:migrate` prints the host it is about to write to before it writes,
+and is the sanctioned way to migrate a shared database — `scripts/dev-migrate.mjs` deliberately
+skips remote URLs so a developer's `pnpm dev` can never migrate production by accident (ADR-121).
+
 Everything else is optional and documented in `.env.example`, grouped by the ADR that introduced it:
 `TURSO_AUTH_TOKEN`, `BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL`, `TRUSTED_ORIGINS`, Upstash pair,
 Resend pair + `EMAIL_FROM`, OAuth pairs, `BILLING_ENABLED` + Dodo keys, `CRON_SECRET`, the AI keys
