@@ -2589,6 +2589,45 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   source-level check and its CSS by an e2e that reads the live stylesheet. The rendered _shape_
   is covered deterministically in jsdom, where it belongs.
 
+## ADR-116 — The review wizard gets real TUI controls, and the AI pre-fill the spec asks for
+
+- **Status:** accepted (2026-09-26)
+- **Context:** `/reviews` looked like a form someone had filled in and abandoned. Three native
+  checkboxes, three unstyled textareas from a hand-rolled class constant, a native `<select>`, a
+  primary button that fought the dark palette, and a heading repeated from the shell header
+  thirty pixels above itself. Meanwhile spec §6.2 asks for a _wizard_ — guided steps, "pre-filled by AI on
+  request" — and the only implementation was `completeReview`, a form post. `run_weekly_review`
+  wrote a note; it never drafted anything.
+- **Decision:**
+  - **`TuiCheckbox` in this app's own vocabulary** (`src/components/tui/`), drawing `▣`/`☐` from
+    the §4.1 glyph set. This is a TUI primitive, not a substitute for a shadcn one: the shadcn
+    checkbox is a Radix rounded square, which is a different design language, and §4.1 asks for
+    small Unicode glyphs for state. It is a real `role="checkbox"` button with `aria-checked`, so
+    it is reachable by keyboard and announced correctly, and the target clears the 28 px floor
+    that spec §4.4 sets for controls.
+  - **`TuiSelect` keeps the native `<select>`.** A custom listbox is prettier and is worse: it
+    re-implements type-ahead, the mobile wheel, and the platform's own announcement, for no gain
+    in a two-option cadence picker. It is restyled to the tokens and given a `▾` affordance,
+    which is where the visual problem actually was.
+  - **The textareas use the shadcn `Textarea`** the repo already ships. The wizard had its own
+    `field` constant — a second place for the same styling, which is how it drifted.
+  - **The duplicated page title is fixed in the shell, not the page.** The header already names
+    the current route (spec §3.3) and every page renders the same words as its `h1`. Demoting the
+    header's label to a location indicator fixes all 47 routes at once; removing either copy would
+    cost the mobile drawer its only statement of where you are, since the sidebar is hidden below
+    the breakpoint (ADR-103).
+  - **AI pre-fill, user-initiated only.** A "draft with AI" button calls the model through the
+    existing `resolveModel`/`generateText` plumbing, returns the three answers as a _draft_ the
+    user edits, and never saves anything itself. A review is a claim about someone's own week;
+    a model may suggest the words, but the review that gets written is the one they kept — the
+    same reason the morning brief is opt-in and never emailed (ADR-075).
+- **Consequences:** the checklist stops being three anonymous booleans and becomes the spec's
+  actual steps. The AI path is bounded by the same approval posture as the rest of the copilot:
+  no provider key means the button is absent, not broken, and a scripted model stands in for CI.
+  A review that existed as three text boxes and a cadence picker had no way to be _pre-filled_,
+  because there was nothing to pre-fill — that is the real reason this was a wizard in the spec and a
+  form in the app.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

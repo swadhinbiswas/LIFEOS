@@ -281,7 +281,12 @@ export function AppShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-border px-3 py-2">
-          <p className="min-w-0 flex-1 truncate font-mono text-xs font-semibold tracking-wider uppercase">
+          {/* The location indicator (spec §3.3), deliberately *quieter* than the page's own `h1`.
+              These are usually the same two words, and at equal weight they read as a title typed
+              twice — which is what every route looked like. Demoting this to the muted foreground
+              marks it as chrome while keeping it legible, because below the breakpoint the sidebar
+              is a drawer and this is the only statement of where you are (ADR-103). */}
+          <p className="nav-label min-w-0 flex-1 truncate font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
             {pageTitle}
           </p>
           <button
