@@ -2906,6 +2906,33 @@ message out of all of them: `Pages.Activity.sender_opencode_code`, whose value i
   nobody would think to check. Now the whole catalogue is parsed on every test run, so any future
   snippet, JSON blob or template literal pasted into a message fails the build instead of a page.
 
+## ADR-125 — One read model for applications, because three views were asking three different questions
+
+- **Status:** accepted (2026-09-26)
+- **Context:** the career module grew a tracker with a rich schema (ADR-114 added fit, next action,
+  apply-by, req id, location, work mode, visa status, excitement) but no way to _read_ the set.
+  `getJobMeta` returned display chips per card, `readJob` returned one application, and the funnel
+  counted. Nothing could answer "every application, with its stage and its fit" — which is exactly
+  what a tracker table, a stage analysis and a follow-up queue all need.
+
+  The fields were not the missing part. Mapping the reference Notion database against the schema,
+  15 of its 18 columns already exist: position, stage, salary (min/max/currency), seniority, next
+  action + due, notes, req id, last edited, location, created, fit, job link, apply by, apply email,
+  work mode, visa status, excitement. **Three do not:** `app_id`, `progress` (0-100%), and
+  `cover_letter_needed` as a boolean — the schema has the cover letter _text_ but nothing that says
+  whether one is owed.
+
+- **Decision:**
+  - **`listJobApplications` is the single read model**, one row per application joined to its card
+    and its column, with `fit` derived through `fitBandFor` rather than stored. It is the foundation
+    for the database view, the stage analysis and anything else that needs the set at once.
+  - **The join to `cards` is inner, deliberately.** Every link to a job, the pipeline board and the
+    drag path are keyed on the card id, so a row without one cannot be opened, filtered into a
+    stage, or moved. An outer join would surface rows that silently do nothing.
+  - **Archived applications are excluded by default**, with `includeArchived` to ask for them. A
+    tracker listing withdrawn roles beside live ones is noise, and leaving the filter to each caller
+    makes forgetting it a decision nobody should make twice.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs
