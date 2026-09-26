@@ -450,7 +450,8 @@
         "fri": "Fri",
         "sat": "Sat",
         "sun": "Sun"
-      }
+      },
+      "more": "+{count} more"
     },
     "Reviews": {
       "title": "Reviews",
