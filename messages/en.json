@@ -1,5 +1,6 @@
 {
   "Common": {
+    "loadingLabel": "Loading",
     "close": "Close"
   },
   "Shell": {

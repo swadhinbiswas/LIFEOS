@@ -1059,3 +1059,58 @@ html[data-theme="oc-zenburn"] {
   --chart-4: #cc9393;
   --chart-5: #dfaf8f;
 }
+
+/* --- Loading skeletons (spec §13 reliability) ---------------------------------------------------
+ * The shadcn `Skeleton` primitive is re-skinned here rather than in the component, so every theme
+ * preset (ADR-098) and the high-contrast one below are covered by one rule and the vendored
+ * primitive stays untouched — the same contract as the chart and panel tokens.
+ *
+ * A flat `animate-pulse` dims and brightens the whole block, which reads as a blinking card. A sweep
+ * reads as "content arriving", and it is built from two existing tokens so it cannot introduce a
+ * colour the palettes do not already approve: `border` for the leading edge and `muted-foreground`
+ * at low alpha for the trail.
+ */
+@keyframes skeleton-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* `overflow: hidden` is the load-bearing part: without a clip the sweep paints over the frame. */
+[data-slot="skeleton"] {
+  position: relative;
+  overflow: hidden;
+  /* The pulse is removed deliberately — a sweep and a pulse together is a strobe. */
+  animation: none;
+}
+
+[data-slot="skeleton"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--muted-foreground) 12%, transparent) 45%,
+    color-mix(in srgb, var(--foreground) 20%, transparent) 50%,
+    color-mix(in srgb, var(--muted-foreground) 12%, transparent) 55%,
+    transparent 100%
+  );
+  animation: skeleton-sweep 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  /* A skeleton is decoration: it carries no text for a screen reader to read mid-swap. */
+  pointer-events: none;
+}
+
+/* Reduced motion means no movement, not no feedback: the block stays a distinct tone so the shape
+   of the incoming page is still legible, it simply stops travelling. */
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="skeleton"]::after {
+    animation: none;
+    transform: none;
+    background: color-mix(in srgb, var(--muted-foreground) 10%, transparent);
+  }
+}

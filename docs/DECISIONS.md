@@ -2550,6 +2550,45 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   the row useful. Those tools now take the new fields, because a tool surface that cannot express
   the model is a model nobody can use from a keyboard or a prompt.
 
+## ADR-115 — Loading states match the page they stand in for, and the motion is CSS
+
+- **Status:** accepted (2026-09-26)
+- **Context:** four of 47 routes had a `loading.tsx`. Everything else fell through to the
+  `(app)` group fallback — a generic six-card grid — so navigating to the dashboard showed grey
+  rectangles shaped like nothing that page contains. A skeleton that does not match the layout
+  it stands in for does not make a slow query look pending; it makes it look broken. Separately,
+  the vendored shadcn `Skeleton` ships `animate-pulse`, and Tailwind does not disable animations
+  under `prefers-reduced-motion` on its own, so every skeleton in the app was pulsing for users
+  who had asked the system not to move things.
+- **Decision:** three parts.
+  - **A shared vocabulary** (`src/components/tui/skeleton.tsx`) built on the shadcn primitive
+    — `PanelSkeleton`, `ListSkeleton`, `ChartSkeleton`, `TileSkeleton`, `FormSkeleton`,
+    `BoardSkeleton`, `FieldGridSkeleton` — and a `loading.tsx` per route composed from it. The panel
+    skeleton reproduces the real `Panel`'s chip geometry, because a chip that moves between the
+    skeleton and the real thing is a re-layout, which is the exact cost a skeleton exists to
+    avoid. A chart's skeleton is a **skyline**, not a row of equal bars, because that is what a
+    chart looks like.
+  - **The motion is CSS, targeting `[data-slot="skeleton"]`**, which is how every other theme
+    token in this app is applied (ADR-098). The vendored component is untouched, the pulse is
+    neutralised rather than left to a future upgrade to remove, and the sweep is built from
+    `muted-foreground` and `foreground` at low alpha so no preset can miss it. Reduced motion
+    stops the travel and leaves the tone: no movement is not no feedback.
+  - **A loading state is a page state.** Its heading is a real `<h1>` with real, **translated**
+    words. Two axe rules caught this in sequence — `page-has-heading-one`, then `empty-heading` on an
+    `h1` holding only a non-breaking space. Neither is visible to a source-level or jsdom test,
+    and both are real failures for a screen reader arriving mid-transition. The default label is
+    read from the catalogue by an async server component, so it is never an untranslated English
+    word on a Bangla page.
+- **Consequences:** adding a route's loading state is a few lines rather than a hand-drawn
+  rectangle field, and a test walks `src/app` so one cannot be forgotten silently. The honest
+  cost is that the e2e cannot assert the boundary itself: `loading.tsx` is a Suspense boundary, and
+  catching one in a transition means racing Next's router — the click queues behind its own
+  in-flight RSC prefetch, and the navigation payload is a `POST` with `accept: text/x-component`
+  that no header predicate can distinguish from a prefetch. A test that races that passes on a fast
+  machine and fails on a slow one is worse than none, so the boundary's existence is pinned by a
+  source-level check and its CSS by an e2e that reads the live stylesheet. The rendered _shape_
+  is covered deterministically in jsdom, where it belongs.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

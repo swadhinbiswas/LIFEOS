@@ -1,22 +1,23 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { PanelSkeleton, PageHeaderSkeleton, TileSkeleton } from "@/components/tui/skeleton";
 
 /**
- * Route-level loading state (spec §13 reliability): the shell stays, the page shows its shape, so a
- * slow query never looks like a dead screen.
+ * The `(app)` group's fallback, for the handful of routes with no `loading.tsx` of their own.
+ *
+ * Most routes now have one that matches their layout, because a skeleton shaped like nothing on the
+ * page makes a slow query look broken rather than pending. This one is deliberately generic: it is
+ * what a *new* route gets for free, and it must not pretend to know a layout it has not been told
+ * about.
  */
 export default function Loading() {
   return (
-    <div className="flex flex-col gap-4" data-slot="loading">
-      <div className="flex items-center gap-3 border-b border-border pb-3">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="ml-auto h-6 w-48" />
+    <div className="grid gap-4" data-slot="loading">
+      <PageHeaderSkeleton title="w-32" control="w-48" />
+      <TileSkeleton count={4} />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <PanelSkeleton label="w-24" hint rows={3} />
+        <PanelSkeleton label="w-28" hint rows={3} />
       </div>
-      <Skeleton className="h-32 w-full" />
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {[0, 1, 2, 3, 4, 5].map((index) => (
-          <Skeleton key={index} className="h-24 w-full" />
-        ))}
-      </div>
+      <PanelSkeleton label="w-20" rows={4} />
     </div>
   );
 }
