@@ -19,6 +19,8 @@ import {
   createJob,
   moveJobStage,
   addInterview,
+  listFollowUps,
+  updateJob,
 } from "@/server/career";
 import { addTransaction } from "@/server/finance";
 import { getResume, listResumes, proposeResumeEdit } from "@/server/cv";
@@ -42,6 +44,17 @@ import { getTrends } from "../trends";
  */
 
 const optionalTrimmed = z.string().trim().max(2_000).optional();
+
+/**
+ * `undefined` means "leave it alone", `null` means "clear it", and a string means "set it to this".
+ * The service patches only what it is given, so collapsing those three cases would silently turn a
+ * partial edit into a wipe.
+ */
+const toDate = (value: string | null | undefined): Date | null | undefined => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  return new Date(value);
+};
 
 const summarizeCard = (card: {
   id: string;
@@ -421,15 +434,114 @@ export function buildAiTools(userId: string): Record<string, Tool> {
         company: optionalTrimmed,
         workMode: z.enum(["remote", "hybrid", "onsite"]).optional(),
         url: z.string().url().optional(),
+        // The fields that make an application trackable rather than a title in a column
+        // (ADR-114). Optional so a bare "add this job" still works, but an agent reading a posting
+        // can now record the deadline and the next step in one call instead of two.
+        seniority: z.enum(["junior", "mid", "senior", "not_stated"]).optional(),
+        applyBy: z.string().datetime().optional(),
+        applyEmail: z.string().email().optional(),
+        reqId: optionalTrimmed,
+        location: optionalTrimmed,
+        salaryMin: z.number().int().min(0).optional(),
+        salaryMax: z.number().int().min(0).optional(),
+        currency: z.string().trim().length(3).optional(),
+        nextAction: optionalTrimmed,
+        nextActionDue: z.string().datetime().optional(),
+        visaStatus: optionalTrimmed,
+        source: optionalTrimmed,
+        jdSnapshot: optionalTrimmed,
       }),
-      async ({ title, company, workMode, url }) => {
+      async (input) => {
         const { card, application } = await createJob(userId, {
-          title,
-          companyName: company ?? null,
-          workMode: workMode ?? null,
-          url: url ?? null,
+          title: input.title,
+          companyName: input.company ?? null,
+          workMode: input.workMode ?? null,
+          url: input.url ?? null,
+          seniority: input.seniority ?? null,
+          applyBy: input.applyBy ? new Date(input.applyBy) : null,
+          applyEmail: input.applyEmail ?? null,
+          reqId: input.reqId ?? null,
+          location: input.location ?? null,
+          salaryMin: input.salaryMin ?? null,
+          salaryMax: input.salaryMax ?? null,
+          currency: input.currency ?? null,
+          nextAction: input.nextAction ?? null,
+          nextActionDue: input.nextActionDue ? new Date(input.nextActionDue) : null,
+          visaStatus: input.visaStatus ?? null,
+          source: input.source ?? null,
+          jdSnapshot: input.jdSnapshot ?? null,
         });
-        return { cardId: card.id, applicationId: application.id, title: card.title };
+        return {
+          cardId: card.id,
+          applicationId: application.id,
+          title: card.title,
+          // Say back what was actually stored. An agent that thinks it saved a deadline it did not
+          // save is worse than one that was told the field does not exist.
+          nextAction: application.next_action,
+          applyBy: application.apply_by,
+        };
+      },
+    ),
+
+    update_job_details: make(
+      "update_job_details",
+      z.object({
+        cardId: z.string().min(1),
+        nextAction: optionalTrimmed,
+        nextActionDue: z.string().datetime().nullable().optional(),
+        applyBy: z.string().datetime().nullable().optional(),
+        dateApplied: z.string().datetime().nullable().optional(),
+        seniority: z.enum(["junior", "mid", "senior", "not_stated"]).nullable().optional(),
+        applyEmail: z.string().email().nullable().optional(),
+        reqId: optionalTrimmed,
+        location: optionalTrimmed,
+        salaryMin: z.number().int().min(0).nullable().optional(),
+        salaryMax: z.number().int().min(0).nullable().optional(),
+        currency: z.string().trim().length(3).nullable().optional(),
+        excitement: z.number().int().min(1).max(5).nullable().optional(),
+        fitScore: z.number().int().min(0).max(100).nullable().optional(),
+        visaStatus: optionalTrimmed,
+        archived: z.boolean().optional(),
+      }),
+      async (input) => {
+        const detail = await getJobDetail(userId, input.cardId);
+        if (!detail) throw new Error(`job not found: ${input.cardId}`);
+        const row = await updateJob(userId, {
+          applicationId: detail.application.id,
+          nextAction: input.nextAction,
+          nextActionDue: toDate(input.nextActionDue),
+          applyBy: toDate(input.applyBy),
+          dateApplied: toDate(input.dateApplied),
+          seniority: input.seniority,
+          applyEmail: input.applyEmail,
+          reqId: input.reqId,
+          location: input.location,
+          salaryMin: input.salaryMin,
+          salaryMax: input.salaryMax,
+          currency: input.currency,
+          excitement: input.excitement,
+          fitScore: input.fitScore,
+          visaStatus: input.visaStatus,
+          archived: input.archived,
+        });
+        return { cardId: input.cardId, applicationId: row.id, nextAction: row.next_action };
+      },
+    ),
+
+    list_follow_ups: make(
+      "list_follow_ups",
+      z.object({ includeDone: z.boolean().optional() }),
+      async ({ includeDone }) => {
+        const rows = await listFollowUps(userId, new Date(), includeDone ?? false);
+        return rows.map((row) => ({
+          company: row.company,
+          position: row.position,
+          kind: row.kind,
+          dueAt: row.dueAt,
+          overdue: row.overdue,
+          nextAction: row.nextAction,
+          cardId: row.cardId,
+        }));
       },
     ),
 
@@ -462,11 +574,16 @@ export function buildAiTools(userId: string): Record<string, Tool> {
       "log_interview",
       z.object({
         cardId: z.string().min(1),
-        kind: z.enum(["screen", "tech", "system_design", "behavioral", "final"]),
+        kind: z.enum(["screen", "tech", "system_design", "behavioral", "final", "follow_up"]),
         startsAt: z.string().datetime().optional(),
         feedback: optionalTrimmed,
+        // A follow-up is a promise with a date, so it needs one (ADR-114).
+        dueAt: z.string().datetime().optional(),
+        status: z.enum(["planned", "done", "needs_follow_up", "cancelled"]).optional(),
+        outcome: optionalTrimmed,
+        preparation: optionalTrimmed,
       }),
-      async ({ cardId, kind, startsAt, feedback }) => {
+      async ({ cardId, kind, startsAt, feedback, dueAt, status, outcome, preparation }) => {
         const detail = await getJobDetail(userId, cardId);
         if (!detail) throw new Error(`job not found: ${cardId}`);
         const row = await addInterview(userId, {
@@ -474,8 +591,12 @@ export function buildAiTools(userId: string): Record<string, Tool> {
           kind,
           startsAt: startsAt ? new Date(startsAt) : null,
           feedback: feedback ?? null,
+          dueAt: dueAt ? new Date(dueAt) : null,
+          status: status ?? null,
+          outcome: outcome ?? null,
+          preparation: preparation ?? null,
         });
-        return { id: row.id, kind: row.kind };
+        return { id: row.id, kind: row.kind, dueAt: row.due_at, status: row.status };
       },
     ),
 

@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull, notInArray, sql } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
 import { db } from "@/server/db";
@@ -7,6 +7,7 @@ import {
   boards,
   cards,
   companies,
+  contacts,
   interviews,
   job_applications,
   offers,
@@ -27,6 +28,7 @@ import type {
   AddOfferInput,
   CreateJobInput,
   MoveJobStageInput,
+  UpdateInterviewInput,
   UpdateJobInput,
 } from "./schemas";
 
@@ -138,6 +140,14 @@ export async function createJob(userId: string, input: CreateJobInput): Promise<
       jd_snapshot: input.jdSnapshot ?? null,
       excitement: input.excitement ?? null,
       fit_score: input.fitScore ?? null,
+      next_action: input.nextAction ?? null,
+      next_action_due: input.nextActionDue ?? null,
+      apply_by: input.applyBy ?? null,
+      date_applied: input.dateApplied ?? null,
+      seniority: input.seniority ?? null,
+      apply_email: input.applyEmail ?? null,
+      req_id: input.reqId ?? null,
+      location: input.location ?? null,
     })
     .returning();
   if (!application) throw new BoardError("invalid", "job insert returned no row");
@@ -155,6 +165,21 @@ async function requireApplication(userId: string, applicationId: string): Promis
   return application;
 }
 
+/**
+ * A contact, tenant-checked. `contacts` predated any link to an application, so the id could come
+ * from a stale client; checking ownership here is what stops one user's contact being attached to
+ * another user's application.
+ */
+async function requireContact(userId: string, contactId: string) {
+  const [contact] = await db
+    .select({ id: contacts.id })
+    .from(contacts)
+    .where(and(eq(contacts.id, contactId), eq(contacts.user_id, userId)))
+    .limit(1);
+  if (!contact) throw new BoardError("not_found", "contact not found");
+  return contact;
+}
+
 export async function updateJob(userId: string, input: UpdateJobInput): Promise<JobApplication> {
   await requireApplication(userId, input.applicationId);
   const patch: Partial<typeof job_applications.$inferInsert> = {};
@@ -170,9 +195,28 @@ export async function updateJob(userId: string, input: UpdateJobInput): Promise<
   if (input.excitement !== undefined) patch.excitement = input.excitement;
   if (input.fitScore !== undefined) patch.fit_score = input.fitScore;
   if (input.archived !== undefined) patch.archived_at = input.archived ? new Date() : null;
+  if (input.nextAction !== undefined) patch.next_action = input.nextAction;
+  if (input.nextActionDue !== undefined) patch.next_action_due = input.nextActionDue;
+  if (input.applyBy !== undefined) patch.apply_by = input.applyBy;
+  if (input.dateApplied !== undefined) patch.date_applied = input.dateApplied;
+  if (input.seniority !== undefined) patch.seniority = input.seniority;
+  if (input.applyEmail !== undefined) patch.apply_email = input.applyEmail;
+  if (input.reqId !== undefined) patch.req_id = input.reqId;
+  if (input.location !== undefined) patch.location = input.location;
+  if (input.contactId !== undefined) {
+    // A contact belongs to the user; a foreign id is rejected rather than silently linked, so a
+    // stale or guessed id cannot attach someone else's contact to an application.
+    if (input.contactId !== null) await requireContact(userId, input.contactId);
+    patch.contact_id = input.contactId;
+  }
   if (input.companyName !== undefined) {
     patch.company_id = input.companyName ? await ensureCompany(userId, input.companyName) : null;
   }
+
+  // A patch with nothing in it is a read, not an error. Drizzle throws "No values to set" on an
+  // empty update, which surfaced as an obscure driver message when the AI tool `update_job_details`
+  // was called with only a cardId — a perfectly reasonable thing for a caller to do.
+  if (Object.keys(patch).length === 0) return requireApplication(userId, input.applicationId);
 
   const [row] = await db
     .update(job_applications)
@@ -181,6 +225,11 @@ export async function updateJob(userId: string, input: UpdateJobInput): Promise<
     .returning();
   if (!row) throw new BoardError("not_found", "job not found");
   return row;
+}
+
+/** Re-exported for the actions layer; the read is on the service so REST/MCP/AI share it. */
+export async function readJob(userId: string, applicationId: string): Promise<JobApplication> {
+  return requireApplication(userId, applicationId);
 }
 
 /**
@@ -233,6 +282,136 @@ export async function moveJobStage(userId: string, input: MoveJobStageInput): Pr
 export interface JobCardMeta {
   label: string;
   detailHref?: string;
+}
+
+export interface FollowUp {
+  /** The round this row is about, or null when the promise is the application's alone. */
+  interviewId: string | null;
+  applicationId: string;
+  cardId: string;
+  company: string | null;
+  position: string;
+  kind: string;
+  dueAt: Date | null;
+  status: string;
+  preparation: string | null;
+  nextAction: string | null;
+  /** A due date in the past, and the row is not already done. What makes this list urgent. */
+  overdue: boolean;
+}
+
+/**
+ * Everything the user owes a company, across every application (ADR-114).
+ *
+ * The reference tracker keeps interviews and follow-ups in one place for a reason: a follow-up has
+ * a due date and no start time, so it is invisible to anything that reads `starts_at`. An
+ * application is a *promise*, and a promise with a due date that nothing queries is a promise nobody
+ * keeps.
+ *
+ * **One row per promise, not per row in the database.** An application with a next action and three
+ * logged rounds is one thing owed, so the two sources are read separately and merged: a follow-up is
+ * its own promise, and an application's next action appears on its own line. Selecting across the
+ * join instead printed the same application three times, which is worse than not printing it at
+ * all — and the test that caught it is why the two reads are separate here.
+ */
+export async function listFollowUps(
+  userId: string,
+  now: Date = new Date(),
+  includeDone = false,
+): Promise<FollowUp[]> {
+  const openFilter = includeDone ? undefined : notInArray(interviews.status, ["done", "cancelled"]);
+
+  const [rounds, nextActions] = await Promise.all([
+    db
+      .select({
+        interviewId: interviews.id,
+        applicationId: job_applications.id,
+        cardId: job_applications.card_id,
+        company: companies.name,
+        position: cards.title,
+        kind: interviews.kind,
+        dueAt: interviews.due_at,
+        status: interviews.status,
+        preparation: interviews.preparation,
+        nextAction: job_applications.next_action,
+      })
+      .from(interviews)
+      .innerJoin(job_applications, eq(job_applications.id, interviews.job_application_id))
+      .innerJoin(cards, eq(cards.id, job_applications.card_id))
+      .leftJoin(companies, eq(companies.id, job_applications.company_id))
+      .where(
+        and(
+          eq(interviews.user_id, userId),
+          isNull(job_applications.archived_at),
+          isNull(cards.deleted_at),
+          // A round only owes something if it carries a date. A past interview is history, not a
+          // promise, and must never appear in a list of things to do.
+          isNotNull(interviews.due_at),
+          ...(openFilter ? [openFilter] : []),
+        ),
+      )
+      .orderBy(interviews.due_at),
+
+    db
+      .select({
+        applicationId: job_applications.id,
+        cardId: job_applications.card_id,
+        company: companies.name,
+        position: cards.title,
+        dueAt: job_applications.next_action_due,
+        nextAction: job_applications.next_action,
+      })
+      .from(job_applications)
+      .innerJoin(cards, eq(cards.id, job_applications.card_id))
+      .leftJoin(companies, eq(companies.id, job_applications.company_id))
+      .where(
+        and(
+          eq(job_applications.user_id, userId),
+          isNull(job_applications.archived_at),
+          isNull(cards.deleted_at),
+          isNotNull(job_applications.next_action),
+          isNotNull(job_applications.next_action_due),
+        ),
+      )
+      .orderBy(job_applications.next_action_due),
+  ]);
+
+  const fromRounds: FollowUp[] = rounds.map((row) => ({
+    interviewId: row.interviewId,
+    applicationId: row.applicationId,
+    cardId: row.cardId,
+    company: row.company,
+    position: row.position,
+    kind: row.kind,
+    dueAt: row.dueAt,
+    status: row.status,
+    preparation: row.preparation,
+    // The application's own words win, so one list never shows two answers to one question.
+    nextAction: row.nextAction ?? row.preparation,
+    overdue: row.dueAt !== null && row.dueAt.getTime() < now.getTime() && row.status !== "done",
+  }));
+
+  const fromApplications: FollowUp[] = nextActions.map((row) => ({
+    interviewId: null,
+    applicationId: row.applicationId,
+    cardId: row.cardId,
+    company: row.company,
+    position: row.position,
+    // Named as what it is rather than borrowing the round vocabulary, so "next action" and
+    // "follow-up" stay distinguishable in the UI and in the AI tool's output.
+    kind: "next_action",
+    dueAt: row.dueAt,
+    status: "planned",
+    preparation: null,
+    nextAction: row.nextAction,
+    overdue: row.dueAt !== null && row.dueAt.getTime() < now.getTime(),
+  }));
+
+  return [...fromRounds, ...fromApplications].sort(
+    (a, b) =>
+      (a.dueAt?.getTime() ?? Number.MAX_SAFE_INTEGER) -
+      (b.dueAt?.getTime() ?? Number.MAX_SAFE_INTEGER),
+  );
 }
 
 export async function getJobMeta(userId: string): Promise<Record<string, JobCardMeta[]>> {
@@ -332,10 +511,48 @@ export async function addInterview(
       interviewers: input.interviewers ?? null,
       feedback: input.feedback ?? null,
       rating: input.rating ?? null,
+      due_at: input.dueAt ?? null,
+      status: input.status ?? "planned",
+      outcome: input.outcome ?? null,
+      preparation: input.preparation ?? null,
     })
     .returning();
   if (!row) throw new BoardError("invalid", "interview insert returned no row");
   return row;
+}
+
+/**
+ * Correct a logged round, or tick off a follow-up (ADR-114). A follow-up is the case that matters:
+ * it has a due date and no start time, and it is the row that goes stale.
+ */
+export async function updateInterview(
+  userId: string,
+  input: UpdateInterviewInput,
+): Promise<typeof interviews.$inferSelect> {
+  const [row] = await db
+    .select()
+    .from(interviews)
+    .where(and(eq(interviews.id, input.interviewId), eq(interviews.user_id, userId)))
+    .limit(1);
+  if (!row) throw new BoardError("not_found", "interview not found");
+
+  const patch: Partial<typeof interviews.$inferInsert> = {};
+  // The column is NOT NULL with a default; "clear it" is not a state this row can be in.
+  if (input.status !== undefined && input.status !== null) patch.status = input.status;
+  if (input.outcome !== undefined) patch.outcome = input.outcome;
+  if (input.preparation !== undefined) patch.preparation = input.preparation;
+  if (input.feedback !== undefined) patch.feedback = input.feedback;
+  if (input.rating !== undefined) patch.rating = input.rating;
+  if (input.dueAt !== undefined) patch.due_at = input.dueAt;
+  if (input.startsAt !== undefined) patch.starts_at = input.startsAt;
+
+  const [updated] = await db
+    .update(interviews)
+    .set(patch)
+    .where(and(eq(interviews.id, input.interviewId), eq(interviews.user_id, userId)))
+    .returning();
+  if (!updated) throw new BoardError("not_found", "interview not found");
+  return updated;
 }
 
 export async function addOffer(

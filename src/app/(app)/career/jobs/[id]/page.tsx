@@ -5,8 +5,10 @@ import { getTranslations } from "next-intl/server";
 import { Panel } from "@/components/tui/panel";
 import { getServerSession } from "@/server/auth/session";
 import { getJobDetail } from "@/server/career";
+import { getTimeZone } from "@/server/settings";
 
 import { AddInterviewForm, AddOfferForm } from "../_components/job-detail-forms";
+import { NextActionForm } from "../_components/next-action-form";
 
 import { pageMetadata } from "@/lib/page-metadata";
 
@@ -22,6 +24,19 @@ const money = (minor: number | null, currency: string | null): string => {
 };
 
 /**
+ * A deadline as a day, in the **user's** zone (ADR-057). A `YYYY-MM-DD` date picked on a calendar is
+ * stored at UTC midnight, so rendering it in the server's own zone shows the previous day for
+ * anyone east of Greenwich — and an apply-by deadline a day early is the kind of bug that costs an
+ * application.
+ */
+const day = (at: Date, timeZone: string): string =>
+  new Intl.DateTimeFormat(undefined, { timeZone, dateStyle: "medium" }).format(at);
+
+/** The `YYYY-MM-DD` an `<input type="date">` expects, read in the user's zone (ADR-057). */
+const toDateInput = (at: Date | null, timeZone = "UTC"): string =>
+  at === null ? "" : new Intl.DateTimeFormat("en-CA", { timeZone, dateStyle: "short" }).format(at);
+
+/**
  * `/career/jobs/[id]` (spec §6.3): the application's own page. `[id]` is the **card id** so the
  * board can link straight to it. Interview rounds and offers are recorded here.
  */
@@ -31,8 +46,16 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
 
   const t = await getTranslations("Pages.Career");
   const { id } = await params;
-  const detail = await getJobDetail(session.user.id, id).catch(() => null);
+  // The zone comes first: every date below is rendered in it (ADR-057).
+  const [detail, timeZone] = await Promise.all([
+    getJobDetail(session.user.id, id).catch(() => null),
+    getTimeZone(session.user.id),
+  ]);
   if (!detail) notFound();
+
+  // Resolved once: `Date.now()` during render is an impure read, and a page that re-renders would
+  // otherwise be able to disagree with itself about whether a date has passed.
+  const now = new Date();
 
   const { card, application, company, interviews, offers } = detail;
   const stage = application.stage_history
@@ -87,7 +110,85 @@ export default async function JobDetailPage({ params }: { params: Promise<{ id: 
                 {application.excitement === null ? "—" : "★".repeat(application.excitement)}
               </dd>
             </div>
+            {/* The deadline fields the reference tracker made obvious (ADR-114). */}
+            <div>
+              <dt className="font-mono text-[10px] text-muted-foreground uppercase">
+                {t("applyBy")}
+              </dt>
+              <dd className="font-mono">
+                {application.apply_by ? day(application.apply_by, timeZone) : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-mono text-[10px] text-muted-foreground uppercase">
+                {t("dateApplied")}
+              </dt>
+              <dd className="font-mono">
+                {application.date_applied ? day(application.date_applied, timeZone) : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-mono text-[10px] text-muted-foreground uppercase">
+                {t("seniority")}
+              </dt>
+              <dd className="font-mono">{application.seniority ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="font-mono text-[10px] text-muted-foreground uppercase">
+                {t("reqId")}
+              </dt>
+              <dd className="font-mono">{application.req_id ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="font-mono text-[10px] text-muted-foreground uppercase">
+                {t("location")}
+              </dt>
+              <dd className="font-mono">{application.location ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="font-mono text-[10px] text-muted-foreground uppercase">
+                {t("applyEmail")}
+              </dt>
+              <dd className="font-mono">
+                {application.apply_email ? (
+                  <a
+                    href={`mailto:${application.apply_email}`}
+                    className="text-primary hover:underline"
+                  >
+                    {application.apply_email}
+                  </a>
+                ) : (
+                  "—"
+                )}
+              </dd>
+            </div>
           </dl>
+
+          {/* The promise. Given its own box because it is the field a tracker exists to hold, and
+              it stayed free text in the reference for a reason: the next step is not one of a fixed
+              set of values. */}
+          <div className="mt-3 rounded-[var(--radius)] border border-border p-2">
+            <p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+              {t("nextAction")}
+            </p>
+            <p className="font-mono text-xs">{application.next_action ?? t("noNextAction")}</p>
+            {application.next_action_due ? (
+              <p
+                className={
+                  application.next_action_due.getTime() < now.getTime()
+                    ? "font-mono text-[10px] text-destructive"
+                    : "font-mono text-[10px] text-muted-foreground"
+                }
+              >
+                {t("dueOn", { date: day(application.next_action_due, timeZone) })}
+              </p>
+            ) : null}
+            <NextActionForm
+              applicationId={application.id}
+              initialAction={application.next_action ?? ""}
+              initialDue={toDateInput(application.next_action_due, timeZone)}
+            />
+          </div>
           {application.url ? (
             <a
               href={application.url}

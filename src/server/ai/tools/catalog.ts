@@ -150,8 +150,21 @@ export const TOOL_SPECS: readonly ToolSpec[] = [
   },
   {
     name: "add_job_application",
-    description: "Add a job application to the pipeline.",
+    description:
+      "Add a job application to the pipeline, with the deadline, salary, seniority and next action when known.",
     risk: "write",
+  },
+  {
+    name: "update_job_details",
+    description:
+      "Edit an application in place — next action and its due date, apply-by deadline, salary, fit, or archive it. Omitted fields are left alone; null clears one.",
+    risk: "write",
+  },
+  {
+    name: "list_follow_ups",
+    description:
+      "Everything owed across every application: follow-ups and next actions with due dates, overdue ones first.",
+    risk: "read",
   },
   {
     name: "update_job_stage",
@@ -160,7 +173,7 @@ export const TOOL_SPECS: readonly ToolSpec[] = [
   },
   {
     name: "log_interview",
-    description: "Record an interview round for a job application.",
+    description: "Record an interview round, or a follow-up with a due date and an outcome.",
     risk: "write",
   },
   {

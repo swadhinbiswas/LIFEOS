@@ -93,7 +93,7 @@ test("card sheet: deep link, edits persist, delete is undoable", async ({ page }
 
   // Delete → the toast offers an undo that restores the card through the service.
   await page.goto(`/tasks?card=${cardId}`);
-  await page.getByRole("button", { name: "delete" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "delete", exact: true }).click();
   await expect(serverCard(page, "Inbox", renamed)).toHaveCount(0);
   await page.getByRole("button", { name: "undo", exact: true }).click();
   await expect(serverCard(page, "Inbox", renamed)).toBeVisible();
@@ -200,7 +200,7 @@ test("trash: a deleted card restores from the trash panel", async ({ page }) => 
   const cardId = await card.getAttribute("data-card-id");
 
   await page.goto(`/tasks?card=${cardId}`);
-  await page.getByRole("button", { name: "delete" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "delete", exact: true }).click();
   await expect(serverCard(page, "Inbox", title)).toHaveCount(0);
   await page.waitForLoadState("networkidle");
 

@@ -2514,6 +2514,42 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   "could not check". The general lesson is the one worth keeping: a gate that only exercises
   throwaway state is not evidence about the state you actually run against.
 
+## ADR-114 — The job tracker takes its shape from a real one, and stays in LifeOS
+
+- **Status:** accepted (2026-09-26)
+- **Context:** spec §6.3 asks for an application tracker with a pipeline, and the module already
+  has one — but it was designed from the schema outwards. Asked to match a tracker the user
+  actually keeps (a Notion workspace with three linked databases), the real one turned out to
+  answer a question the schema never posed: **what do I do next, and by when.** Its single most
+  used field is a free-text `Next Action`, and a whole third database exists for interviews _and
+  follow-ups_ with its own `Due` date — a follow-up is a task, and LifeOS had no way to
+  record one.
+- **Decision:** adopt the fields, not the storage. The three Notion databases map onto tables
+  LifeOS already has:
+  - `job_applications` gains `next_action` + `next_action_due`, `apply_by` (the apply-by deadline),
+    `date_applied`, `seniority`, `apply_email`, `req_id`, a per-application `location`, and a
+    `contact_id` relation — `contacts` existed and was linked to nothing, which is why a contact
+    could never be attached to the application they were discussing.
+  - `interviews` gains `due_at`, `outcome`, `preparation` and `status` - `companies` gains `career_page`, `linkedin`, `relationship` and `target_country`.
+    Where LifeOS is already **better**, that stays and the Notion shape is derived from it: salary
+    is integer minor units plus an ISO currency here versus free text there, and the pipeline is an
+    append-only `stage_history` rather than a single mutable status (ADR-044). Pushing Notion's
+    `Salary` text into a numeric column is the right direction; the reverse would be a downgrade.
+- **`Fit` is not duplicated.** Notion models fit as a four-value select
+  (Strong fit / Worth applying / Long shot / Not a fit); LifeOS stores `fit_score` 1—5. Two fields for one
+  judgement is two sources of truth that will disagree, so the select is _derived_ from the score
+  at the boundary and nothing is stored twice. Same reasoning for `Progress`: Notion computes it
+  with a formula, here it is computed from the stage history.
+- **No Notion calls.** LifeOS is the source of truth and the tracker is not a mirror. Nothing in
+  this change talks to Notion, so there is no token to store, no rate limit to absorb, and no
+  conflict to resolve when a stage is edited in the app the user happens to be looking at. The
+  Notion workspace was read as a specification, not as a target.
+- **Consequences:** the MCP tools were the actual bottleneck, not the schema. `add_job_application`
+  accepted a title, a company, a work mode and a URL, so an agent could not record a deadline, a
+  next action or a contact — it could create a row and then not fill in any of the fields that make
+  the row useful. Those tools now take the new fields, because a tool surface that cannot express
+  the model is a model nobody can use from a keyboard or a prompt.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

@@ -12,7 +12,15 @@ export const interviewKindSchema = z.enum([
   "system_design",
   "behavioral",
   "final",
+  // A follow-up is a task with a due date, not a meeting — see the ADR-114 note on `due_at`.
+  "follow_up",
 ]);
+export const senioritySchema = z.enum(["junior", "mid", "senior", "not_stated"]);
+export const relationshipSchema = z.enum(["cold", "contacted", "replied", "referral"]);
+export const interviewStatusSchema = z.enum(["planned", "done", "needs_follow_up", "cancelled"]);
+
+/** `YYYY-MM-DD` or a full instant; the app stores instants and renders days. */
+const dateish = z.coerce.date().nullable().optional();
 
 export const createJobInput = z.object({
   title: z.string().trim().min(1).max(300),
@@ -32,6 +40,15 @@ export const createJobInput = z.object({
   excitement: z.number().int().min(1).max(5).nullable().optional(),
   fitScore: z.number().int().min(0).max(100).nullable().optional(),
   dueAt: z.coerce.date().nullable().optional(),
+  // The next-action trio (ADR-114): the thing to do, and when it stops being optional.
+  nextAction: optionalText(500),
+  nextActionDue: dateish,
+  applyBy: dateish,
+  dateApplied: dateish,
+  seniority: senioritySchema.nullable().optional(),
+  applyEmail: z.string().trim().email().nullable().optional(),
+  reqId: optionalText(80),
+  location: optionalText(200),
 });
 
 export const ensureCompanyInput = z.object({
@@ -41,6 +58,10 @@ export const ensureCompanyInput = z.object({
   size: optionalText(60),
   location: optionalText(200),
   notes: optionalText(10_000),
+  careerPage: optionalText(2_000),
+  linkedin: optionalText(2_000),
+  relationship: relationshipSchema.nullable().optional(),
+  targetCountry: z.array(z.string().trim().min(1).max(80)).max(12).nullable().optional(),
 });
 
 export const updateJobInput = z.object({
@@ -58,6 +79,16 @@ export const updateJobInput = z.object({
   excitement: z.number().int().min(1).max(5).nullable().optional(),
   fitScore: z.number().int().min(0).max(100).nullable().optional(),
   archived: z.boolean().optional(),
+  // Same trio as create, so a job can be corrected without recreating it.
+  nextAction: optionalText(500),
+  nextActionDue: dateish,
+  applyBy: dateish,
+  dateApplied: dateish,
+  seniority: senioritySchema.nullable().optional(),
+  applyEmail: z.string().trim().email().nullable().optional(),
+  reqId: optionalText(80),
+  location: optionalText(200),
+  contactId: z.string().min(1).nullable().optional(),
 });
 
 export const moveJobStageInput = z.object({
@@ -77,6 +108,23 @@ export const addInterviewInput = z.object({
   interviewers: optionalText(2_000),
   feedback: optionalText(20_000),
   rating: z.number().int().min(1).max(5).nullable().optional(),
+  // Follow-ups: a due date, an outcome, and notes read *before* the call (ADR-114).
+  dueAt: dateish,
+  status: interviewStatusSchema.nullable().optional(),
+  outcome: optionalText(20_000),
+  preparation: optionalText(20_000),
+});
+
+/** Raised when a follow-up or an application deadline has come round (ADR-114). */
+export const updateInterviewInput = z.object({
+  interviewId: z.string().min(1),
+  status: interviewStatusSchema.nullable().optional(),
+  outcome: optionalText(20_000),
+  preparation: optionalText(20_000),
+  feedback: optionalText(20_000),
+  rating: z.number().int().min(1).max(5).nullable().optional(),
+  dueAt: dateish,
+  startsAt: dateish,
 });
 
 export const addOfferInput = z.object({
@@ -93,7 +141,25 @@ export type CreateJobInput = z.infer<typeof createJobInput>;
 export type UpdateJobInput = z.infer<typeof updateJobInput>;
 export type MoveJobStageInput = z.infer<typeof moveJobStageInput>;
 export type AddInterviewInput = z.infer<typeof addInterviewInput>;
+export type UpdateInterviewInput = z.infer<typeof updateInterviewInput>;
 export type AddOfferInput = z.infer<typeof addOfferInput>;
+
+/**
+ * Fit as the four-way judgement a person actually makes, derived from `fitScore` rather than
+ * stored beside it (ADR-114). Two fields for one opinion is two truths that will disagree.
+ */
+export const fitBandSchema = z.enum(["strong_fit", "worth_applying", "long_shot", "not_a_fit"]);
+
+/** 0–100 score to band. The boundaries are the call, so they live in one place with a test. */
+export function fitBandFor(
+  score: number | null | undefined,
+): "strong_fit" | "worth_applying" | "long_shot" | "not_a_fit" | null {
+  if (score === null || score === undefined) return null;
+  if (score >= 75) return "strong_fit";
+  if (score >= 50) return "worth_applying";
+  if (score >= 25) return "long_shot";
+  return "not_a_fit";
+}
 
 export const createSkillInput = z.object({
   name: z.string().trim().min(1).max(120),

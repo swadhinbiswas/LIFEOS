@@ -34,6 +34,13 @@ export const companies = sqliteTable(
     location: text("location"),
     ats_type: text("ats_type"),
     logo_url: text("logo_url"),
+    /** The company's own jobs page, kept apart from an application URL (ADR-114). */
+    career_page: text("career_page"),
+    linkedin: text("linkedin"),
+    /** `cold` | `contacted` | `replied` | `referral` — how this company came to know you. */
+    relationship: text("relationship"),
+    /** Target countries as JSON, e.g. `["Germany","Remote"]` (ADR-114). */
+    target_country: text("target_country").default("[]"),
     /** User's own research notes (tech stack, culture, Glassdoor-style) — never scraped. */
     notes: text("notes"),
     ...timestamps(),
@@ -73,8 +80,33 @@ export const job_applications = sqliteTable(
       .unique()
       .references(() => cards.id, { onDelete: "cascade" }),
     company_id: text("company_id").references(() => companies.id, { onDelete: "set null" }),
+    /**
+     * The person on the other side (ADR-114). `contacts` existed and was linked to nothing, so a
+     * contact could never be attached to the application they were actually discussing.
+     */
+    contact_id: text("contact_id").references(() => contacts.id, { onDelete: "set null" }),
     /** Append-only `[{from, to, at}]` (ADR-044) — the funnel's raw material. */
     stage_history: text("stage_history").notNull().default("[]"),
+    /**
+     * The one thing to do next, in the user's own words (ADR-114). Free text on purpose: "email
+     * Sarah about the referral deadline" and "re-apply after the freeze lifts" are not the same
+     * shape, and a select would force one of them to be wrong.
+     */
+    next_action: text("next_action"),
+    /** When that action is due. Null means "someday", which is a real and common answer. */
+    next_action_due: integer("next_action_due", { mode: "timestamp_ms" }),
+    /** The apply-by deadline, when the posting states one. */
+    apply_by: integer("apply_by", { mode: "timestamp_ms" }),
+    /** When the application was actually sent, distinct from when the row was created. */
+    date_applied: integer("date_applied", { mode: "timestamp_ms" }),
+    /** `junior` | `mid` | `senior` | `not_stated`. */
+    seniority: text("seniority"),
+    /** Where to send it, when the posting names an address. */
+    apply_email: text("apply_email"),
+    /** The posting's requisition id — the one field that makes a duplicate detectable. */
+    req_id: text("req_id"),
+    /** Per-application location: a remote role's country is not the company's HQ. */
+    location: text("location"),
     /** Minor units + ISO code (ADR-044). */
     salary_min: integer("salary_min"),
     salary_max: integer("salary_max"),
@@ -111,17 +143,33 @@ export const interviews = sqliteTable(
     job_application_id: text("job_application_id")
       .notNull()
       .references(() => job_applications.id, { onDelete: "cascade" }),
-    /** `screen` | `tech` | `system_design` | `behavioral` | `final`. */
+    /** `screen` | `tech` | `system_design` | `behavioral` | `final` | `follow_up`. */
     kind: text("kind").notNull(),
     starts_at: integer("starts_at", { mode: "timestamp_ms" }),
     duration_min: integer("duration_min"),
+    /**
+     * When a **follow-up** is due (ADR-114). Distinct from `starts_at` because a follow-up has no
+     * start time — "write to them on Friday" is a task with a due date, and storing it in
+     * `starts_at` would have made it look like a scheduled meeting.
+     */
+    due_at: integer("due_at", { mode: "timestamp_ms" }),
+    /** `planned` | `done` | `needs_follow_up` | `cancelled`. */
+    status: text("status").notNull().default("planned"),
+    /** What actually happened, once it has. */
+    outcome: text("outcome"),
+    /** Prep notes, read before the call rather than written after it. */
+    preparation: text("preparation"),
     /** Interviewers as JSON (name/role), typed at the boundary. */
     interviewers: text("interviewers"),
     feedback: text("feedback"),
     rating: integer("rating"),
     ...timestamps(),
   },
-  (t) => [index("interviews_application_idx").on(t.job_application_id)],
+  (t) => [
+    index("interviews_application_idx").on(t.job_application_id),
+    // The "what do I owe this company" read: due follow-ups across every application.
+    index("interviews_user_due_idx").on(t.user_id, t.due_at),
+  ],
 );
 
 export const offers = sqliteTable(
