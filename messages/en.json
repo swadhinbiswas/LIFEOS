@@ -1258,39 +1258,22 @@
       "faqA5": "Next.js and TypeScript on SQLite (libSQL) with Drizzle, shadcn/ui and Recharts in the UI, and an MCP server over the same services.",
       "builtWith": "Built with"
     },
-    "Demo": {
-      "title": "Demo",
-      "banner": "This is sample data from the research-based seed. Everything is labelled and reversible — sign up to make it your own.",
-      "notSeeded": "The demo has not been seeded yet. Run: pnpm db:seed",
-      "createAccount": "create an account",
-      "briefTitle": "Today",
-      "boardTitle": "Tasks",
-      "jobsTitle": "Job pipeline",
-      "habitsTitle": "Habits",
-      "projectsTitle": "Projects",
-      "goalsTitle": "Goals",
-      "overdue": "overdue",
-      "open": "open"
-    },
     "Onboarding": {
       "title": "Welcome",
       "hint": "This takes about a minute.",
       "step1Title": "What should we call you?",
       "name": "display name",
-      "step2Title": "Start from a profile",
-      "step2Body": "Pick what fits you. Everything it adds is sample data you can edit or delete.",
-      "step3Title": "Choose a starter board",
       "none": "no extra board",
       "back": "back",
       "next": "next",
       "finish": "finish setup",
-      "finishing": "setting up…"
+      "finishing": "setting up…",
+      "step2Title": "Choose a starter board"
     },
     "Templates": {
       "title": "Templates",
       "intro": "Board templates and starter profiles. Create an account to use them.",
       "boardsTitle": "Board templates",
-      "profilesTitle": "Starter profiles",
       "columns": "{count} columns",
       "createAccount": "create an account"
     },

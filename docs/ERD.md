@@ -243,7 +243,7 @@ rebalance job at key length ≥128 (Atlassian LexoRank thresholds).
 pnpm db:generate   # drizzle-kit generate from schema changes
 pnpm db:migrate    # apply to Turso (libSQL) — PITR on, branch first in dev (research (g) §g2)
 pnpm db:studio     # inspect
-pnpm db:seed       # loads docs/research/github-swadhinbiswas.json → is_demo=1 rows,
+# removed (ADR-123): pnpm db:seed loaded docs/research/github-swadhinbiswas.json → is_demo=1 rows,
                    # everything visibly labelled "sample"/"demo", one-click removable (spec §12)
 ```
 

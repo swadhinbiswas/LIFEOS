@@ -10,11 +10,11 @@ wins.
 pnpm install
 cp .env.example .env      # fill in the values you need; never commit .env
 pnpm db:migrate
-pnpm db:seed              # the demo workspace (pnpm db:seed -- --reset to rebuild)
 pnpm dev
 ```
 
-Sign in with the seeded demo account, or create your own. Every integration is optional; the app
+Create your own account, or run `pnpm tsx scripts/dev-login.ts` for a local one with a known
+password. Every integration is optional; the app
 runs with the defaults in `.env.example`.
 
 ## The gate

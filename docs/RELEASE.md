@@ -52,7 +52,7 @@ items are honest gaps with the reason and the next step.
 - [x] Version tagged `v0.1.0` locally (not pushed)
 - [ ] Deploy to a Vercel preview — **not done here**: no credentials in this environment. Next: set
       the env vars from `docs/SELF_HOSTING.md` and run `vercel` with the repo's build command.
-- [x] Demo mode works without an account (`/demo`), and a new user reaches a populated dashboard in
+- [x] Removed: the public `/demo` preview and the sample-data option (ADR-123). A new user reaches an empty dashboard in
       under 60 seconds (e2e).
 
 ## Sign-off

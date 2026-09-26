@@ -2843,6 +2843,38 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   faking a Better Auth session in Redis is not what broke — the divergence between a valid session and a
   missing row is, and that is the part worth pinning.
 
+## ADR-123 — The demo workspace is removed: no public preview, and no invented history for a new account
+
+- **Status:** accepted (2026-09-26)
+- **Context:** the app was pointed at a real Turso database and a public read-only `/demo` preview
+  was published, showing a seeded workspace to anyone who opened the URL. The operator does not
+  want it: there is no public site to drive traffic to, and a preview of invented personal data is
+  a liability rather than a feature. Removing it turned out to reach further than the route.
+- **Decision:**
+  - **`/demo`, `src/server/seed`, `config/seed-profiles`, `db:seed` and the `Pages.Demo`
+    translations are gone.** The public preview had no audience, and the code that fed it was
+    only reachable from the preview.
+  - **Onboarding loses its "start from a profile" step.** It was the only other caller of
+    `seedUser`, so the module could not be deleted without it. This is the part worth arguing
+    about, and the reason the decision is recorded rather than just done: a new account now starts
+    empty. That is the honest default. Showing someone a month of plausible tasks, focus sessions
+    and habit logs the moment they sign up means showing them data that is not theirs, and the
+    project's own rules forbid presenting invented facts as real. Someone who has just created an
+    account has not done a month's work.
+  - **The profile radios and the templates page's profile panel were removed rather than left
+    in place.** Both would have kept looking meaningful while doing nothing, which is the dead
+    control the project rules forbid. The board-template picker is untouched: it still works, and
+    it creates a real board.
+  - **`scripts/dev-login.ts` keeps its actual job** — minting a verified local account with a known
+    password — and loses the seeding. The `db:admin` script added earlier in the same session is
+    deleted as a duplicate of it: the original already did the job, and having two scripts that
+    create a login is how you end up with two accounts and one stale password.
+- **Consequences:** a new account starts empty, which is the intended reading of a personal OS.
+  Populating a workspace with real data means using the app, or restoring the seed deliberately — the
+  ADR log and the research file it was built from are untouched, so this is reversible. The axe
+  sweep loses `/demo` and the acceptance run no longer seeds, which also makes it faster and
+  means no test can pass by depending on invented data.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

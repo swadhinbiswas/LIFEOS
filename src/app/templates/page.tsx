@@ -3,7 +3,6 @@ import { getTranslations } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
 import { BOARD_TEMPLATES } from "@/config/board-templates";
-import { SEED_PROFILES } from "@/config/seed-profiles";
 
 import { pageMetadata } from "@/lib/page-metadata";
 
@@ -32,17 +31,6 @@ export default async function TemplatesPage() {
         >
           {t("createAccount")}
         </Link>
-
-        <Panel title={t("profilesTitle")} hint={`${SEED_PROFILES.length}`}>
-          <ul className="flex flex-col gap-2 font-mono text-xs">
-            {SEED_PROFILES.map((profile) => (
-              <li key={profile.id} className="flex flex-col">
-                <span>{profile.name}</span>
-                <span className="text-[10px] text-muted-foreground">{profile.description}</span>
-              </li>
-            ))}
-          </ul>
-        </Panel>
 
         <Panel title={t("boardsTitle")} hint={`${BOARD_TEMPLATES.length}`}>
           <ul className="grid gap-2 sm:grid-cols-2">

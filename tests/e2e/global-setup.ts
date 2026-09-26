@@ -67,7 +67,4 @@ export default function globalSetup(): void {
   // drizzle.config.ts resolves DATABASE_URL through src/env.ts, whose loader never
   // overrides an already-set variable — so this migrates the E2E database, not the dev one.
   execSync("pnpm exec drizzle-kit migrate", { env: childEnv, stdio: "inherit" });
-
-  // Seed the public demo workspace so /demo shows real sample data (spec §12, ADR-084).
-  execSync("pnpm db:seed -- --reset", { env: childEnv, stdio: "inherit" });
 }

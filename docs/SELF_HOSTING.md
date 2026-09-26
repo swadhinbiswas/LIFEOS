@@ -108,8 +108,9 @@ Call them with `Authorization: Bearer $CRON_SECRET`; without the secret the rout
 
 ## Demo data
 
-`pnpm db:seed` builds a labelled sample workspace from the committed research file; `--reset`
-rebuilds it. It is safe to leave unseeded — `/demo` then reports that it has not been seeded.
+New accounts start empty. There is no sample-data option: a personal OS that fills a fresh account
+with a month of invented tasks, focus sessions and habit logs is showing you data that is not yours
+(ADR-123).
 
 ## Health and backups
 

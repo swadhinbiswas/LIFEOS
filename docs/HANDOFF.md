@@ -24,7 +24,7 @@ not decisions (those are in `docs/DECISIONS.md`).
 - Security review found one acceptance-worthy gap (webhook secrets stored plaintext) and one
   moderate dev-only dependency advisory; both are recorded with next steps rather than hidden.
 
-## Phase 8 — onboarding, templates, seed, landing (complete)
+## Phase 8 — onboarding, templates, seed, landing (complete; seed + /demo removed in ADR-123)
 
 - Seed (ADR-084): `pnpm db:seed [--reset]` builds a demo workspace from the committed research file —
   real repositories/languages (labelled `sample`), fictional employers suffixed `(sample)`, habits

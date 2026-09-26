@@ -50,15 +50,51 @@ SELF_HOSTING,RELEASE}.md`, CHANGELOG, Dockerfile, `/api/health`, dependabot + au
 
 ## Commands
 
-The standing gate for every chunk is:
+### The gate is tiered — match it to the blast radius
+
+Running everything after every edit is not diligence, it is latency: a full round is several minutes
+of waiting and it trains the reviewer to ignore the output. What matters is that a change is verified
+_in proportion to what it can break_, and that anything genuinely at risk is actually covered.
+
+**Always, on every edit** — these are seconds, not minutes:
 
 ```bash
-pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build
+pnpm typecheck && pnpm format:check
 ```
 
-plus `pnpm e2e` (Playwright, includes the axe sweep) for anything that touches a route. Each phase
-ends with: run the gate → commit (conventional format, e.g. `feat(boards): …`) → print a short
-status report.
+**When the change touches logic, a service, a schema, or a boundary:**
+
+```bash
+pnpm lint && pnpm test        # 643 unit tests, ~20s
+```
+
+**When the change touches a route, a component the specs drive, or an auth/env path:** run the specs
+that cover _those_ routes, not the sweep.
+
+```bash
+pnpm exec playwright test --config=playwright.local.ts tests/e2e/boards.spec.ts
+```
+
+Match the spec to the change. Fixing the inbox does not require re-running the career suite. If a
+spec file does not exist for what you changed, that is a gap worth filling — not a reason to run the
+other eighty.
+
+**Only when asked, at a phase boundary, or before a release:** the full sweep.
+
+```bash
+pnpm build && pnpm exec playwright test --config=playwright.local.ts
+```
+
+**Never skip a check because a change looks small.** A one-line edit to a query, a role, a cookie or
+an env key reaches further than a one-line edit to a class string. The tiering is about _which_
+checks, decided by what the change can break — not about skipping verification. If you cannot say
+which tier a change falls in, it is the higher one.
+
+Report honestly what was run and what was not. "Unit green, e2e not run" is a useful sentence; a
+green tick for a suite that was quietly skipped is a lie.
+
+Each phase ends with: run the gate → commit (conventional format, e.g. `feat(boards): …`) → print a
+short status report.
 
 ## Conventions
 

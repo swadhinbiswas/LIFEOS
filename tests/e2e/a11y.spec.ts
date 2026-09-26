@@ -51,7 +51,6 @@ const PRESETS = [
 
 const AUTH_ROUTES = [
   "/",
-  "/demo",
   "/templates",
   "/sign-in",
   "/sign-up",
