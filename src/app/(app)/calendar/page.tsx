@@ -2,6 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 
+import { cn } from "cn";
+
+import { controlBoxed } from "@/components/tui/controls";
 import { Panel } from "@/components/tui/panel";
 import { PageHeader } from "@/components/tui/page-header";
 import { dayKeyInTimeZone } from "@/lib/timezone";
@@ -28,10 +31,15 @@ export async function generateMetadata() {
 }
 
 /** Plain-token controls only: opacity modifiers make axe sample pixels (ADR-041). */
-const control =
-  "rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 font-mono text-[10px] text-foreground hover:bg-accent hover:text-accent-foreground";
-const activeControl =
-  "rounded-[var(--radius)] border border-ring bg-accent px-2 py-0.5 font-mono text-[10px] text-accent-foreground";
+// Both are the boxed tier from the shared vocabulary, so they carry its 24px floor and its
+// focus-visible ring. The active variant only changes the fill and border colour, which keeps the
+// two states the same size — a tab that resizes when you select it is a tab that moves under the
+// pointer (ADR-117).
+const control = controlBoxed;
+const activeControl = cn(
+  controlBoxed,
+  "border-ring bg-accent text-accent-foreground hover:border-ring",
+);
 
 type PageProps = { searchParams: Promise<{ view?: string; d?: string }> };
 

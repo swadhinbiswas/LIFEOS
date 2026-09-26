@@ -6,9 +6,8 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { logHealthAction } from "@/server/health/actions";
+import { controlField } from "@/components/tui/controls";
 
-const field =
-  "border border-border bg-background px-1.5 py-0.5 font-mono text-xs outline-none placeholder:text-muted-foreground";
 const label = "flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase";
 
 /** Values are logged in the unit the user chose; nothing is converted behind their back. */
@@ -53,7 +52,7 @@ export function HealthForm({ defaultDate }: { defaultDate: string }) {
         <select
           value={kind}
           onChange={(e) => setKind(e.target.value)}
-          className={field}
+          className={controlField}
           aria-label={t("ariaKind")}
         >
           {["sleep", "workout", "water", "mood", "weight"].map((option) => (
@@ -70,7 +69,7 @@ export function HealthForm({ defaultDate }: { defaultDate: string }) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="8"
-          className={`${field} w-20`}
+          className={`${controlField} w-20`}
           aria-label={t("ariaValue")}
         />
       </label>
@@ -80,7 +79,7 @@ export function HealthForm({ defaultDate }: { defaultDate: string }) {
           value={unit}
           onChange={(e) => setUnit(e.target.value)}
           placeholder="h"
-          className={`${field} w-20`}
+          className={`${controlField} w-20`}
           aria-label={t("ariaUnit")}
         />
       </label>
@@ -90,7 +89,7 @@ export function HealthForm({ defaultDate }: { defaultDate: string }) {
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          className={field}
+          className={controlField}
           aria-label={t("ariaDate")}
         />
       </label>

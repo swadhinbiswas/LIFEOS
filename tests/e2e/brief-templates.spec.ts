@@ -58,7 +58,9 @@ test("dashboard: a starter layout replaces the widgets on show", async ({ page }
 
   await page.reload();
   await open.click();
-  const checked = page.locator('[data-slot="layout-controls"] input[type="checkbox"]:checked');
+  const checked = page.locator(
+    '[data-slot="layout-controls"] [role="checkbox"][aria-checked="true"]',
+  );
   await expect(checked).toHaveCount(5);
   await expect(page.getByRole("heading", { name: "open card queue", level: 2 })).toBeVisible();
 

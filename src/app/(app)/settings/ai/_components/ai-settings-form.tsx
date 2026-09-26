@@ -4,12 +4,14 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { TuiCheckbox } from "@/components/tui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import type { CredentialSummary } from "@/server/ai/credentials";
 import { AI_PROVIDERS, type AiPrefs, type AiProvider } from "@/server/ai/prefs";
 import { AUTO_APPROVABLE_TOOLS } from "@/server/ai/tools/catalog";
 import type { UsageSummary } from "@/server/ai/usage";
+import { controlField } from "@/components/tui/controls";
 import {
   deleteCredentialAction,
   saveAiPrefsAction,
@@ -24,8 +26,6 @@ const PROVIDER_LABELS: Record<AiProvider, string> = {
   openrouter: "OpenRouter",
   compatible: "Ollama / OpenAI-compatible",
 };
-
-const field = "h-9 border border-border bg-background px-2 font-mono text-xs";
 
 export function AiSettingsForm({
   prefs,
@@ -114,7 +114,7 @@ export function AiSettingsForm({
             id="ai-provider"
             value={provider}
             onChange={(event) => setProvider(event.target.value as AiProvider)}
-            className={field}
+            className={controlField}
           >
             {AI_PROVIDERS.map((candidate) => (
               <option key={candidate} value={candidate}>
@@ -130,7 +130,7 @@ export function AiSettingsForm({
             value={model}
             onChange={(event) => setModel(event.target.value)}
             placeholder={t("modelPlaceholder")}
-            className={`${field} w-56`}
+            className={`${controlField} w-56`}
           />
         </div>
       </div>
@@ -145,7 +145,7 @@ export function AiSettingsForm({
             onChange={(event) => setKey(event.target.value)}
             placeholder={encryptionOn ? t("keyPlaceholder") : t("encryptionOff")}
             disabled={!encryptionOn}
-            className={`${field} w-72`}
+            className={`${controlField} w-72`}
             autoComplete="off"
           />
           <Button
@@ -180,46 +180,44 @@ export function AiSettingsForm({
         </legend>
         <p className="font-mono text-[10px] text-muted-foreground">{t("autoApproveHint")}</p>
         {AUTO_APPROVABLE_TOOLS.map((tool) => (
-          <label key={tool} className="flex items-center gap-2 font-mono text-xs">
-            <input
-              type="checkbox"
-              checked={autoApprove.includes(tool)}
-              onChange={(event) =>
-                setAutoApprove((current) =>
-                  event.target.checked
-                    ? [...new Set([...current, tool])]
-                    : current.filter((name) => name !== tool),
-                )
-              }
-            />
+          <TuiCheckbox
+            key={tool}
+            checked={autoApprove.includes(tool)}
+            onCheckedChange={(checked) =>
+              setAutoApprove((current) =>
+                checked
+                  ? [...new Set([...current, tool])]
+                  : current.filter((name) => name !== tool),
+              )
+            }
+            className="normal-case"
+          >
             {tool}
-          </label>
+          </TuiCheckbox>
         ))}
       </fieldset>
 
       <div className="flex flex-wrap items-center gap-4">
-        <label className="flex items-center gap-2 font-mono text-xs">
-          <input
-            type="checkbox"
-            checked={memoryEnabled}
-            onChange={(event) => setMemoryEnabled(event.target.checked)}
-          />
+        <TuiCheckbox
+          checked={memoryEnabled}
+          onCheckedChange={(checked) => setMemoryEnabled(checked)}
+          className="normal-case"
+        >
           {t("memory")}
-        </label>
-        <label className="flex items-center gap-2 font-mono text-xs">
-          <input
-            type="checkbox"
-            checked={fridayReview}
-            onChange={(event) => setFridayReview(event.target.checked)}
-          />
+        </TuiCheckbox>
+        <TuiCheckbox
+          checked={fridayReview}
+          onCheckedChange={(checked) => setFridayReview(checked)}
+          className="normal-case"
+        >
           {t("fridayReview")}
-        </label>
+        </TuiCheckbox>
         <label className="flex items-center gap-2 font-mono text-xs">
           {t("morningBrief")}
           <select
             value={morningBrief}
             onChange={(event) => setMorningBrief(event.target.value as AiPrefs["morningBrief"])}
-            className={field}
+            className={controlField}
           >
             <option value="off">{t("off")}</option>
             <option value="in_app">{t("inApp")}</option>

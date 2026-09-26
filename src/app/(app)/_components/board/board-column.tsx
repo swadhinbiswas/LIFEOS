@@ -112,7 +112,7 @@ export function BoardColumn({
         </span>
         <button
           type="button"
-          className="font-mono text-xs text-muted-foreground hover:text-foreground"
+          className="inline-grid min-h-6 min-w-6 place-items-center rounded-[var(--radius)] font-mono text-xs text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           aria-expanded={!collapsed}
           onClick={() => setCollapsed((value) => !value)}
         >

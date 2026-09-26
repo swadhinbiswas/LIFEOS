@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { TuiCheckbox } from "@/components/tui/checkbox";
 import { Button } from "@/components/ui/button";
 import {
   createWebhookAction,
@@ -108,14 +109,14 @@ export function Webhooks({
         <fieldset className="flex flex-wrap items-center gap-3 font-mono text-[10px]">
           <legend className="sr-only">{t("events")}</legend>
           {EVENTS.map((event) => (
-            <label key={event} className="flex items-center gap-1">
-              <input
-                type="checkbox"
-                checked={events.includes(event)}
-                onChange={() => toggleEvent(event)}
-              />
+            <TuiCheckbox
+              key={event}
+              checked={events.includes(event)}
+              className="normal-case"
+              onCheckedChange={() => toggleEvent(event)}
+            >
               {event}
-            </label>
+            </TuiCheckbox>
           ))}
         </fieldset>
         <div className="flex items-center gap-2">

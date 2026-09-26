@@ -2697,6 +2697,59 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   _after_ a capture rather than checking the header at rest, because a count that is correct
   only on load is not correct.
 
+## ADR-119 — The control-size floor is measured in a browser, because nothing else can see it
+
+- **Status:** accepted (2026-09-26)
+- **Context:** asked to make the UI comfortable to look at across the whole app. The first useful
+  move was to measure instead of eyeball, and the measurement contradicted the obvious
+  diagnosis. Contrast was never the problem: `themes.test.ts` already verifies every preset against
+  WCAG with real relative luminance (4.5:1 body, 3:1 UI), and midnight is off-white on off-black,
+  which is the standard mitigation for dark-mode halation. What _was_ measurable: across ten
+  pages, **86 of 445 interactive targets (19%) were under the 24px WCAG 2.2 SC 2.5.8 minimum**,
+  and 122 (27%) under the 28px floor spec §4.4 sets for itself. Every one of the undersized ones
+  was 19px tall, and every one came from the same `py-0.5 text-[10px]` chip geometry. The worst
+  page was `/career/jobs` at 26 of 72.
+
+  The specific defects: every form input in the app was 22px, because **nine files each declared
+  their own `field` class string**; the dashboard's reorder arrows were 7x16px; its visibility
+  checkboxes were 13x13px raw `<input type=checkbox>` when a 24px `TuiCheckbox` already existed
+  in the app; and the column collapse toggle was a bare 7px glyph button.
+
+- **Decision:**
+  - **The floor lives in the shared vocabulary, not in each caller.** `controlGhost`,
+    `chipState`, `controlBoxed` and the new `controlField` all declare a `min-h-6` or `min-h-7`,
+    so the floor propagates to every page that adopts the tier. The nine private `field` copies
+    and the remaining hand-rolled `control` copies are gone: they were the _mechanism_ of the
+    regression, not an incidental detail of it.
+  - **The guard is a browser measurement, because SC 2.5.8 is not machine-checkable.** `axe` covers
+    the automated WCAG criteria and does not cover target size, which is precisely why the app
+    could state a 28px floor in its own spec and miss it on every page. `tests/e2e/target-size.spec.ts`
+    measures the rendered box of every button, link, checkbox, switch, radio, select and input on
+    twelve pages and fails on anything under 24px. It applies WCAG's inline exception (a link inside
+    a sentence is bounded by its line box) and skips zero-size elements, which cannot be targeted.
+    A rule that is written down, unenforced, and unmeasurable is a comment; this one is a test.
+  - **`min-h-6` on the ghost reserves geometry that `py-0.5` does not.** For the dashboard tabs the
+    19px was the line box, not the padding, so the fix is `inline-flex min-h-6 items-center`
+    rather than more padding. Padding alone would have looked like it worked in the source and
+    changed nothing in the browser.
+- **Consequences:** all twelve measured pages now pass with nothing under 24px, and the number is
+  enforced on every run instead of asserted in a document. Raising 19px chips to 24px makes the
+  board slightly taller per row, which is a real trade: less content above the fold in exchange
+  for targets that can be hit, and more vertical structure for the eye to track. That is the
+  trade the app's own §4.4 already asked for.
+
+  One caveat worth recording, because it is the failure mode of any page-list guard: the first
+  version of the spec covered ten pages and passed, while three settings files still held 13x13
+  native checkboxes it never looked at. A list of pages is only as good as its membership, and
+  "the test is green" is not the same as "the app is fixed". The settings pages are in the list
+  now, the remaining native checkboxes are gone, and the spec's page list is the thing to revisit
+  whenever a feature is added.
+
+  The known remaining issue is _typographic_, not
+  geometric: 299 uses of `text-[10px]` against 4 of `text-base` means the app has no type scale,
+  which is a design decision about how the whole thing should read and is deliberately not
+  changed here on the strength of a passing test.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

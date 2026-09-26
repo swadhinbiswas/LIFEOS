@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { TuiCheckbox } from "@/components/tui/checkbox";
 import { Button } from "@/components/ui/button";
 import { createApiKeyAction, revokeApiKeyAction } from "@/server/api-keys/actions";
 
@@ -83,14 +84,14 @@ export function ApiKeys({ keys }: { keys: KeySummary[] }) {
         <fieldset className="flex flex-wrap items-center gap-3 font-mono text-[10px]">
           <legend className="sr-only">{t("scopes")}</legend>
           {SCOPES.map((scope) => (
-            <label key={scope} className="flex items-center gap-1">
-              <input
-                type="checkbox"
-                checked={scopes.includes(scope)}
-                onChange={() => toggleScope(scope)}
-              />
+            <TuiCheckbox
+              key={scope}
+              checked={scopes.includes(scope)}
+              className="normal-case"
+              onCheckedChange={() => toggleScope(scope)}
+            >
               {scope}
-            </label>
+            </TuiCheckbox>
           ))}
         </fieldset>
         <div className="flex items-center gap-2">

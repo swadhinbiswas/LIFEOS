@@ -6,9 +6,8 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { addQuestionAction, addStoryAction } from "@/server/career/actions";
+import { controlField } from "@/components/tui/controls";
 
-const field =
-  "border border-border bg-background px-1.5 py-0.5 font-mono text-xs outline-none placeholder:text-muted-foreground";
 const label = "flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase";
 
 export function AddQuestionForm() {
@@ -50,7 +49,7 @@ export function AddQuestionForm() {
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
           placeholder={t("questionPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("question")}
         />
       </label>
@@ -60,7 +59,7 @@ export function AddQuestionForm() {
           value={category}
           onChange={(event) => setCategory(event.target.value)}
           placeholder={t("topicPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("topic")}
         />
       </label>
@@ -69,7 +68,7 @@ export function AddQuestionForm() {
         <select
           value={difficulty}
           onChange={(event) => setDifficulty(event.target.value)}
-          className={field}
+          className={controlField}
           aria-label={t("difficulty")}
         >
           <option value="">—</option>
@@ -130,7 +129,7 @@ export function AddStoryForm() {
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder={t("headlinePlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("headline")}
         />
       </label>
@@ -140,7 +139,7 @@ export function AddStoryForm() {
           value={result}
           onChange={(event) => setResult(event.target.value)}
           placeholder={t("resultPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("result")}
         />
       </label>

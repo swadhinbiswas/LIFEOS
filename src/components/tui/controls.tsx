@@ -26,7 +26,7 @@ export const controlGhost = cn(
   // element the box grew by 2px and nudged every sibling to its right, which is exactly the sort of
   // small instability that makes a dense toolbar feel restless. Transparent is invisible, so the
   // control is still borderless in every sense a reader can see.
-  "rounded-[var(--radius)] border border-transparent px-2 py-0.5 font-mono text-[10px]",
+  "min-h-6 rounded-[var(--radius)] border border-transparent px-2 py-0.5 font-mono text-[10px]",
   "text-muted-foreground",
   "hover:border-border hover:bg-background hover:text-foreground",
   "focus-visible:border-ring focus-visible:bg-background focus-visible:text-foreground",
@@ -43,16 +43,32 @@ export const controlGhost = cn(
  */
 export const chipState = (active: boolean) =>
   cn(
-    "rounded-[var(--radius)] px-2 py-0.5 font-mono text-[10px]",
+    "min-h-6 rounded-[var(--radius)] px-2 py-0.5 font-mono text-[10px]",
     active
       ? "bg-primary text-primary-foreground"
       : "text-muted-foreground hover:bg-accent hover:text-foreground",
     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
   );
 
+/**
+ * The input tier: a bare text field, for the forms that used to each declare their own.
+ *
+ * Nine files had a private `field` class string and every one of them rendered a 22px-tall input,
+ * which is under the 24px WCAG minimum and under this app's own 28px floor. The fix is not to
+ * retype nine class strings; it is to notice that they were all the same control. Plain tokens
+ * only, no opacity modifiers (ADR-041: axe cannot resolve them behind `color-mix`).
+ */
+export const controlField = cn(
+  "min-h-7 rounded-[var(--radius)] border border-border bg-background px-2 py-1",
+  "font-mono text-xs text-foreground",
+  "outline-none placeholder:text-muted-foreground",
+  "focus-visible:border-ring",
+  "disabled:cursor-not-allowed disabled:opacity-50",
+);
+
 /** The persistent tier: a control that stays boxed because it is in constant use. */
 export const controlBoxed = cn(
-  "rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 font-mono text-[10px]",
+  "min-h-6 rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 font-mono text-[10px]",
   "text-foreground",
   "hover:border-ring",
   "focus-visible:border-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",

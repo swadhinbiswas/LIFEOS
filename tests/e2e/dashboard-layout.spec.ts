@@ -26,10 +26,22 @@ test("dashboard: widget visibility and order persist", async ({ page }) => {
   await openCustomize(page);
 
   // Hide the habit-streak widget, then reload: it stays hidden.
-  await page.getByLabel("show habit streaks").uncheck();
+  //
+  // `click()` + `aria-checked` rather than Playwright's `uncheck()`/`toBeChecked()`: those are
+  // written against `<input type="checkbox">`, and the app's checkbox is a `role="checkbox"` button
+  // (ADR-116) so that the platform handles the keyboard. `aria-checked` is the state the control
+  // actually publishes, which is the thing worth asserting anyway.
+  const streaks = page.getByRole("checkbox", { name: "show habit streaks" });
+  await expect(streaks).toHaveAttribute("aria-checked", "true");
+  await streaks.click();
+  await expect(streaks).toHaveAttribute("aria-checked", "false");
   await expect(page.locator('[data-slot="layout-controls"]')).toContainText("layout saved");
   await page.reload();
-  await expect(page.getByLabel("show habit streaks")).not.toBeChecked();
+  await openCustomize(page);
+  await expect(page.getByRole("checkbox", { name: "show habit streaks" })).toHaveAttribute(
+    "aria-checked",
+    "false",
+  );
   await expect(page.getByRole("heading", { name: "habit streaks", level: 2 })).toHaveCount(0);
 
   // Move the KPI cards down one slot, then reload: the order is kept.

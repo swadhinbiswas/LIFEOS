@@ -2,13 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { cn } from "cn";
+
+import { controlBoxed } from "@/components/tui/controls";
 import { useState, useTransition } from "react";
 
 import type { DashboardVariant } from "@/config/dashboard-widgets";
 import { applyTemplateAction } from "@/server/dashboard/actions";
-
-const control =
-  "rounded-[var(--radius)] border border-border bg-background px-2 py-1 font-mono text-[10px] hover:bg-accent hover:text-accent-foreground disabled:opacity-50";
 
 export interface TemplateOption {
   id: string;
@@ -55,7 +55,7 @@ export function TemplatePicker({
           <li key={template.id}>
             <button
               type="button"
-              className={control}
+              className={cn(controlBoxed, "disabled:opacity-50")}
               disabled={pending}
               aria-pressed={applied === template.id}
               data-slot="template-button"

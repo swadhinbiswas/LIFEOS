@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { cn } from "cn";
 
-import { controlGhost } from "@/components/tui/controls";
+import { controlField, controlGhost } from "@/components/tui/controls";
 import {
   createSavedViewAction,
   deleteSavedViewAction,
@@ -93,7 +93,7 @@ export function SavedViews({
         id="saved-view-select"
         value={selected}
         onChange={(event) => apply(event.target.value)}
-        className="max-w-32 rounded-[var(--radius)] border border-border bg-background px-1 py-0.5 font-mono text-[10px] text-foreground focus-visible:border-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className={cn(controlField, "max-w-32 px-1 py-0.5 text-[10px] focus-visible:border-ring")}
       >
         <option value="">{views.isLoading ? t("loading") : t("savedViews")}</option>
         {(views.data ?? []).map((view) => (

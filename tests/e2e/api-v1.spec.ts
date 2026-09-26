@@ -18,7 +18,11 @@ test("rest: a UI-created key pushes a task that appears on the board", async ({
   await page.goto("/settings/integrations");
 
   await page.getByLabel("key name").fill("curl key");
-  await page.getByRole("checkbox", { name: "write:tasks" }).check();
+  // click + aria-checked rather than Playwright's check(): the app's checkbox is a
+  // `role="checkbox"` button (ADR-116), and the state it publishes is aria-checked.
+  const scope = page.getByRole("checkbox", { name: "write:tasks" });
+  await scope.click();
+  await expect(scope).toHaveAttribute("aria-checked", "true");
   await page.getByRole("button", { name: "create key" }).click();
 
   const token = await page.locator('[data-slot="api-key-plaintext"] code').innerText();

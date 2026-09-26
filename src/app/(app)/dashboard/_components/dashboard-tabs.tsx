@@ -39,7 +39,7 @@ export function DashboardTabs({
           href={`/dashboard?variant=${option}`}
           aria-current={option === variant ? "page" : undefined}
           className={cn(
-            "rounded-[var(--radius)] px-2 py-0.5 transition-colors",
+            "inline-flex min-h-6 items-center rounded-[var(--radius)] px-2 py-0.5 transition-colors",
             option === variant
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",

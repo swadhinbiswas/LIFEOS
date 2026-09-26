@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { controlField } from "@/components/tui/controls";
 import {
   createBookAction,
   createCourseAction,
@@ -12,8 +13,6 @@ import {
   setCourseProgressAction,
 } from "@/server/learning/actions";
 
-const field =
-  "border border-border bg-background px-1.5 py-0.5 font-mono text-xs outline-none placeholder:text-muted-foreground";
 const label = "flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase";
 
 function useSubmit() {
@@ -72,7 +71,7 @@ export function AddCourseForm() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={t("coursePlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("ariaCourseTitle")}
         />
       </label>
@@ -82,7 +81,7 @@ export function AddCourseForm() {
           value={provider}
           onChange={(e) => setProvider(e.target.value)}
           placeholder={t("providerPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("ariaCourseProvider")}
         />
       </label>
@@ -167,7 +166,7 @@ export function AddBookForm() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={t("bookTitlePlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("ariaBookTitle")}
         />
       </label>
@@ -177,7 +176,7 @@ export function AddBookForm() {
           value={author}
           onChange={(e) => setAuthor(e.target.value)}
           placeholder={t("authorPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("ariaBookAuthor")}
         />
       </label>
@@ -209,7 +208,7 @@ export function BookStatus({ bookId, status }: { bookId: string; status: string 
           }),
         )
       }
-      className={field}
+      className={controlField}
       aria-label={t("bookStatus")}
     >
       {["want", "reading", "finished", "abandoned"].map((option) => (

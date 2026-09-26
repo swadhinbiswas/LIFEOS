@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 import { QUICK_FILTERS, type QuickFilterId } from "@/config/board-filters";
 import { BOARD_VIEWS, type BoardView } from "@/config/boards";
 
-import { chipState } from "@/components/tui/controls";
+import { cn } from "cn";
+
+import { chipState, controlField } from "@/components/tui/controls";
 
 export type GroupBy = "none" | "column" | "priority";
 export const GROUP_OPTIONS: { id: GroupBy; label: string }[] = [
@@ -121,7 +123,7 @@ export function BoardToolbar({
         value={query}
         onChange={(event) => onQuery(event.target.value)}
         placeholder={t("filterCards")}
-        className="w-40 rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 font-mono text-[10px] outline-none placeholder:text-muted-foreground focus-visible:border-ring"
+        className={cn(controlField, "w-40 px-2 py-0.5 text-[10px] focus-visible:border-ring")}
       />
 
       <p

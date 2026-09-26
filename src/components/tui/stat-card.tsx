@@ -75,7 +75,10 @@ export function StatCard({
           <AsciiMeter value={meter} label={label} cells={14} showValue={false} />
         ) : null}
         {href ? (
-          <Link href={href} className="mt-auto font-mono text-[10px] text-primary hover:underline">
+          <Link
+            href={href}
+            className="mt-auto inline-flex min-h-6 items-center font-mono text-[10px] text-primary hover:underline"
+          >
             {linkLabel ?? "open list"}
           </Link>
         ) : null}

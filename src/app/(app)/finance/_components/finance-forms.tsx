@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { controlField } from "@/components/tui/controls";
 import {
   addTransactionAction,
   createAccountAction,
@@ -12,8 +13,6 @@ import {
   setBudgetAction,
 } from "@/server/finance/actions";
 
-const field =
-  "border border-border bg-background px-1.5 py-0.5 font-mono text-xs outline-none placeholder:text-muted-foreground";
 const label = "flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase";
 
 function useSubmit() {
@@ -80,7 +79,7 @@ export function AddAccountForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder={t("accountPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("accountName")}
         />
       </label>
@@ -90,7 +89,7 @@ export function AddAccountForm() {
           value={currency}
           onChange={(e) => setCurrency(e.target.value)}
           maxLength={3}
-          className={`${field} w-16`}
+          className={`${controlField} w-16`}
           aria-label={t("accountCurrency")}
         />
       </label>
@@ -101,7 +100,7 @@ export function AddAccountForm() {
           value={opening}
           onChange={(e) => setOpening(e.target.value)}
           placeholder="0.00"
-          className={`${field} w-24`}
+          className={`${controlField} w-24`}
           aria-label={t("opening")}
         />
       </label>
@@ -166,7 +165,7 @@ export function AddTransactionForm({
         <select
           value={accountId}
           onChange={(e) => setAccountId(e.target.value)}
-          className={field}
+          className={controlField}
           aria-label={t("transactionAccount")}
         >
           {accounts.map((account) => (
@@ -181,7 +180,7 @@ export function AddTransactionForm({
         <select
           value={direction}
           onChange={(e) => setDirection(e.target.value as "expense" | "income")}
-          className={field}
+          className={controlField}
           aria-label={t("transactionType")}
         >
           <option value="expense">{t("expense")}</option>
@@ -195,7 +194,7 @@ export function AddTransactionForm({
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="12.50"
-          className={`${field} w-24`}
+          className={`${controlField} w-24`}
           aria-label={t("transactionAmount")}
         />
       </label>
@@ -205,7 +204,7 @@ export function AddTransactionForm({
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           placeholder={t("categoryPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("transactionCategory")}
         />
       </label>
@@ -256,7 +255,7 @@ export function AddBudgetForm() {
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           placeholder={t("categoryPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("budgetCategory")}
         />
       </label>
@@ -267,7 +266,7 @@ export function AddBudgetForm() {
           value={limit}
           onChange={(e) => setLimit(e.target.value)}
           placeholder="300.00"
-          className={`${field} w-24`}
+          className={`${controlField} w-24`}
           aria-label={t("budgetLimit")}
         />
       </label>
@@ -277,7 +276,7 @@ export function AddBudgetForm() {
           value={currency}
           onChange={(e) => setCurrency(e.target.value)}
           maxLength={3}
-          className={`${field} w-16`}
+          className={`${controlField} w-16`}
           aria-label={t("budgetCurrency")}
         />
       </label>
@@ -333,7 +332,7 @@ export function AddSubscriptionForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder={t("subscriptionPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("subscriptionName")}
         />
       </label>
@@ -344,7 +343,7 @@ export function AddSubscriptionForm() {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="9.99"
-          className={`${field} w-24`}
+          className={`${controlField} w-24`}
           aria-label={t("subscriptionAmount")}
         />
       </label>
@@ -354,7 +353,7 @@ export function AddSubscriptionForm() {
           value={currency}
           onChange={(e) => setCurrency(e.target.value)}
           maxLength={3}
-          className={`${field} w-16`}
+          className={`${controlField} w-16`}
           aria-label={t("subscriptionCurrency")}
         />
       </label>
@@ -363,7 +362,7 @@ export function AddSubscriptionForm() {
         <select
           value={cadence}
           onChange={(e) => setCadence(e.target.value as "month" | "year")}
-          className={field}
+          className={controlField}
           aria-label={t("subscriptionCadence")}
         >
           <option value="month">{t("monthly")}</option>
@@ -376,7 +375,7 @@ export function AddSubscriptionForm() {
           type="date"
           value={renews}
           onChange={(e) => setRenews(e.target.value)}
-          className={field}
+          className={controlField}
           aria-label={t("subscriptionRenewal")}
         />
       </label>

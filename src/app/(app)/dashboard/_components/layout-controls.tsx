@@ -2,13 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { cn } from "cn";
+
+import { TuiCheckbox } from "@/components/tui/checkbox";
+import { controlBoxed } from "@/components/tui/controls";
 import { useState } from "react";
 
 import type { LayoutInput } from "@/config/dashboard-widgets";
 import { saveLayoutAction } from "@/server/dashboard/actions";
-
-const control =
-  "rounded-[var(--radius)] border border-border bg-background px-1.5 py-0.5 font-mono text-[10px] hover:bg-accent hover:text-accent-foreground";
 
 /**
  * Widget visibility and order (ADR-046). Reordering uses explicit buttons rather than drag: the
@@ -55,25 +56,25 @@ export function LayoutControls({
       <ul className="flex flex-col gap-1">
         {widgets.map((widget, index) => (
           <li key={widget.id} className="flex flex-wrap items-center gap-2 font-mono text-xs">
-            <label className="flex min-w-48 items-center gap-2">
-              <input
-                type="checkbox"
-                checked={widget.visible}
-                disabled={busy}
-                aria-label={t("show", { name: labels[widget.id] ?? widget.id })}
-                onChange={(event) =>
-                  void persist(
-                    widgets.map((entry) =>
-                      entry.id === widget.id ? { ...entry, visible: event.target.checked } : entry,
-                    ),
-                  )
-                }
-              />
+            <TuiCheckbox
+              checked={widget.visible}
+              // Restored deliberately: the label says what the control *does* ("show habit
+              // pulse"), which is a better name than the bare widget label, and the visible text
+              // is still contained in it so WCAG's label-in-name holds.
+              aria-label={t("show", { name: labels[widget.id] ?? widget.id })}
+              onCheckedChange={(visible) =>
+                void persist(
+                  widgets.map((entry) => (entry.id === widget.id ? { ...entry, visible } : entry)),
+                )
+              }
+              disabled={busy}
+              className="min-w-48 normal-case"
+            >
               {labels[widget.id] ?? widget.id}
-            </label>
+            </TuiCheckbox>
             <button
               type="button"
-              className={control}
+              className={cn(controlBoxed, "min-w-7 px-1")}
               disabled={busy || index === 0}
               onClick={() => move(index, -1)}
               aria-label={t("moveUp", { name: labels[widget.id] ?? widget.id })}
@@ -82,7 +83,7 @@ export function LayoutControls({
             </button>
             <button
               type="button"
-              className={control}
+              className={cn(controlBoxed, "min-w-7 px-1")}
               disabled={busy || index === widgets.length - 1}
               onClick={() => move(index, 1)}
               aria-label={t("moveDown", { name: labels[widget.id] ?? widget.id })}

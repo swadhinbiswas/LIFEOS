@@ -572,7 +572,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             {t("openShareHint", { total: career?.funnel.total ?? 0 })}
           </span>
         </div>
-        <Link href="/career/jobs" className="font-mono text-[10px] text-primary hover:underline">
+        <Link
+          href="/career/jobs"
+          className="inline-flex min-h-6 items-center font-mono text-[10px] text-primary hover:underline"
+        >
           {t("openList")}
         </Link>
       </div>
@@ -705,7 +708,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <p className="font-mono text-[10px] text-muted-foreground">
           {t("reviewsLogged", { count: reviews.length })}
         </p>
-        <Link href="/reviews" className="font-mono text-[10px] text-primary hover:underline">
+        <Link
+          href="/reviews"
+          className="inline-flex min-h-6 items-center font-mono text-[10px] text-primary hover:underline"
+        >
           {t("openList")}
         </Link>
       </div>
@@ -858,7 +864,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         ) : null}
         <Link
           href="/settings/activity"
-          className="font-mono text-[10px] text-primary hover:underline"
+          className="inline-flex min-h-6 items-center font-mono text-[10px] text-primary hover:underline"
         >
           {t("connectionSettings")}
         </Link>

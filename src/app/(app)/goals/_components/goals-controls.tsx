@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { controlField } from "@/components/tui/controls";
 import {
   createGoalAction,
   createKeyResultAction,
@@ -12,8 +13,6 @@ import {
   updateGoalAction,
 } from "@/server/goals/actions";
 
-const field =
-  "border border-border bg-background px-1.5 py-0.5 font-mono text-xs outline-none placeholder:text-muted-foreground";
 const label = "flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase";
 
 function useSubmit() {
@@ -65,7 +64,7 @@ export function AddGoalForm() {
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder={t("objectivePlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("ariaObjective")}
         />
       </label>
@@ -75,7 +74,7 @@ export function AddGoalForm() {
           value={period}
           onChange={(event) => setPeriod(event.target.value)}
           placeholder="2026-Q4"
-          className={`${field} w-28`}
+          className={`${controlField} w-28`}
           aria-label={t("ariaCycle")}
         />
       </label>
@@ -128,7 +127,7 @@ export function AddKeyResultForm({ goalId }: { goalId: string }) {
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder={t("keyResultPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("ariaKeyResult")}
         />
       </label>
@@ -137,7 +136,7 @@ export function AddKeyResultForm({ goalId }: { goalId: string }) {
         <select
           value={kind}
           onChange={(event) => setKind(event.target.value as "number" | "percent" | "linked")}
-          className={field}
+          className={controlField}
           aria-label={t("ariaMeasure")}
         >
           <option value="number">{t("number")}</option>
@@ -153,7 +152,7 @@ export function AddKeyResultForm({ goalId }: { goalId: string }) {
             value={target}
             onChange={(event) => setTarget(event.target.value)}
             placeholder={kind === "percent" ? "100" : "4"}
-            className={`${field} w-20`}
+            className={`${controlField} w-20`}
             aria-label={t("ariaTarget")}
           />
         </label>

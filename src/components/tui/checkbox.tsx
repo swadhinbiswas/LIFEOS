@@ -20,6 +20,10 @@ import { cn } from "cn";
  *   would not. The earlier native checkboxes on this page were roughly that small.
  * - **Forced colours**: the glyph is text in `currentColor`, so Windows High Contrast renders it
  *   without a single custom property.
+ *
+ * The label carries §4.1's uppercase monospace idiom, which suits a *label* and does not suit an
+ * identifier — an API scope or a webhook event name would render `WRITE:TASKS`. Pass
+ * `className="normal-case"` for those.
  */
 export interface TuiCheckboxProps extends Omit<
   React.ComponentProps<"button">,

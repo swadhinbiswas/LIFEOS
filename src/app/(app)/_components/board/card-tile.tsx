@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useTranslations } from "next-intl";
 
 import type { Card } from "@/server/boards";
+import { controlGhost } from "@/components/tui/controls";
 import { cn } from "@/lib/utils";
 
 export type MoveDirection = "up" | "down" | "left" | "right";
@@ -17,8 +18,7 @@ const PRIORITY_TONE: Record<string, string> = {
 };
 
 /** Plain-token control (ADR-041): opacity modifiers would make axe sample pixels. */
-const control =
-  "rounded-[var(--radius)] px-1.5 py-0.5 font-mono text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground";
+const cardAction = cn(controlGhost, "px-1.5 text-xs");
 
 export function CardTile({
   card,
@@ -120,7 +120,7 @@ export function CardTile({
         {onToggleSelect ? (
           <button
             type="button"
-            className={control}
+            className={cardAction}
             aria-pressed={selected ?? false}
             onClick={() => onToggleSelect(card.id)}
             aria-label={t("select", { title: card.title })}
@@ -130,7 +130,7 @@ export function CardTile({
         ) : null}
         <button
           type="button"
-          className={control}
+          className={cardAction}
           onClick={() => onMove(card.id, "up")}
           aria-label={t("moveUp", { title: card.title })}
         >
@@ -138,7 +138,7 @@ export function CardTile({
         </button>
         <button
           type="button"
-          className={control}
+          className={cardAction}
           onClick={() => onMove(card.id, "down")}
           aria-label={t("moveDown", { title: card.title })}
         >
@@ -146,7 +146,7 @@ export function CardTile({
         </button>
         <button
           type="button"
-          className={control}
+          className={cardAction}
           onClick={() => onMove(card.id, "left")}
           aria-label={t("moveLeft", { title: card.title })}
         >
@@ -154,7 +154,7 @@ export function CardTile({
         </button>
         <button
           type="button"
-          className={control}
+          className={cardAction}
           onClick={() => onMove(card.id, "right")}
           aria-label={t("moveRight", { title: card.title })}
         >
@@ -162,7 +162,7 @@ export function CardTile({
         </button>
         <button
           type="button"
-          className={cn(control, "ml-auto")}
+          className={cn(cardAction, "ml-auto")}
           onClick={() => onOpen?.(card.id)}
           aria-label={t("openCard", { title: card.title })}
           hidden={!onOpen}

@@ -6,9 +6,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { addInterviewAction, addOfferAction } from "@/server/career/actions";
-
-const field =
-  "border border-border bg-background px-1.5 py-0.5 font-mono text-xs outline-none placeholder:text-muted-foreground";
+import { controlField } from "@/components/tui/controls";
 
 /** Interview log entry (spec §6.3 "per-round records"). */
 export function AddInterviewForm({ applicationId }: { applicationId: string }) {
@@ -49,7 +47,7 @@ export function AddInterviewForm({ applicationId }: { applicationId: string }) {
         <select
           value={kind}
           onChange={(event) => setKind(event.target.value)}
-          className={field}
+          className={controlField}
           aria-label={t("interviewRound")}
         >
           {["screen", "tech", "system_design", "behavioral", "final"].map((value) => (
@@ -65,7 +63,7 @@ export function AddInterviewForm({ applicationId }: { applicationId: string }) {
           type="date"
           value={when}
           onChange={(event) => setWhen(event.target.value)}
-          className={field}
+          className={controlField}
           aria-label={t("interviewDate")}
         />
       </label>
@@ -75,7 +73,7 @@ export function AddInterviewForm({ applicationId }: { applicationId: string }) {
           value={feedback}
           onChange={(event) => setFeedback(event.target.value)}
           placeholder={t("feedbackPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("interviewFeedback")}
         />
       </label>
@@ -139,7 +137,7 @@ export function AddOfferForm({ applicationId }: { applicationId: string }) {
           value={base}
           onChange={(event) => setBase(event.target.value)}
           placeholder="60000"
-          className={field}
+          className={controlField}
           aria-label={t("offerBase")}
         />
       </label>
@@ -150,7 +148,7 @@ export function AddOfferForm({ applicationId }: { applicationId: string }) {
           value={bonus}
           onChange={(event) => setBonus(event.target.value)}
           placeholder="5000"
-          className={field}
+          className={controlField}
           aria-label={t("offerBonus")}
         />
       </label>
@@ -161,7 +159,7 @@ export function AddOfferForm({ applicationId }: { applicationId: string }) {
           onChange={(event) => setCurrency(event.target.value)}
           placeholder="EUR"
           maxLength={3}
-          className={field}
+          className={controlField}
           aria-label={t("offerCurrency")}
         />
       </label>

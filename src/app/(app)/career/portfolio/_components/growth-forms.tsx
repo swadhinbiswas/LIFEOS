@@ -11,9 +11,8 @@ import {
   createSkillAction,
 } from "@/server/career/actions";
 import type { ActionResult } from "@/server/boards/actions";
+import { controlField } from "@/components/tui/controls";
 
-const field =
-  "border border-border bg-background px-1.5 py-0.5 font-mono text-xs outline-none placeholder:text-muted-foreground";
 const label = "flex flex-col gap-1 font-mono text-[10px] text-muted-foreground uppercase";
 
 /** One submit lifecycle per form: these are the user's own entries, never samples. */
@@ -74,7 +73,7 @@ export function AddProjectForm() {
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder={t("placeholderName")}
-          className={field}
+          className={controlField}
           aria-label={t("projectName")}
         />
       </label>
@@ -84,7 +83,7 @@ export function AddProjectForm() {
           value={url}
           onChange={(event) => setUrl(event.target.value)}
           placeholder="https://github.com/…"
-          className={field}
+          className={controlField}
           aria-label={t("projectUrl")}
         />
       </label>
@@ -94,7 +93,7 @@ export function AddProjectForm() {
           value={language}
           onChange={(event) => setLanguage(event.target.value)}
           placeholder="Go"
-          className={field}
+          className={controlField}
           aria-label={t("projectLanguage")}
         />
       </label>
@@ -144,7 +143,7 @@ export function AddSkillForm() {
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder="Kubernetes"
-          className={field}
+          className={controlField}
           aria-label={t("skillName")}
         />
       </label>
@@ -155,7 +154,7 @@ export function AddSkillForm() {
           value={level}
           onChange={(event) => setLevel(event.target.value)}
           placeholder="4"
-          className={field}
+          className={controlField}
           aria-label={t("skillLevel")}
         />
       </label>
@@ -204,7 +203,7 @@ export function AddAchievementForm() {
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder={t("winPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("achievementTitle")}
         />
       </label>
@@ -214,7 +213,7 @@ export function AddAchievementForm() {
           value={impact}
           onChange={(event) => setImpact(event.target.value)}
           placeholder={t("impactPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("achievementImpact")}
         />
       </label>

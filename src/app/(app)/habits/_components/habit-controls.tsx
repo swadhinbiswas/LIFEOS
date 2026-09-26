@@ -6,9 +6,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { createHabitAction, logHabitAction } from "@/server/habits/actions";
-
-const field =
-  "border border-border bg-background px-1.5 py-0.5 font-mono text-xs outline-none placeholder:text-muted-foreground";
+import { controlField } from "@/components/tui/controls";
 
 /** Gentle by design: the only feedback is the streak going up (spec §6.4: never shame). */
 export function HabitToggle({
@@ -121,7 +119,7 @@ export function AddHabitForm() {
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder={t("habitPlaceholder")}
-          className={field}
+          className={controlField}
           aria-label={t("ariaName")}
         />
       </label>
@@ -130,7 +128,7 @@ export function AddHabitForm() {
         <select
           value={kind}
           onChange={(event) => setKind(event.target.value as "binary" | "numeric")}
-          className={field}
+          className={controlField}
           aria-label={t("ariaType")}
         >
           <option value="binary">{t("yesNo")}</option>
@@ -144,7 +142,7 @@ export function AddHabitForm() {
           value={target}
           onChange={(event) => setTarget(event.target.value)}
           placeholder="8"
-          className={`${field} w-20`}
+          className={`${controlField} w-20`}
           aria-label={t("ariaTarget")}
         />
       </label>
@@ -154,7 +152,7 @@ export function AddHabitForm() {
           value={unit}
           onChange={(event) => setUnit(event.target.value)}
           placeholder={t("unitPlaceholder")}
-          className={`${field} w-24`}
+          className={`${controlField} w-24`}
           aria-label={t("ariaUnit")}
         />
       </label>

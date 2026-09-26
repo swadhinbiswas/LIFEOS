@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { globSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
@@ -8,6 +9,15 @@ import { describe, expect, it } from "vitest";
  */
 
 const tui = (name: string) => readFileSync(`src/components/tui/${name}`, "utf8");
+const read2 = (path: string) => readFileSync(path, "utf8");
+
+/** The source of one `export const`, up to the next one. */
+const tier = (name: string): string => {
+  const source = tui("controls.tsx");
+  const start = source.indexOf(`export const ${name}`);
+  const next = source.indexOf("export const ", start + 1);
+  return source.slice(start, next === -1 ? undefined : next);
+};
 const board = (name: string) => readFileSync(`src/app/(app)/_components/board/${name}`, "utf8");
 
 /** Unprefixed class tokens between two markers. A `:` prefix is a Tailwind variant, so
@@ -61,6 +71,16 @@ describe("control vocabulary (adr-117)", () => {
     expect(group).not.toMatch(/[\u2500-\u257F]/u);
   });
 
+  it("floors every tier at 24px, the wcag minimum", () => {
+    // Measured: 86 of 445 targets across ten pages were 19px, all from one chip geometry.
+    // `min-h-6` is 24px; the field tier is deliberately `min-h-7` (28px, the app's own §4.4 floor).
+    // The invariant is the number, not the literal class.
+    for (const name of ["controlGhost", "chipState", "controlBoxed", "controlField"]) {
+      const steps = Number(/min-h-(\d)/u.exec(tier(name))?.[1] ?? 0);
+      expect(steps, `${name} declares no min-height`).toBeGreaterThanOrEqual(6);
+    }
+  });
+
   it("is defined once, and used by both features", () => {
     for (const file of [
       "board-toolbar",
@@ -72,9 +92,12 @@ describe("control vocabulary (adr-117)", () => {
       expect(board(`${file}.tsx`), file).toContain("tui/controls");
     }
     expect(board("inbox-list.tsx")).toMatch(/className=\{controlGhost\}/u);
-    // A local copy is how the five drifted in the first place.
-    for (const file of ["board-toolbar", "inbox-list", "saved-views", "board-utils"]) {
+    // A local copy is how the five drifted in the first place, and the ninth (`field`) is why
+    // every form input in the app was 22px.
+    for (const file of ["board-toolbar", "inbox-list", "saved-views", "board-utils", "card-tile"]) {
       expect(board(`${file}.tsx`), file).not.toMatch(/const control =/u);
     }
+    const forms = globSync("src/app/**/[a-z]*.tsx").filter((f) => /const field =/u.test(read2(f)));
+    expect(forms, "files still declaring their own field class").toEqual([]);
   });
 });
