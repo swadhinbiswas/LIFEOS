@@ -2628,6 +2628,49 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   because there was nothing to pre-fill — that is the real reason this was a wizard in the spec and a
   form in the app.
 
+## ADR-117 — Board chrome gets a two-tier hierarchy, because 20 equal-weight boxes are what tires the eye
+
+- **Status:** accepted (2026-09-26)
+- **Context:** `/tasks` was reported as painful to look at. The instinct is to reach for contrast,
+  and that would be the wrong cure: midnight is `#c0caf5` on `#1a1b26`, about 11:1, and the board
+  components already lean on `text-muted-foreground` (49 uses against 8 `text-foreground`). The
+  tokens are fine. What is actually on the screen is **twenty bordered controls, in three
+  ungrouped rows, above the content** — the view switch, five quick filters, a search box and a count; then
+  saved views, a name field, save, delete, undo and redo; then export, csv, json and trash. Eight
+  cards live below that. So the page spent ~660 px of the viewport on chrome in which every
+  element had the same weight as every other, and the reader had to hunt to find the work.
+  Grouping was absent too: the counts in _plan my day_ render as the run-on string
+  `OVERVIEW 0 DUE TODAY 0 INBOX 1 PLANNED 65 MIN`, because four `<dt>`/`<dd>` pairs sit in a
+  `dl` with `gap-4` and nothing that reads as a division.
+- **Decision:**
+  - **Two tiers of control, and only one of them is a box.** What you touch constantly — the view
+    switch, the quick filters, the search field — keeps its border. What you touch
+    occasionally — saved views, undo/redo, export, trash — becomes a borderless
+    muted label that grows a border and a background on hover and focus. This is the vim/tmux
+    idiom the spec's visual language is already built on (§4.1): persistent mode, path and hints,
+    with the rest reachable from the keyboard rather than worn into the pixels. It removes about
+    eleven rectangles from the resting state and costs nothing to discover, because the controls
+    keep their labels.
+  - **An inactive filter chip is not a box either.** Five always-visible bordered chips for
+    filters that are mostly _off_ is the loudest thing on the page and carries the least
+    information. Off is now muted text with a transparent border; on is the `primary` fill. State
+    is still carried by the fill, so `aria-pressed` and the screenshot agree.
+  - **The three rows become one bar, with hairline rules between the groups.** Three stacked
+    full-width rows of chips read as one undifferentiated mass; one bar with `│` between the
+    groups reads as three things, and wraps only when the viewport genuinely cannot hold it.
+  - **The shared classes live in one place.** The ghost treatment was about to be written four
+    times — once per row — and four copies of a class string is how they drift apart, which is
+    exactly how the current three rows drifted apart in the first place.
+  - **The plan-my-day counts get separators**, so four numbers stop reading as one sentence.
+- **Consequences:** the board's resting state is roughly a third less ink, and the cards start
+  about a third of the way up the viewport instead of halfway down. Nothing is hidden: no control
+  moved behind a menu or a shortcut, and every label is still on screen, because a control that
+  only appears on hover is unusable on touch. The hover treatment is progressive enhancement — `hover:` and
+  `focus-visible:` both raise the border, so keyboard and touch users get the same affordance
+  that a mouse user does. This is deliberately _not_ a change to the card and column borders:
+  those delimit the content, which is the one job a border is good at, and removing them would
+  cost more than it saves.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

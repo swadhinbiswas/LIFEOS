@@ -4,7 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { cn } from "cn";
+
+import { controlGhost } from "./controls";
 import {
   createSavedViewAction,
   deleteSavedViewAction,
@@ -83,13 +85,15 @@ export function SavedViews({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-1 font-mono text-[10px] text-muted-foreground">
-      <label htmlFor="saved-view-select">{t("views")}</label>
+    <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
+      <label htmlFor="saved-view-select" className="font-mono text-[10px] text-muted-foreground">
+        {t("views")}
+      </label>
       <select
         id="saved-view-select"
         value={selected}
         onChange={(event) => apply(event.target.value)}
-        className="border border-border bg-background px-1 py-0.5 font-mono text-[10px]"
+        className="max-w-32 rounded-[var(--radius)] border border-border bg-background px-1 py-0.5 font-mono text-[10px] text-foreground focus-visible:border-ring focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         <option value="">{views.isLoading ? t("loading") : t("savedViews")}</option>
         {(views.data ?? []).map((view) => (
@@ -109,26 +113,28 @@ export function SavedViews({
         value={name}
         onChange={(event) => setName(event.target.value)}
         placeholder={t("nameView")}
-        className="h-6 w-40 border border-border bg-background px-1 font-mono text-[10px] text-foreground outline-none placeholder:text-muted-foreground"
+        className="h-6 w-32 rounded-[var(--radius)] border border-border bg-background px-1 font-mono text-[10px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:border-ring"
       />
-      <Button
+      <button
         type="button"
-        size="sm"
-        variant="outline"
+        className={cn(controlGhost, "text-foreground")}
         disabled={save.isPending || name.trim() === ""}
         onClick={() => save.mutate(name.trim())}
       >
         {t("saveView")}
-      </Button>
-      <Button
+      </button>
+      <button
         type="button"
-        size="sm"
-        variant="outline"
+        className={cn(
+          controlGhost,
+          "text-foreground",
+          "hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive",
+        )}
         disabled={remove.isPending || selected === ""}
         onClick={() => remove.mutate(selected)}
       >
         {t("deleteView")}
-      </Button>
+      </button>
       {error ? (
         <span role="alert" className="text-destructive">
           {error}

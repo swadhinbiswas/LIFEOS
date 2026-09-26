@@ -16,6 +16,8 @@ import { useTranslations } from "next-intl";
 import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
 
+import { cn } from "cn";
+
 import {
   cardMatchesFilter,
   parseQuickFilters,
@@ -26,6 +28,7 @@ import type { BoardPayload, Card } from "@/server/boards";
 import { BoardColumn } from "./board-column";
 import { BoardToolbar, type GroupBy } from "./board-toolbar";
 import { BoardUtils } from "./board-utils";
+import { controlBoxed, controlGhost, ToolbarGroup } from "./controls";
 import { CardSheet } from "./card-sheet";
 import { type MoveDirection } from "./card-tile";
 import { SavedViews } from "./saved-views";
@@ -281,20 +284,25 @@ export function BoardView({
         showGroup={view === "table"}
       />
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <SavedViews
-          scope={payload.board.is_system ? "tasks" : "board"}
-          current={currentQuery}
-          onApply={applyView}
-        />
-        <div className="flex flex-wrap items-center gap-1 font-mono text-[10px]">
+      {/* Rows two and three, folded into the bar (ADR-117). They were a second and third
+          full-width row of identically-weighted boxes, which read as one undifferentiated mass;
+          the hairline rules now say "these are different kinds of control" instead. Undo and redo
+          lose their boxes outright — they are occasional, and `controlGhost` raises the border on
+          hover and focus so nothing is hidden from a keyboard or a touch screen. */}
+      <div className="flex flex-wrap items-center gap-x-1 gap-y-1">
+        <ToolbarGroup ruled>
+          <SavedViews
+            scope={payload.board.is_system ? "tasks" : "board"}
+            current={currentQuery}
+            onApply={applyView}
+          />
           <button
             type="button"
             data-slot="undo"
             data-undo-count={undoCount}
             disabled={!canUndo}
             onClick={undo}
-            className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 text-foreground hover:bg-accent hover:text-accent-foreground disabled:text-muted-foreground"
+            className={controlGhost}
           >
             {t("undoButton")}
           </button>
@@ -304,14 +312,13 @@ export function BoardView({
             data-redo-count={redoCount}
             disabled={!canRedo}
             onClick={redo}
-            className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 text-foreground hover:bg-accent hover:text-accent-foreground disabled:text-muted-foreground"
+            className={controlGhost}
           >
             {t("redoButton")}
           </button>
-        </div>
+        </ToolbarGroup>
+        <BoardUtils boardId={boardId} />
       </div>
-
-      <BoardUtils boardId={boardId} />
 
       {selectedIds.length > 0 ? (
         <div
@@ -335,25 +342,20 @@ export function BoardView({
               </option>
             ))}
           </select>
-          <button
-            type="button"
-            className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 hover:bg-accent hover:text-accent-foreground"
-            onClick={() => void bulkRemove(true)}
-          >
+          <button type="button" className={controlBoxed} onClick={() => void bulkRemove(true)}>
             {t("archive")}
           </button>
           <button
             type="button"
-            className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 hover:bg-accent hover:text-accent-foreground"
+            className={cn(
+              controlBoxed,
+              "hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive",
+            )}
             onClick={() => void bulkRemove(false)}
           >
             {t("delete")}
           </button>
-          <button
-            type="button"
-            className="rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 hover:bg-accent hover:text-accent-foreground"
-            onClick={() => setSelectedIds([])}
-          >
+          <button type="button" className={controlBoxed} onClick={() => setSelectedIds([])}>
             {t("clear")}
           </button>
         </div>

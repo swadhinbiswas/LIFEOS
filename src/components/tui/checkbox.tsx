@@ -54,7 +54,7 @@ export function TuiCheckbox({
         "font-mono text-[10px] tracking-wider uppercase",
         // The ring is never removed: spec §4.1 requires a visible focus ring for keyboard users.
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
-        "hover:bg-accent/60",
+        "hover:bg-accent",
         checked ? "text-foreground" : "text-muted-foreground",
         className,
       )}

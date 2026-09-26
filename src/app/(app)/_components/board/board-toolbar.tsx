@@ -4,7 +4,8 @@ import { useTranslations } from "next-intl";
 
 import { QUICK_FILTERS, type QuickFilterId } from "@/config/board-filters";
 import { BOARD_VIEWS, type BoardView } from "@/config/boards";
-import { cn } from "@/lib/utils";
+
+import { chipState } from "./controls";
 
 export type GroupBy = "none" | "column" | "priority";
 export const GROUP_OPTIONS: { id: GroupBy; label: string }[] = [
@@ -27,14 +28,6 @@ const GROUP_KEYS: Record<GroupBy, string> = {
   column: "groupByColumn",
   priority: "groupByPriority",
 };
-
-const chip = (active: boolean) =>
-  cn(
-    "rounded-[var(--radius)] border px-2 py-0.5 font-mono text-[10px]",
-    active
-      ? "border-primary bg-primary text-primary-foreground"
-      : "border-border bg-background text-foreground",
-  );
 
 /**
  * Board toolbar (spec §6.1): view switch, quick-filter chips, grouping and the text filter.
@@ -68,7 +61,7 @@ export function BoardToolbar({
 }) {
   const t = useTranslations("Pages.Board");
   return (
-    <div className="flex flex-wrap items-center gap-3" data-slot="board-toolbar">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1" data-slot="board-toolbar">
       <fieldset className="flex items-center gap-1">
         <legend className="sr-only">{t("view")}</legend>
         {BOARD_VIEWS.filter((candidate) => candidate === "kanban" || candidate === "table").map(
@@ -77,7 +70,7 @@ export function BoardToolbar({
               key={candidate}
               type="button"
               aria-pressed={view === candidate}
-              className={chip(view === candidate)}
+              className={chipState(view === candidate)}
               onClick={() => onView(candidate)}
             >
               {t(candidate)}
@@ -86,10 +79,6 @@ export function BoardToolbar({
         )}
       </fieldset>
 
-      <span className="font-mono text-[10px] text-muted-foreground" aria-hidden="true">
-        |
-      </span>
-
       <fieldset className="flex flex-wrap items-center gap-1">
         <legend className="sr-only">{t("quickFilters")}</legend>
         {QUICK_FILTERS.map((filter) => (
@@ -97,7 +86,7 @@ export function BoardToolbar({
             key={filter.id}
             type="button"
             aria-pressed={filters.includes(filter.id)}
-            className={chip(filters.includes(filter.id))}
+            className={chipState(filters.includes(filter.id))}
             onClick={() => onToggleFilter(filter.id)}
           >
             {t(FILTER_KEYS[filter.id])}
@@ -132,10 +121,14 @@ export function BoardToolbar({
         value={query}
         onChange={(event) => onQuery(event.target.value)}
         placeholder={t("filterCards")}
-        className="w-48 border border-border bg-background px-2 py-0.5 font-mono text-xs outline-none"
+        className="w-40 rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 font-mono text-[10px] outline-none placeholder:text-muted-foreground focus-visible:border-ring"
       />
 
-      <p className="font-mono text-[10px] text-muted-foreground" role="status">
+      <p
+        className="ml-auto pl-2 font-mono text-[10px] text-muted-foreground"
+        role="status"
+        data-slot="card-count"
+      >
         {t("cardCount", { count })}
         {syncing ? t("syncing") : ""}
       </p>

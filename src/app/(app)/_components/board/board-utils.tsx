@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { cn } from "cn";
+
 import { Panel } from "@/components/tui/panel";
 import type { Card } from "@/server/boards";
 import {
@@ -13,11 +15,8 @@ import {
   restoreCardAction,
 } from "@/server/boards/actions";
 
+import { controlBoxed, controlGhost, ToolbarGroup } from "./controls";
 import { boardQueryKey } from "./use-board";
-
-/** Plain-token control (ADR-041): opacity modifiers make axe sample pixels. */
-const control =
-  "rounded-[var(--radius)] border border-border bg-background px-2 py-0.5 font-mono text-[10px] text-foreground hover:bg-accent hover:text-accent-foreground";
 
 /**
  * Board utilities (spec §6.1): CSV/JSON export and the 30-day Trash. Restoring is the same
@@ -72,19 +71,19 @@ export function BoardUtils({ boardId }: { boardId: string }) {
   const items = trash.data ?? [];
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-1 font-mono text-[10px] text-muted-foreground">
-        <span>{t("export")}</span>
+    <>
+      <ToolbarGroup ruled>
+        <span className="font-mono text-[10px] text-muted-foreground">{t("export")}</span>
         {/* Real links: these are downloads, so a router navigation would be wrong. */}
         <a
-          className={control}
+          className={controlGhost}
           href={`/api/boards/${boardId}/export?format=csv`}
           download={`${boardId}.csv`}
         >
           {t("csv")}
         </a>
         <a
-          className={control}
+          className={controlGhost}
           href={`/api/boards/${boardId}/export?format=json`}
           download={`${boardId}.json`}
         >
@@ -92,13 +91,13 @@ export function BoardUtils({ boardId }: { boardId: string }) {
         </a>
         <button
           type="button"
-          className={control}
+          className={controlGhost}
           aria-expanded={open}
           onClick={() => setOpen((value) => !value)}
         >
           {t("trashButton", { count: items.length })}
         </button>
-      </div>
+      </ToolbarGroup>
 
       {open ? (
         <Panel title={t("trashTitle")} hint={`${items.length}`}>
@@ -119,7 +118,7 @@ export function BoardUtils({ boardId }: { boardId: string }) {
                   </span>
                   <button
                     type="button"
-                    className={control}
+                    className={controlBoxed}
                     onClick={() => restore.mutate(card.id)}
                     aria-label={t("restoreAria", { title: card.title })}
                   >
@@ -127,7 +126,10 @@ export function BoardUtils({ boardId }: { boardId: string }) {
                   </button>
                   <button
                     type="button"
-                    className={control}
+                    className={cn(
+                      controlBoxed,
+                      "hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive",
+                    )}
                     onClick={() => purgeOne.mutate(card.id)}
                     aria-label={t("deleteForeverAria", { title: card.title })}
                   >
@@ -140,7 +142,10 @@ export function BoardUtils({ boardId }: { boardId: string }) {
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              className={control}
+              className={cn(
+                controlGhost,
+                "border border-border text-foreground hover:border-destructive/50 hover:bg-destructive/10 hover:text-destructive",
+              )}
               disabled={purgeOld.isPending}
               onClick={() => purgeOld.mutate()}
             >
@@ -150,6 +155,6 @@ export function BoardUtils({ boardId }: { boardId: string }) {
           </div>
         </Panel>
       ) : null}
-    </div>
+    </>
   );
 }

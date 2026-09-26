@@ -5,9 +5,13 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { cn } from "cn";
+
 import { Panel } from "@/components/tui/panel";
 import { Button } from "@/components/ui/button";
 import { carryOverAction } from "@/server/boards/actions";
+
+import { ToolbarGroup } from "./controls";
 import type { DailyBrief } from "@/server/boards/brief";
 
 /**
@@ -61,30 +65,51 @@ export function PlanMyDay({ boardId, brief }: { boardId: string; brief: DailyBri
 
   return (
     <Panel title={t("planMyDay")} hint={t("openCards", { count: brief.openCards })}>
-      <div className="flex flex-col gap-2 text-xs">
-        <dl className="flex flex-wrap gap-4 font-mono text-[10px] uppercase">
-          <div className="flex items-center gap-1">
+      <div className="flex flex-col gap-2.5 text-xs">
+        {/* Four counts in a `dl` with only `gap-4` between them rendered as the run-on string
+            `OVERVIEW 0 DUE TODAY 0 INBOX 1 PLANNED 65 MIN`: the numbers had nothing to divide
+            them, so the eye read one sentence. Each pair is now its own group with a hairline
+            rule, and the only count that gets colour is the one that means something is wrong
+            (ADR-117). A `dl` is still the right element here — the relation is real, and the
+            dividers are decoration, so they are `aria-hidden` rather than announced. */}
+        <dl
+          className="flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase"
+          data-slot="plan-counts"
+        >
+          <div className="flex items-center gap-1.5">
             <dt className="text-muted-foreground">{t("overdue")}</dt>
-            <dd className={overdue > 0 ? "text-warning" : "text-muted-foreground"}>{overdue}</dd>
-          </div>
-          <div className="flex items-center gap-1">
-            <dt className="text-muted-foreground">{t("dueToday")}</dt>
-            <dd className="text-muted-foreground">{brief.dueToday.length}</dd>
-          </div>
-          <div className="flex items-center gap-1">
-            <dt className="text-muted-foreground">{t("inbox")}</dt>
-            <dd className="text-muted-foreground">{brief.inbox.length}</dd>
-          </div>
-          <div className="flex items-center gap-1">
-            <dt className="text-muted-foreground">{t("planned")}</dt>
-            <dd className="text-muted-foreground tabular-nums">
-              {brief.estimatedMinutesToday} min
+            <dd
+              className={cn(
+                "tabular-nums",
+                overdue > 0 ? "font-medium text-warning" : "text-muted-foreground",
+              )}
+            >
+              {overdue}
             </dd>
           </div>
+          <ToolbarGroup ruled className="gap-x-1.5">
+            <dt className="text-muted-foreground">{t("dueToday")}</dt>
+            <dd className="tabular-nums text-muted-foreground">{brief.dueToday.length}</dd>
+          </ToolbarGroup>
+          <ToolbarGroup ruled className="gap-x-1.5">
+            <dt className="text-muted-foreground">{t("inbox")}</dt>
+            <dd className="tabular-nums text-muted-foreground">{brief.inbox.length}</dd>
+          </ToolbarGroup>
+          <ToolbarGroup ruled className="gap-x-1.5">
+            <dt className="text-muted-foreground">{t("planned")}</dt>
+            <dd className="tabular-nums text-muted-foreground">
+              {brief.estimatedMinutesToday} min
+            </dd>
+          </ToolbarGroup>
         </dl>
 
-        <div>
-          <p className="font-mono text-[10px] text-muted-foreground uppercase">{t("top3")}</p>
+        <div className="border-t border-border pt-2">
+          {/* Plain token, no opacity modifier: axe cannot resolve `color-mix` behind a
+              `/70`, falls back to sampling pixels, and reports a false contrast failure
+              (ADR-041). The rule above this line carries the hierarchy instead. */}
+          <p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+            {t("top3")}
+          </p>
           {brief.top.length === 0 ? (
             <p className="font-mono text-xs text-muted-foreground">{t("nothingOpen")}</p>
           ) : (
@@ -93,7 +118,7 @@ export function PlanMyDay({ boardId, brief }: { boardId: string; brief: DailyBri
                 <li key={card.id}>
                   <button
                     type="button"
-                    className="font-mono text-xs hover:text-primary"
+                    className="text-left font-mono text-xs text-foreground/90 hover:text-primary"
                     onClick={() => router.push(`/tasks?card=${card.id}`)}
                   >
                     {card.priority ? `[${card.priority}] ` : ""}
