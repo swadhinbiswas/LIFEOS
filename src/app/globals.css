@@ -466,8 +466,6 @@ html[data-text-weight] :is(h1, h2, h3, h4, h5, h6, strong, b, th) {
  * the shadow disappear at each end exactly when there is nothing more that way. The *shadows* are
  * attached `scroll`, so they stay pinned to the edges of the panel. No JavaScript, no measurement,
  * and no reflow when the data changes.
- */
-* and no reflow when the data changes.
  *
  * The edge colour is `muted-foreground` mixed down rather than `--border`: a border token is drawn
  * to be *almost* invisible next to the surface, which is right for a 1px rule and useless for a

@@ -62,6 +62,13 @@ _in proportion to what it can break_, and that anything genuinely at risk is act
 pnpm typecheck && pnpm format:check
 ```
 
+**When the change touches a `.css` file:** nothing else in the gate can see a stylesheet. `prettier`
+does not reformat comment prose, `format:check` passes, and `pnpm build` prints "Compiled
+successfully" from a warm cache without compiling. A comment block split by a mis-anchored edit sat
+in `globals.css` through a full green gate and only surfaced in the dev server. `pnpm test` now
+compiles every stylesheet with the same compiler Next uses (`src/app/globals-css.test.ts`) — but note
+that `postcss.parse` is **not** a substitute; it accepted the broken file.
+
 **When the change touches logic, a service, a schema, or a boundary:**
 
 ```bash

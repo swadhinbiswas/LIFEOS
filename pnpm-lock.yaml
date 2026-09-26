@@ -204,6 +204,9 @@ importers:
       jsdom:
         specifier: 30.1.1
         version: 30.1.1(@noble/hashes@2.4.0)
+      lightningcss:
+        specifier: 1.33.0
+        version: 1.33.0
       lint-staged:
         specifier: 17.5.1
         version: 17.5.1
