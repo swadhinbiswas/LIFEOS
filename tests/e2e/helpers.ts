@@ -43,14 +43,16 @@ export async function signIn(
 }
 
 /**
- * Finish onboarding without loading sample data (the Blank profile), so a test user is marked
- * onboarded and nothing else about their account changes. The onboarding spec itself passes
- * `{ onboard: false }` to exercise the real flow.
+ * Finish onboarding, so a test user is marked onboarded and nothing else about their account
+ * changes. The onboarding spec itself passes `{ onboard: false }` to exercise the real flow.
+ *
+ * Two steps: name → starter board. It used to be three, with a sample-profile picker in the middle
+ * and a "blank" radio to opt out of it; both are gone with the seed module (ADR-123), so this helper
+ * clicked a control that no longer exists and every signed-in test timed out on it. The account is
+ * now always created empty, so there is nothing to opt out of.
  */
 export async function completeOnboarding(page: Page): Promise<void> {
   await page.goto("/onboarding");
-  await page.getByRole("button", { name: "next" }).click();
-  await page.getByRole("radio", { name: /blank/i }).check();
   await page.getByRole("button", { name: "next" }).click();
   await page.getByRole("button", { name: "finish setup" }).click();
   await page.waitForURL("**/dashboard");

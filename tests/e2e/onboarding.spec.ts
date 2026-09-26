@@ -3,10 +3,18 @@ import { expect, test } from "@playwright/test";
 import { PASSWORD, createVerifiedUser, signIn, uniqueEmail } from "./helpers";
 
 /**
- * Phase 8 acceptance (spec §14): a new user reaches a populated dashboard in ≤ 60 s, the template
- * gallery lists the board templates and starter profiles, and the in-app docs render the repo files.
+ * Phase 8 acceptance (spec §14): a new user reaches a dashboard in ≤ 60 s, the template gallery
+ * lists the board templates, and the in-app docs render the repo files.
+ *
+ * The dashboard is *empty*, and the test name used to claim otherwise. It read "reaches a populated
+ * dashboard" while asserting a seeded developer profile's cards were on the board — so the name
+ * described the demo, the body described the product, and the two drifted apart the moment the seed
+ * went (ADR-123). A test whose name contradicts its assertions is worse than a failing one: it
+ * passes, and it lies about what it checked.
  */
-test("onboarding: a new account reaches a populated dashboard in under 60s", async ({ page }) => {
+test("onboarding: a new account reaches a dashboard in under 60s, with nothing invented", async ({
+  page,
+}) => {
   test.setTimeout(150_000);
   const email = uniqueEmail("onboard");
 
@@ -17,8 +25,7 @@ test("onboarding: a new account reaches a populated dashboard in under 60s", asy
   await page.goto("/dashboard");
   await page.waitForURL("**/onboarding");
 
-  await page.getByRole("button", { name: "next" }).click();
-  await page.getByRole("radio", { name: /developer/i }).check();
+  // Two steps: name → starter board (the sample-profile step went with the seed, ADR-123).
   await page.getByRole("button", { name: "next" }).click();
   await page.getByRole("radio", { name: /daily kanban/i }).check();
   await page.getByRole("button", { name: "finish setup" }).click();
@@ -26,16 +33,20 @@ test("onboarding: a new account reaches a populated dashboard in under 60s", asy
 
   expect(Date.now() - started).toBeLessThan(60_000);
 
-  // The account is populated with the selected developer profile's content.
+  // The chosen board was created, and nothing was invented: a new account has no cards, because
+  // the sample data it used to load is gone.
   await page.goto("/tasks");
-  await expect(page.getByText("Reply to the Northwind recruiter").first()).toBeVisible();
+  await expect(page.getByText("Reply to the Northwind recruiter")).toHaveCount(0);
+  await expect(page.locator('[data-slot="inbox-card"]')).toHaveCount(0);
 });
 
-test("templates: the gallery lists board templates and starter profiles", async ({ page }) => {
+test("templates: the gallery lists the board templates", async ({ page }) => {
   await page.goto("/templates");
   await expect(page.getByRole("heading", { level: 1, name: "Templates" })).toBeVisible();
   await expect(page.getByText("Job Pipeline", { exact: true })).toBeVisible();
-  await expect(page.getByText("Freelancer", { exact: true })).toBeVisible();
+  // The starter-profile panel is gone with the seed module (ADR-123); the board templates remain,
+  // because choosing one still creates a real board.
+  await expect(page.getByText("Freelancer", { exact: true })).toHaveCount(0);
 });
 
 test("docs: the index renders and a document opens", async ({ page }) => {
