@@ -20,6 +20,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
+    "e2e:visual": "playwright test --config=playwright.visual.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/server/db/migrate-cli.ts",
     "db:studio": "drizzle-kit studio",

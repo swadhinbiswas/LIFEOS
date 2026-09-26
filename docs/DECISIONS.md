@@ -3131,6 +3131,32 @@ app had got wrong, the second about data that was only as fresh as somebody's me
   other regions in the app still draw the platform default and are **not** fixed by this commit —
   sweeping them is a separate, screenshot-led piece of work, not something to do blind.
 
+- **The verification gap was closed by a display, not a flag, and it found a real bug.** The themed
+  scrollbar had been reported as unverifiable twice — once here and once in ADR-127 — because headless
+  Chromium draws _overlay_ scrollbars, which occupy no space, so the gutter measures 0 and nothing is
+  painted. Four flags were tried against a control element asking for a 40px custom scrollbar:
+  `--disable-features=OverlayScrollbar`, `--force-renderer-accessibility`, and both together. All four
+  measured 0. The same page launched **headed** measured exactly 40, with no flag at all. So "I cannot
+  measure this" was never a browser limitation to report — it was a missing display.
+
+  `playwright.visual.ts` and `pnpm e2e:visual` are that fix: headed, needs a display, opens real
+  windows, and so is not in `pnpm e2e` or CI.
+
+  Which immediately paid for itself. `tests/e2e/scrollbar.spec.ts` failed on its first run, because
+  the rule set **both** `scrollbar-width: thin` and `::-webkit-scrollbar`, and per spec a
+  `scrollbar-width` other than `auto` tells the UA to use _standard_ scrollbar rendering, which
+  **discards the entire pseudo-element block**. The themed scrollbar had therefore never applied in
+  Chromium or Safari — the browser that reported the ugly default — and what was actually shipping was
+  the platform's own thin bar. `scrollbar-width` and `scrollbar-color` now live only inside
+  `@supports not selector(::-webkit-scrollbar)`, which is the Firefox path and only the Firefox path.
+  Neither a screenshot nor a headless run could have found that; a measurement could, and did.
+
+- **The spec skips with a reason when it cannot answer**, rather than passing quietly. A probe element
+  asks for a 40px scrollbar and the test skips with the reason _and_ the command that would fix it. In
+  the ordinary headless sweep two of the three skip and the third still runs, because "a region that
+  fits has no gutter" is 0 in both worlds. A skip that says why is honest; one that hides is the thing
+  this entry keeps having to correct.
+
 ### The activity tracker
 
 - **Context:** `syncWakaTime` was reachable only from the button on `/settings/activity`. Nothing

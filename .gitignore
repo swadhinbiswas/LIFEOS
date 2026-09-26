@@ -12,6 +12,9 @@ playwright-report/
 # Lighthouse CI writes its own reports and cache here; they are run artifacts.
 .lighthouseci/
 test-results/
+# Human-inspection output for `pnpm e2e:visual`; see playwright.visual.ts. Kept out of
+# test-results/ because that directory is cleared at the start of every run.
+visual-shots/
 tests/e2e/.e2e.db*
 
 playwright.local.ts

@@ -236,6 +236,7 @@ export function AppShell({
             {APP_NAME}
           </p>
           <nav
+            data-slot="app-sidebar-nav"
             aria-label={tShell("primaryNav")}
             // `scroll-tui` rather than the OS default: this nav overflows on any normal laptop, and
             // the platform's gutter is a 15px light widget with arrow buttons down the side of a

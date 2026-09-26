@@ -576,10 +576,6 @@ html[data-text-weight] :is(h1, h2, h3, h4, h5, h6, strong, b, th) {
  * The bar is only *drawn* when the region actually overflows, which is the browser's behaviour and
  * not ours — so a sidebar that fits has no gutter at all, and one that does not has an obvious one.
  */
-.scroll-tui {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scroll-thumb) transparent;
-}
 .scroll-tui::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -599,6 +595,25 @@ html[data-text-weight] :is(h1, h2, h3, h4, h5, h6, strong, b, th) {
 }
 .scroll-tui::-webkit-scrollbar-corner {
   background: transparent;
+}
+/*
+ * Firefox only, and only because it has to be.
+ *
+ * Setting `scrollbar-width` to anything other than `auto` tells the UA to use **standard** scrollbar
+ * rendering, and standard rendering means `::-webkit-scrollbar` is ignored — the whole block above is
+ * discarded, in Chromium and Safari alike. The first version of this rule set both unconditionally
+ * and so shipped the platform's thin bar instead of the themed one, in the exact browser the theme
+ * was written for. Nothing in a screenshot caught it, because the platform's thin bar looks close
+ * enough to a themed one at a glance; a measurement of the gutter did.
+ *
+ * `selector(::-webkit-scrollbar)` is unsupported in Firefox and supported everywhere else, so this
+ * block is the Firefox path and only the Firefox path.
+ */
+@supports not selector(::-webkit-scrollbar) {
+  .scroll-tui {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
+  }
 }
 /* The thumb is the only scroll affordance there is, so it has to be visible without a hover. */
 :root {
