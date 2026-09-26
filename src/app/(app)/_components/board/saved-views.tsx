@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { cn } from "cn";
 
-import { controlGhost } from "./controls";
+import { controlGhost } from "@/components/tui/controls";
 import {
   createSavedViewAction,
   deleteSavedViewAction,

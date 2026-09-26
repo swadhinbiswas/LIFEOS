@@ -374,12 +374,12 @@
       "quickCapture": "দ্রুত ক্যাপচার",
       "naturalLanguage": "স্বাভাবিক ভাষা",
       "triage": "ট্রায়াজ",
-      "onBoard": "বোর্ডে {count}টি",
-      "empty": "ইনবক্স খালি — উপরে কিছু ক্যাপচার করুন",
       "moveTo": "→ {name}",
       "moveAria": "{title} → {name}",
       "count": "ইনবক্সে {count}টি",
-      "syncing": " · সিংক হচ্ছে…"
+      "syncing": "সিঙ্ক হচ্ছে…",
+      "emptyTitle": "ট্রায়েজ করার কিছু নেই",
+      "emptyHint": "উপরে কিছু ক্যাপচার করলে সেটি এখানে আসবে"
     },
     "Health": {
       "title": "স্বাস্থ্য",

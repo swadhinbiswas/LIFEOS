@@ -15,7 +15,7 @@ import {
   restoreCardAction,
 } from "@/server/boards/actions";
 
-import { controlBoxed, controlGhost, ToolbarGroup } from "./controls";
+import { controlBoxed, controlGhost, ToolbarGroup } from "@/components/tui/controls";
 import { boardQueryKey } from "./use-board";
 
 /**

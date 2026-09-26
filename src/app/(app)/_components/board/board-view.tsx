@@ -28,7 +28,7 @@ import type { BoardPayload, Card } from "@/server/boards";
 import { BoardColumn } from "./board-column";
 import { BoardToolbar, type GroupBy } from "./board-toolbar";
 import { BoardUtils } from "./board-utils";
-import { controlBoxed, controlGhost, ToolbarGroup } from "./controls";
+import { controlBoxed, controlGhost, ToolbarGroup } from "@/components/tui/controls";
 import { CardSheet } from "./card-sheet";
 import { type MoveDirection } from "./card-tile";
 import { SavedViews } from "./saved-views";

@@ -374,12 +374,12 @@
       "quickCapture": "Quick capture",
       "naturalLanguage": "natural language",
       "triage": "Triage",
-      "onBoard": "{count} on the board",
-      "empty": "inbox is empty — capture something above",
       "moveTo": "→ {name}",
       "moveAria": "move {title} to {name}",
       "count": "{count} in inbox",
-      "syncing": " · syncing…"
+      "syncing": "syncing…",
+      "emptyTitle": "nothing to triage",
+      "emptyHint": "capture something above and it lands here"
     },
     "Health": {
       "title": "Health",

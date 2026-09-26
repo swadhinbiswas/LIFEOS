@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { QUICK_FILTERS, type QuickFilterId } from "@/config/board-filters";
 import { BOARD_VIEWS, type BoardView } from "@/config/boards";
 
-import { chipState } from "./controls";
+import { chipState } from "@/components/tui/controls";
 
 export type GroupBy = "none" | "column" | "priority";
 export const GROUP_OPTIONS: { id: GroupBy; label: string }[] = [

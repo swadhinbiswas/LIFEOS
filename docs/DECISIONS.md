@@ -2671,6 +2671,32 @@ fixed`, translated off-canvas, `width: min(17rem, 82vw)`, with a scrim — and t
   those delimit the content, which is the one job a border is good at, and removing them would
   cost more than it saves.
 
+## ADR-118 — A shared control vocabulary, and a count belongs wherever its data is live
+
+- **Status:** accepted (2026-09-26)
+- **Context:** `/inbox` had the same defect ADR-117 fixed on `/tasks`: four identical bordered
+  boxes per row for Today/Upcoming/Someday/Done, so the chrome grew with the list and the row's
+  actual content — the title — was the quietest thing in it. It also carried a fifth hand-rolled copy of the
+  control class. Two findings came out of fixing it, and both are wider than the inbox.
+- **Decision:**
+  - **The control vocabulary moves out of the feature that invented it.** It lived in
+    `(app)/_components/board/controls.tsx` because the board was the first caller. The inbox is
+    the second, and a shared vocabulary owned by one of its consumers is a layering trap that
+    only shows up later — when the next feature either imports from a sibling feature's folder
+    or copies it a third time. It is now `src/components/tui/controls.tsx`, beside the checkbox
+    and select ADR-116 added, which are shared for the same reason.
+  - **A count renders where its data is live, not where it reads best.** Moving the inbox count
+    from the foot of the list into the `PageHeader` looked like a clear improvement and was a
+    bug: `PageHeader` is a server component, so a count rendered into it is frozen at load. The
+    screenshot showed the header reading `0` directly above a list holding one card. The count is
+    derived from the board payload, which only the client holds after a capture, so it renders
+    in `InboxList` — placed _above_ the list, where it reads as a heading, which was the
+    actual goal. The stale-header version would have shipped a number that lies.
+- **Consequences:** five copies of one class string become one, and a second feature can adopt
+  the hierarchy without a cross-feature import. The e2e asserts the count with `toHaveText`
+  _after_ a capture rather than checking the header at rest, because a count that is correct
+  only on load is not correct.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

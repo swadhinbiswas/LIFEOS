@@ -40,3 +40,29 @@ test("inbox: quick capture parses the grammar, triage moves the card", async ({ 
     column(page, "Inbox").locator('[data-slot="card"]', { hasText: "buy milk" }),
   ).toHaveCount(0);
 });
+
+/**
+ * The live count and the empty state (ADR-117).
+ *
+ * The count is asserted in the list rather than the page header on purpose: `PageHeader` is a server
+ * component, so a count rendered into it is frozen at load and would read 0 while the list showed 1.
+ * The `toHaveText` after capture is the assertion that keeps it live.
+ */
+test("inbox: the count is live and empty is a real empty state", async ({ page }) => {
+  test.setTimeout(90_000);
+  const email = uniqueEmail("inbox-count");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/inbox");
+
+  await expect(page.getByTestId("inbox-empty")).toBeVisible();
+  await expect(page.getByTestId("inbox-empty")).toContainText("nothing to triage");
+
+  await page.getByLabel("capture a task").fill("water the plants");
+  await page.getByLabel("capture a task").press("Enter");
+
+  // The empty state gives way to the list, and the count tracks it without a reload.
+  await expect(page.getByTestId("inbox-empty")).toHaveCount(0);
+  await expect(page.locator('[data-slot="inbox-count"]')).toHaveText(/1 in inbox/u);
+});

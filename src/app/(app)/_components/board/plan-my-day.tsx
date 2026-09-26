@@ -11,7 +11,7 @@ import { Panel } from "@/components/tui/panel";
 import { Button } from "@/components/ui/button";
 import { carryOverAction } from "@/server/boards/actions";
 
-import { ToolbarGroup } from "./controls";
+import { ToolbarGroup } from "@/components/tui/controls";
 import type { DailyBrief } from "@/server/boards/brief";
 
 /**

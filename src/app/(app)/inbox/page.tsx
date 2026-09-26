@@ -27,14 +27,20 @@ export default async function InboxPage() {
   const board = await ensureSystemTasksBoard(session.user.id);
   const payload = await getBoard(session.user.id, board.id);
 
+  // The count is a page-level fact — how many are waiting — so it sits in the header rather than
+  // trailing the list it describes, and the panel below needs no hint of its own. The board total
+  // that used to be here is already reported by /tasks and changed nothing about what to do here.
+  const inbox = payload.columns.find((column) => column.name === "Inbox");
+  const waiting = inbox ? payload.cards.filter((card) => card.column_id === inbox.id).length : 0;
+
   return (
     <>
-      <PageHeader title={t("title")} />
+      <PageHeader title={t("title")} count={waiting} />
       <div className="grid max-w-3xl gap-4">
         <Panel title={t("quickCapture")} hint={t("naturalLanguage")}>
           <CaptureBox boardId={board.id} />
         </Panel>
-        <Panel title={t("triage")} hint={t("onBoard", { count: payload.cards.length })}>
+        <Panel title={t("triage")}>
           <InboxList boardId={board.id} initialData={payload} />
         </Panel>
       </div>
