@@ -32,7 +32,7 @@ function Table({
       data-slot="table-container"
       className={cn(
         "relative w-full overflow-x-auto",
-        scrollRegion ? "scroll-x-tui" : "scrollbar-hidden",
+        scrollRegion ? "scroll-tui" : "scrollbar-hidden",
         containerClassName,
       )}
       {...(scrollRegion ? { role: "region", "aria-label": scrollRegion, tabIndex: 0 } : {})}

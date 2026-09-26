@@ -388,6 +388,59 @@ export async function activitySeries(
   }));
 }
 
+/* -------------------------------------------------------------------------- */
+/* Scheduled freshness (ADR-129)                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * How often one account is refreshed, and how much history a tick re-reads.
+ *
+ * `minIntervalMs` is the throttle, and it is deliberately enforced **here** rather than left to the
+ * scheduler. "Every hour" has to mean *at most* once an hour: a scheduler that fires every fifteen
+ * minutes, a retry, or a curious person hitting the route must not turn into four WakaTime calls an
+ * hour against someone's real account.
+ *
+ * The window is **two days, not thirty**, and that is the whole trick. A finished day does not
+ * change, so re-reading a month of summaries every hour spends a month's worth of API calls to
+ * discover nothing. Today is still accruing and yesterday can still move — an offline editor
+ * uploading late, a clock skew, a day boundary in the provider's own timezone. Two days is the
+ * smallest window that keeps the chart current without doing work nobody reads.
+ */
+export const ACTIVITY_REFRESH = {
+  minIntervalMs: 60 * 60 * 1000,
+  windowDays: 2,
+  provider: WAKATIME_PROVIDER,
+} as const;
+
+/** One account awaiting a refresh, with enough context to decide whether it is due. */
+export interface DueConnection {
+  userId: string;
+  lastSyncedAt: Date | null;
+}
+
+/**
+ * Every account with a WakaTime connection, and when each was last refreshed.
+ *
+ * `last_error` is deliberately *not* filtered on: a connection that failed is exactly the one that
+ * needs retrying, and hiding it would make a broken integration look like no integration at all.
+ */
+export async function listDueActivityConnections(): Promise<DueConnection[]> {
+  const rows = await db
+    .select({
+      userId: activity_connections.user_id,
+      lastSyncedAt: activity_connections.last_synced_at,
+    })
+    .from(activity_connections)
+    .where(eq(activity_connections.provider, WAKATIME_PROVIDER));
+  return rows.map((row) => ({ userId: row.userId, lastSyncedAt: row.lastSyncedAt }));
+}
+
+/** Whether this account is past its refresh interval. `lastSyncedAt === null` means never synced. */
+export function isDue(lastSyncedAt: Date | null, now: Date = new Date()): boolean {
+  if (!lastSyncedAt) return true;
+  return now.getTime() - lastSyncedAt.getTime() >= ACTIVITY_REFRESH.minIntervalMs;
+}
+
 /** A merged top-N across the window, for the meters: the provider own numbers, summed. */
 export function topAcross(
   series: ActivityDay[],

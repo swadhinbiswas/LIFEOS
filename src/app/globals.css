@@ -560,38 +560,45 @@ html[data-text-weight] :is(h1, h2, h3, h4, h5, h6, strong, b, th) {
  * `--card` and not `--background`.
  */
 /**
- * A visible, themed horizontal scrollbar (ADR-127).
+ * A visible, themed scrollbar, on both axes (ADR-127, ADR-129).
  *
- * `.scrollbar-hidden` is the right call for a table that overflows by a few pixels and the wrong
- * one for a table that overflows by two hundred: with no bar there is nothing to drag, and a
- * container you cannot drag is a container most people never find. Shift+wheel is not a discoverable
- * answer to "I cannot see the last three columns", and on a machine without a trackpad it is not an
- * answer at all.
+ * `.scrollbar-hidden` is the right call for a region that overflows by a few pixels and the wrong
+ * one for a region that overflows by a lot: with no bar there is nothing to drag, and a container you
+ * cannot drag is a container most people never find. Shift+wheel is not a discoverable answer to "I
+ * cannot see the last three columns", and on a machine without a trackpad it is not an answer at all.
  *
  * Themed rather than left alone because the OS default is a light widget with arrow buttons sitting
- * in a dark interface — the loudest thing on the page. `background-clip: content-box` over a
- * transparent border is how a 10px-tall scrollbar carries a 4px thumb, which is the minimum that
- * reads as grabbable.
+ * in a dark interface — on the sidebar that was a 15px striped gutter down the middle of a 250px
+ * column, the loudest thing on the page. `background-clip: content-box` over a transparent border is
+ * how a 10px gutter carries a 4px thumb, which is the minimum that reads as grabbable while costing
+ * a third of the width. No arrow buttons: they are the loudest part and they duplicate the wheel.
+ *
+ * The bar is only *drawn* when the region actually overflows, which is the browser's behaviour and
+ * not ours — so a sidebar that fits has no gutter at all, and one that does not has an obvious one.
  */
-.scroll-x-tui {
+.scroll-tui {
   scrollbar-width: thin;
   scrollbar-color: var(--scroll-thumb) transparent;
 }
-.scroll-x-tui::-webkit-scrollbar {
+.scroll-tui::-webkit-scrollbar {
+  width: 10px;
   height: 10px;
 }
-.scroll-x-tui::-webkit-scrollbar-track {
+.scroll-tui::-webkit-scrollbar-track {
   background: transparent;
 }
-.scroll-x-tui::-webkit-scrollbar-thumb {
+.scroll-tui::-webkit-scrollbar-thumb {
   background: var(--scroll-thumb);
   border: 3px solid transparent;
   background-clip: content-box;
   border-radius: 999px;
 }
-.scroll-x-tui::-webkit-scrollbar-thumb:hover {
+.scroll-tui::-webkit-scrollbar-thumb:hover {
   background: var(--scroll-thumb-hover);
   background-clip: content-box;
+}
+.scroll-tui::-webkit-scrollbar-corner {
+  background: transparent;
 }
 /* The thumb is the only scroll affordance there is, so it has to be visible without a hover. */
 :root {
@@ -599,7 +606,7 @@ html[data-text-weight] :is(h1, h2, h3, h4, h5, h6, strong, b, th) {
   --scroll-thumb-hover: color-mix(in srgb, var(--muted-foreground) 68%, transparent);
 }
 /* A focusable scroll region needs to say so, or the focus ring is drawn around nothing useful. */
-.scroll-x-tui:focus-visible {
+.scroll-tui:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: -2px;
 }

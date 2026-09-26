@@ -17,9 +17,12 @@ const { migrate } = await import("drizzle-orm/libsql/migrator");
 const { db } = await import("@/server/db");
 const { users } = await import("@/server/db/schema");
 const {
+  ACTIVITY_REFRESH,
   activitySeries,
   deleteConnection,
   getConnection,
+  isDue,
+  listDueActivityConnections,
   mapSummaries,
   saveConnection,
   syncWakaTime,
@@ -28,6 +31,7 @@ const {
 
 const USER = "01HACTIVITY000000000000001";
 const OTHER = "01HACTIVITY000000000000002";
+const THIRD = "01HACTIVITY000000000000003";
 const NOW = new Date("2026-09-26T12:00:00.000Z");
 
 /**
@@ -199,5 +203,63 @@ describe("a WakaTime connection (ADR-110)", () => {
   it("forgets the connection, and then cannot sync", async () => {
     await deleteConnection(OTHER);
     expect(await getConnection(OTHER)).toBeNull();
+  });
+});
+
+/**
+ * The refresh throttle (ADR-129).
+ *
+ * The point of these is that "every hour" is enforced by the *service* and not by the scheduler. A
+ * cron that fires every fifteen minutes, a retry, or a retry of a retry must not become four
+ * WakaTime calls an hour against a real person's account.
+ */
+describe("scheduled activity refresh (adr-129)", () => {
+  it("treats a never-synced account as due and a recent one as not", () => {
+    expect(isDue(null, NOW)).toBe(true);
+    expect(isDue(new Date(NOW.getTime() - 59 * 60 * 1000), NOW)).toBe(false);
+    expect(isDue(new Date(NOW.getTime() - 61 * 60 * 1000), NOW)).toBe(true);
+  });
+
+  it("keeps the boundary at the stated interval rather than 'about an hour'", () => {
+    const exactly = new Date(NOW.getTime() - ACTIVITY_REFRESH.minIntervalMs);
+    expect(isDue(exactly, NOW)).toBe(true);
+  });
+
+  it("re-reads two days on a tick, not the thirty the dashboard shows", () => {
+    // A finished day does not change. Re-reading a month hourly spends a month's calls to learn
+    // nothing; today is still accruing and yesterday can still move.
+    expect(ACTIVITY_REFRESH.windowDays).toBe(2);
+  });
+
+  it("lists only wakatime connections, with their last sync", async () => {
+    await db
+      .insert(users)
+      .values({
+        id: THIRD,
+        email: "third@example.test",
+        name: "third",
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .onConflictDoNothing();
+    await saveConnection(THIRD, "key-abcdefgh");
+
+    const due = await listDueActivityConnections();
+    expect(due.map((c) => c.userId).sort()).toEqual([USER, THIRD].sort());
+    // The field is what makes the throttle possible, so it has to actually move: a connection that
+    // has never synced is null, and one that has carries a Date. USER was synced by an earlier test
+    // in this file, which is what makes the pair worth asserting.
+    expect(due.find((c) => c.userId === THIRD)?.lastSyncedAt).toBeNull();
+    expect(due.find((c) => c.userId === USER)?.lastSyncedAt).toBeInstanceOf(Date);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => Response.json(wire)),
+    );
+    const synced = await syncWakaTime(THIRD, 2, NOW, "UTC");
+    expect(synced.ok).toBe(true);
+
+    const after = await listDueActivityConnections();
+    expect(after.find((c) => c.userId === THIRD)?.lastSyncedAt).toBeInstanceOf(Date);
   });
 });

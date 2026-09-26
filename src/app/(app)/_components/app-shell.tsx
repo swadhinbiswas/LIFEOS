@@ -237,7 +237,10 @@ export function AppShell({
           </p>
           <nav
             aria-label={tShell("primaryNav")}
-            className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2"
+            // `scroll-tui` rather than the OS default: this nav overflows on any normal laptop, and
+            // the platform's gutter is a 15px light widget with arrow buttons down the side of a
+            // 250px column. Themed, it is 10px, arrowless, and the same paint as everything else.
+            className="scroll-tui flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2"
           >
             {NAV_SECTIONS.map((section) => {
               const items = NAV_ITEMS.filter(

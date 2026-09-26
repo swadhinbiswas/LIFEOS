@@ -3107,6 +3107,63 @@ message out of all of them: `Pages.Activity.sender_opencode_code`, whose value i
   - The stage colour is available to any surface that shows a stage, so the board's column headers
     and the card chips can adopt it. They still do not — a follow-up, not a claim.
 
+## ADR-129 — One themed scrollbar, and an activity tracker that refreshes itself
+
+Two unrelated fixes that share a reason to be written down: the first is about a control the whole
+app had got wrong, the second about data that was only as fresh as somebody's memory of a button.
+
+### The scrollbar
+
+- **Context:** the sidebar nav is 25+ destinations in a 250px column, so it genuinely overflows on
+  any normal laptop — and it was drawing the platform's gutter: a 15px light widget with arrow
+  buttons, down the side of a dark interface, the loudest thing on the page. `.scrollbar-hidden` was
+  the wrong answer here, and it is the answer ADR-127 had already learned is wrong: a container with
+  no bar is a container nobody finds.
+
+- **Decision:** one `.scroll-tui` class for both axes, rather than a `-x-` and a `-y-` variant.
+  `10px` wide, `3px` transparent border with `background-clip: content-box` so the drawn thumb is
+  4px, rounded, and **no arrow buttons** — they are the loudest part and they duplicate the wheel.
+  The thumb is a `muted-foreground` mix so it is visible without a hover, since the thumb is the
+  entire affordance. The browser only paints it when the region actually overflows, so a sidebar
+  that fits has no gutter at all.
+- **Consequence:** the class is opt-in per region and the default is still `scrollbar-hidden`, because
+  for the many small tables that overflow by a few pixels a gutter is still the wrong answer. Twelve
+  other regions in the app still draw the platform default and are **not** fixed by this commit —
+  sweeping them is a separate, screenshot-led piece of work, not something to do blind.
+
+### The activity tracker
+
+- **Context:** `syncWakaTime` was reachable only from the button on `/settings/activity`. Nothing
+  scheduled it. So the chart showed whatever the last manual sync happened to have fetched, which
+  for a page whose whole subject is _how much you have coded today_ is the wrong shape of answer.
+
+- **Decision:**
+  - **`GET /api/cron/activity`**, on the same contract as `/api/cron/proactive` and
+    `/api/cron/webhooks` (ADR-078/079): no `CRON_SECRET` means the route does not exist (404), and
+    the bearer header is checked before anything is read. The schedule is the operator's — there is
+    no `vercel.json` in this repo by design, and adding one would presume a hosting target.
+  - **The one-hour interval is enforced in the service, not delegated to the scheduler.** "Every
+    hour" has to mean _at most_ once an hour: a scheduler firing every fifteen minutes, a retry, or a
+    retry of a retry must not become four calls an hour against somebody's real account.
+    `activity_connections.last_synced_at` already existed for exactly this — it was being written and
+    nothing read it.
+  - **A tick re-reads two days, not the thirty the dashboard shows.** A finished day does not change,
+    so a month-wide hourly fetch spends a month's calls to learn nothing. Today is still accruing and
+    yesterday can still move — an offline editor uploading late, clock skew, the provider's own day
+    boundary.
+  - **The throttle is per account, not global.** One account syncing twenty minutes ago must not hold
+    back the nineteen that have never run.
+  - **Each account is synced in its own timezone**, because "today" is a local day and a UTC
+    assumption files the last hours of a Berlin evening under tomorrow.
+  - **Sequentially, and one throwing account does not abort the run.** These are outbound calls
+    against real people's accounts; firing them concurrently is how a refresh job earns a
+    rate-limit for the whole install. A throw is caught, the account is reported, and the loop moves
+    on.
+- **Consequence:** seven route tests and four service tests, so the crons are no longer the only
+  unguarded part of the surface. The other three cron routes still have none — named as a gap, not
+  claimed as fine. The activity page's manual button stays: a refresh you can ask for is still
+  useful, and it is the only way to recover an account whose key just changed.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs
