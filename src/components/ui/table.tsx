@@ -5,7 +5,11 @@ import { cn } from "cn";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
-    <div data-slot="table-container" className="relative w-full overflow-x-auto">
+    // `scrollbar-hidden`: a wide table used to draw the OS scrollbar, which is a light widget with
+    // arrow buttons sitting in a dark interface — the loudest thing on the page and information the
+    // reader does not need, because the table overflows by a little. The region still scrolls; only
+    // the bar is gone. The board's own scroller keeps its bar, which is a real affordance there.
+    <div data-slot="table-container" className="scrollbar-hidden relative w-full overflow-x-auto">
       <table
         data-slot="table"
         className={cn("w-full caption-bottom text-sm", className)}
