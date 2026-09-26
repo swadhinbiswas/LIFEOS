@@ -3361,6 +3361,60 @@ right about the tracking.
     provider, and the only one with no key. If Open-Meteo's terms or availability change, the service
     is the single place to swap.
 
+## ADR-133 — The landing page's screenshots were unreadable, and its terminal transcript was invented
+
+Both of these were visible only by looking at the rendered page, and one of them is the kind of
+defect this repo treats as a bug rather than a flourish.
+
+- **Context:** asked to make the landing page better. It had no dangling anchors, no phone overflow
+  and no failing check. Three things were wrong anyway, and none of them was reachable from a
+  compiler or a test.
+
+- **Decision:**
+  - **The screenshots were cropped to what reads, and renamed.** Both were 2880x1800 shown in the
+    page's 1104px column — a 2.6x downscale, so 14px sidebar text rendered at 5px. They said "this
+    exists" without saying what, and they were a third of the page. Cropped to drop the 512px
+    sidebar and the ~300-500px of empty tail, then downscaled to 1600px wide, which is 1.45x at the
+    size they are shown: `Share of habits checked off, last 28 days`, `274.72 EUR`, `24 day streak`
+    and the kanban cards are all legible.
+  - **The files were renamed rather than overwritten.** Next's image optimizer keys its cache on the
+    **URL**, so replacing `dashboard.png` in place served the stale optimized variant and the page
+    kept showing the old crop — which is why the first attempt appeared to do nothing. The name now
+    carries the crop, so a future re-crop cannot be silently swallowed either. This is a deployment
+    trap, not just a dev one: a content change at a stable path is invisible until the optimizer's
+    cache expires.
+  - **The `width`/`height` props were corrected to the file's real size.** They described the old
+    2880x1800, so the browser reserved the wrong box and the image shifted on load.
+  - **The hero terminal is now a transcript of `src/cli/index.ts`.** It was invented: `add` prints
+    `added: <title> (due …)`, not a tick and an arrow; `today` prints one `- title` or
+    `! title (overdue)` line per card and **cannot know a focus total**, and the transcript claimed
+    `focus 25:00`; `jobs move` prints `moved <id> → <stage>` with no tick. The commands were always
+    real — they are the three the CLI's `usage()` lists — but every line of output was fiction, on
+    the first thing a visitor reads. The example now avoids a relative date, because
+    `add "… tomorrow 3pm"` prints a date relative to whenever the reader ran it.
+  - **`src/cli/cli-transcript.test.ts` holds the two together.** It reads both files and asserts that
+    the transcript contains the format strings the CLI really prints, that the commands are the
+    ones `usage()` advertises, and that no `✓` appears anywhere. A source-level guard, deliberately:
+    the behavioural alternative needs a server, a key and a fixture account, which is precisely why
+    the transcript drifted in the first place. **There was no test on the CLI at all.**
+  - **The FAQ's odd one out spans both columns.** Five questions in a two-column grid left a hole
+    that read as a missing question, which on an FAQ is the worst thing a gap can do.
+  - **The keyboard shortcuts are one divided panel, not four boxes.** They are a single reference —
+    a keyboard map — and four equal borders made one list look like four objects, on a page that is
+    already a wall of bordered boxes. ADR-117's argument applied to a section.
+  - **The hero's columns align at the top.** `items-center` left the much shorter terminal floating in
+    the middle of its column, with dead space above and below it.
+
+- **Consequences:**
+  - Replacing an image under a stable name does not invalidate Next's image cache. Any future asset
+    change needs a new filename, and the crop is in the name for that reason.
+  - The transcript guard is coupled to the CLI's _source formatting_. Reformatting a `console.info`
+    in `src/cli/index.ts` will fail it, which is the intended direction — the landing page should
+    have to follow the CLI, not the other way round.
+  - The module cards are still six equal-weight boxes with no hierarchy, and the dashboard opens on
+    `overview` while the day strip leads `today`. Both are judgement calls left alone rather than
+    changed blind.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

@@ -35,13 +35,28 @@ export const metadata = { title: { absolute: APP_NAME } };
  * Everything is server-rendered and token-themed, so it passes axe in every preset.
  */
 
+/**
+ * The hero's terminal, transcribed from `src/cli/index.ts` (ADR-133).
+ *
+ * These lines used to be a plausible-looking transcript, and none of the output was real: `add`
+ * prints `added: <title> (due …)`, not a tick and an arrow; `today` prints one `- title` or
+ * `! title (overdue)` line per card and says nothing about focus minutes, which it cannot know;
+ * `jobs move` prints `moved <id> → <stage>` with no tick at all. It was invented UI on the first
+ * thing anybody reads, which spec §1 treats as a defect rather than a flourish.
+ *
+ * Every line below is the format the corresponding function in `src/cli/index.ts` actually produces,
+ * and the commands are the three the CLI's own `usage()` lists. The example deliberately avoids a
+ * relative date, because `add "… tomorrow 3pm"` would print a date relative to whenever the reader
+ * ran it and a transcript cannot be relative.
+ */
 const HERO_LINES = [
-  "$ lifeos add 'call the recruiter tomorrow 3pm #career'",
-  "  ✓ captured → career · Thu 15:00",
+  "$ lifeos add 'tail the failing cron test #eng'",
+  "added: tail the failing cron test",
   "$ lifeos today",
-  "  ▸ 3 due today · 1 overdue · focus 25:00",
-  "$ lifeos jobs move acme interview",
-  "  ✓ moved Acme → Interview",
+  "! reply to the Northwind recruiter  (overdue)",
+  "- review PR #482 on the ingest PR",
+  "$ lifeos jobs move 01JACME8Q interview",
+  "moved 01JACME8Q → interview",
 ];
 
 const API_SNIPPET = [
@@ -208,7 +223,7 @@ export default async function RootPage() {
       </header>
 
       <main className="mx-auto w-full max-w-6xl px-6">
-        <section className="grid items-center gap-10 py-12 lg:grid-cols-[1.05fr_1fr] lg:py-20">
+        <section className="grid items-start gap-10 py-12 lg:grid-cols-[1.05fr_1fr] lg:py-20">
           <div className="flex flex-col gap-5">
             <span className="inline-flex w-fit items-center gap-2 rounded-full border border-border px-3 py-1 font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
               <span aria-hidden="true" className="size-1.5 rounded-full bg-primary" />
@@ -266,10 +281,10 @@ export default async function RootPage() {
                 </span>
               </div>
               <Image
-                src="/landing/dashboard.png"
+                src="/landing/dashboard-crop.png"
                 alt={t("screenshotDashboardAlt")}
-                width={2880}
-                height={1800}
+                width={1600}
+                height={1014}
                 sizes="(min-width: 1200px) 1104px, calc(100vw - 48px)"
                 loading="eager"
                 className="h-auto w-full"
@@ -286,10 +301,10 @@ export default async function RootPage() {
                 </span>
               </div>
               <Image
-                src="/landing/board.png"
+                src="/landing/board-crop.png"
                 alt={t("screenshotBoardAlt")}
-                width={2880}
-                height={1800}
+                width={1600}
+                height={946}
                 sizes="(min-width: 1200px) 1104px, calc(100vw - 48px)"
                 className="h-auto w-full"
               />
@@ -357,23 +372,32 @@ export default async function RootPage() {
                 {t("keyboardBody")}
               </p>
             </div>
-            <ul className="flex flex-col gap-2">
+            {/*
+              One panel with dividers, not four boxes (ADR-133). The shortcuts are a single
+              reference — a keyboard map — and drawing each row in its own border made four equal
+              objects where there is one list, on a page that is already a wall of bordered boxes.
+              This is the same "less ink for the things you scan" argument as ADR-117, applied to a
+              section rather than a control.
+            */}
+            <ul className="divide-y divide-border overflow-hidden rounded-[var(--radius)] border border-border bg-card">
               {KEYCAPS.map((cap) => (
                 <li
                   key={cap.labelKey}
-                  className="flex items-center gap-3 rounded-[var(--radius)] border border-border bg-card px-3 py-2 font-mono text-xs"
+                  className="flex items-center gap-3 px-3 py-2.5 font-mono text-xs last:pb-2.5"
                 >
-                  <span className="flex items-center gap-1">
+                  <span className="flex shrink-0 items-center gap-1">
                     {cap.keys.map((key) => (
                       <kbd
                         key={key}
-                        className="rounded-[var(--radius)] border border-border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                        className="min-w-6 rounded-[var(--radius)] border border-border bg-background px-1.5 py-1 text-center text-[10px] text-muted-foreground"
                       >
                         {key}
                       </kbd>
                     ))}
                   </span>
-                  <span className="text-muted-foreground">{t(cap.labelKey)}</span>
+                  {/* Pushed to the far edge so the four labels form a column you can read down,
+                      which is how a list of four is actually read. */}
+                  <span className="ml-auto truncate text-muted-foreground">{t(cap.labelKey)}</span>
                 </li>
               ))}
             </ul>
@@ -383,10 +407,16 @@ export default async function RootPage() {
         <section id="faq" className="scroll-mt-20 border-t border-border py-12">
           <h2 className="font-mono text-xl font-semibold tracking-tight">{t("faqTitle")}</h2>
           <dl className="mt-6 grid gap-3 lg:grid-cols-2">
-            {FAQS.map((index) => (
+            {FAQS.map((index, position) => (
               <div
                 key={index}
-                className="flex flex-col gap-1.5 rounded-[var(--radius)] border border-border bg-card p-4"
+                // Five questions in a two-column grid leaves a hole in the last row. The odd one
+                // out spans both columns rather than sitting beside an empty cell — the gap read as
+                // a missing question, which on an FAQ is the worst thing a gap can do.
+                className={cn(
+                  "flex flex-col gap-1.5 rounded-[var(--radius)] border border-border bg-card p-4",
+                  position === FAQS.length - 1 && FAQS.length % 2 === 1 && "lg:col-span-2",
+                )}
               >
                 <dt className="font-mono text-sm font-semibold">{t(`faqQ${index}`)}</dt>
                 <dd className="font-mono text-[11px] leading-relaxed text-muted-foreground">
