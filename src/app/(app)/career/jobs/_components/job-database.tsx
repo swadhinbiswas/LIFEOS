@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { Table } from "@/components/ui/table";
 import { EmptyState } from "@/components/tui/empty-state";
 import { chipState } from "@/components/tui/controls";
+import { cn } from "cn";
 import { listJobApplications, listJobStages, type JobRow } from "@/server/career/applications";
 import {
   InlineCoverLetter,
@@ -98,7 +99,8 @@ export async function JobDatabase({
         />
       ) : (
         <Table
-          containerClassName="scroll-shadow-x"
+          containerClassName="scroll-shadow-x [--scroll-shadow-cover:var(--card)]"
+          scrollRegion={t("dbScrollRegion")}
           className="font-mono text-xs [&_td]:px-2 [&_td]:py-1 [&_td]:align-top"
         >
           <caption className="sr-only">{t("dbCaption")}</caption>
@@ -109,6 +111,7 @@ export async function JobDatabase({
                 label={t("dbPosition")}
                 field="position"
                 sort={sort}
+                sticky
               />
               <Th
                 href={link({ sort: "company" })}
@@ -160,7 +163,7 @@ export async function JobDatabase({
           <tbody>
             {rows.map((row) => (
               <tr key={row.applicationId} data-slot="job-row">
-                <td className="max-w-48 min-w-44">
+                <td className={STICKY_COLUMN}>
                   <Link
                     href={`/career/jobs/${row.cardId}`}
                     className="flex min-h-6 items-center truncate hover:underline"
@@ -274,6 +277,17 @@ export async function JobDatabase({
   );
 }
 
+/**
+ * The pinned first column.
+ *
+ * `bg-card` is load-bearing: a sticky cell is taken out of the table's paint order, so with a
+ * transparent background the columns scrolling underneath show straight through it. The right border
+ * is what says "this one is pinned" — the scroll shadow cannot, because it lives on the container and
+ * the sticky cell covers the container's left edge.
+ */
+const STICKY_COLUMN =
+  "sticky left-0 z-1 max-w-48 min-w-44 bg-card border-r border-border shadow-[1px_0_0_0_var(--border)]";
+
 /** The bands `fitBandFor` can return, in the order that reads as descending fit. */
 const FIT_BANDS = ["strong_fit", "worth_applying", "long_shot", "not_a_fit"] as const;
 
@@ -364,18 +378,24 @@ function Th({
   label,
   field,
   sort,
+  sticky = false,
 }: {
   href: string;
   label: string;
   /** Empty means "not a sort column" — the ids column, which is a bag of values, not an ordering. */
   field: string;
   sort: string | undefined;
+  /** Pin to the left edge while the table scrolls sideways. */
+  sticky?: boolean;
 }) {
   if (field === "") {
     return (
       <th
         scope="col"
-        className="px-2 py-1 text-left text-[10px] font-normal text-muted-foreground uppercase"
+        className={cn(
+          "px-2 py-1 text-left text-[10px] font-normal text-muted-foreground uppercase",
+          sticky && `${STICKY_COLUMN} z-10`,
+        )}
       >
         {label}
       </th>
@@ -383,7 +403,13 @@ function Th({
   }
   const active = sort === field || sort === `-${field}`;
   return (
-    <th scope="col" className="px-2 py-1 text-left text-[10px] font-normal uppercase">
+    <th
+      scope="col"
+      className={cn(
+        "px-2 py-1 text-left text-[10px] font-normal uppercase",
+        sticky && `${STICKY_COLUMN} z-10`,
+      )}
+    >
       <Link
         href={href}
         aria-sort={active ? (sort?.startsWith("-") ? "descending" : "ascending") : undefined}

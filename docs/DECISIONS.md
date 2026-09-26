@@ -3011,6 +3011,25 @@ message out of all of them: `Pages.Activity.sender_opencode_code`, whose value i
     portion from one inline custom property, so the bar reads as a value instead of a dim line with a
     dot on it somewhere.
 
+  - **A wide table scrolls visibly, and is focusable.** The table container is `overflow-x: auto`
+    with `scrollbar-hidden`, which is right for a table that overflows by a few pixels and useless
+    for one that overflows by seven hundred: nothing to drag, and a container nobody can reach with
+    the arrow keys because a plain `div` takes no focus (WCAG 2.1.1). So a table that opts in with
+    `scrollRegion` gets `role="region"`, a `tabindex`, an accessible name, and `.scroll-x-tui` — a
+    themed 10px bar with a 4px thumb — instead of `scrollbar-hidden`. The role and the `tabindex` are
+    set together on purpose: either alone is worse than neither. The bar is themed because the OS
+    default is a light widget with arrow buttons sitting in a dark interface, which is the reason
+    the bar was hidden in the first place.
+  - **The first column is pinned.** Scrolling right to reach Progress on a table of eight similar job
+    titles otherwise leaves no way to tell which row you are reading. `bg-card` is load-bearing: a
+    sticky cell is lifted out of the table's paint order, so a transparent one shows the columns
+    scrolling underneath straight through it. The right border is what says "pinned" — the scroll
+    shadow cannot, because it lives on the container and the sticky cell covers the container's left
+    edge.
+  - **The scroll shadow's cover is a variable, not `--background`.** The cover masks the shadow, so
+    it has to be painted in the colour of the surface the table actually sits on. Inside a `Panel`
+    that is `--card`, and a `--background` cover masks with the wrong paint.
+
   - Salary and apply-by remain read-only in the table. Each is two or three stored fields
     (`salary_min`, `salary_max`, `currency`) and a range needs a different control from a single
     value; they are edited on the job's own page.

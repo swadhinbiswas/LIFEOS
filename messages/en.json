@@ -1093,7 +1093,8 @@
       "seniority_mid": "mid",
       "seniority_senior": "senior",
       "seniority_not_stated": "not stated",
-      "dbUnset": "not set"
+      "dbUnset": "not set",
+      "dbScrollRegion": "Applications table, scroll sideways for the remaining columns"
     },
     "Copilot": {
       "title": "Copilot",

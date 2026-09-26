@@ -6,8 +6,18 @@ import { cn } from "cn";
 function Table({
   className,
   containerClassName,
+  scrollRegion,
   ...props
-}: React.ComponentProps<"table"> & { containerClassName?: string }) {
+}: React.ComponentProps<"table"> & {
+  containerClassName?: string;
+  /**
+   * Names the scrollable region, and makes it focusable. A horizontally scrolling `div` that cannot
+   * take focus is not keyboard-operable (WCAG 2.1.1) — the arrow keys do nothing because nothing is
+   * focused — so passing a label here is what opts a wide table into keyboard scrolling. The role
+   * and the `tabindex` go together deliberately: either alone is worse than neither.
+   */
+  scrollRegion?: string;
+}) {
   return (
     // `scrollbar-hidden`: a wide table used to draw the OS scrollbar, which is a light widget with
     // arrow buttons sitting in a dark interface — the loudest thing on the page and information the
@@ -15,12 +25,17 @@ function Table({
     // the bar is gone. The board's own scroller keeps its bar, which is a real affordance there.
     //
     // Hiding the bar is only honest while the overflow is small. A table with eleven columns
-    // overflows by a couple of hundred pixels, and with no bar and no edge the reader concludes the
-    // last columns do not exist. `scroll-shadow-x` is that edge: opt-in, and it shows itself only
-    // when there is genuinely more table in that direction.
+    // overflows by a couple of hundred pixels, and with no bar and no drag the reader concludes the
+    // last columns do not exist. A wide table therefore passes `scroll-x-tui` (a themed, visible
+    // bar) instead, and `scroll-shadow-x` for the edge.
     <div
       data-slot="table-container"
-      className={cn("scrollbar-hidden relative w-full overflow-x-auto", containerClassName)}
+      className={cn(
+        "relative w-full overflow-x-auto",
+        scrollRegion ? "scroll-x-tui" : "scrollbar-hidden",
+        containerClassName,
+      )}
+      {...(scrollRegion ? { role: "region", "aria-label": scrollRegion, tabIndex: 0 } : {})}
     >
       <table
         data-slot="table"

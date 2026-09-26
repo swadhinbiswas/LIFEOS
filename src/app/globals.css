@@ -554,8 +554,65 @@ html[data-text-weight] :is(h1, h2, h3, h4, h5, h6, strong, b, th) {
   border-radius: 999px;
 }
 
+/*
+ * The cover has to be the colour of the surface the table actually sits on, or it masks the shadow
+ * with the wrong paint. Overridden to `--card` where the table is inside a Panel, since a Panel is
+ * `--card` and not `--background`.
+ */
+/**
+ * A visible, themed horizontal scrollbar (ADR-127).
+ *
+ * `.scrollbar-hidden` is the right call for a table that overflows by a few pixels and the wrong
+ * one for a table that overflows by two hundred: with no bar there is nothing to drag, and a
+ * container you cannot drag is a container most people never find. Shift+wheel is not a discoverable
+ * answer to "I cannot see the last three columns", and on a machine without a trackpad it is not an
+ * answer at all.
+ *
+ * Themed rather than left alone because the OS default is a light widget with arrow buttons sitting
+ * in a dark interface — the loudest thing on the page. `background-clip: content-box` over a
+ * transparent border is how a 10px-tall scrollbar carries a 4px thumb, which is the minimum that
+ * reads as grabbable.
+ */
+.scroll-x-tui {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+.scroll-x-tui::-webkit-scrollbar {
+  height: 10px;
+}
+.scroll-x-tui::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-x-tui::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+.scroll-x-tui::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+  background-clip: content-box;
+}
+/* The thumb is the only scroll affordance there is, so it has to be visible without a hover. */
+:root {
+  --scroll-thumb: color-mix(in srgb, var(--muted-foreground) 42%, transparent);
+  --scroll-thumb-hover: color-mix(in srgb, var(--muted-foreground) 68%, transparent);
+}
+/* A focusable scroll region needs to say so, or the focus ring is drawn around nothing useful. */
+.scroll-x-tui:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
 .scroll-shadow-x {
-  --edge: color-mix(in srgb, var(--muted-foreground) 38%, transparent);
+  --scroll-shadow-cover: var(--background);
+  --scroll-shadow-edge: color-mix(in srgb, var(--muted-foreground) 38%, transparent);
+  --edge: var(--scroll-shadow-edge);
+  background-image:
+    linear-gradient(to right, var(--scroll-shadow-cover) 40%, transparent),
+    linear-gradient(to left, var(--scroll-shadow-cover) 40%, transparent),
+    linear-gradient(to right, var(--edge), transparent),
+    linear-gradient(to left, var(--edge), transparent);
   background-image:
     linear-gradient(to right, var(--background) 40%, transparent),
     linear-gradient(to left, var(--background) 40%, transparent),
