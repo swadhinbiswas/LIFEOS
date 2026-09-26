@@ -84,6 +84,14 @@ export const board_columns = sqliteTable(
     position: text("position").notNull(),
     /** Soft WIP warning, not a hard block (spec §6.1) — null hides the meter. */
     wip_limit: integer("wip_limit"),
+    /**
+     * How far through the work a card in this column is, 0-100 (ADR-128). Seeded from the template
+     * and **derived in the read model**, never stored per application: a per-application copy of a
+     * number the column already determines is a second truth that drifts (ADR-114). Null means this
+     * column is an outcome rather than a step — Rejected, Withdrawn — and no percentage is drawn
+     * for a card sitting in one.
+     */
+    progress_pct: integer("progress_pct"),
     /** Dropping a card here completes it and sets `completed_at`. */
     is_done: integer("is_done", { mode: "boolean" }).notNull().default(false),
     /** Column visibility/state as JSON (collapsed, etc.). */

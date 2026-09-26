@@ -43,7 +43,14 @@ export interface JobRow {
   visaStatus: string | null;
   reqId: string | null;
   appId: string | null;
+  /**
+   * How far through this application is, **derived from the stage column's `progress_pct`** and
+   * never stored per application (ADR-128). `null` means the stage is an outcome rather than a step
+   * — Rejected, Withdrawn — which is not the same as 0% and must not be drawn as a meter.
+   */
   progress: number | null;
+  /** The stage column's theme-token name, for colouring the stage wherever it is shown. */
+  stageColor: string | null;
   coverLetterNeeded: boolean | null;
   url: string | null;
   applyBy: Date | null;
@@ -88,7 +95,8 @@ export async function listJobApplications(
       visaStatus: job_applications.visa_status,
       reqId: job_applications.req_id,
       appId: job_applications.app_id,
-      progress: job_applications.progress,
+      progress: board_columns.progress_pct,
+      stageColor: board_columns.color,
       coverLetterNeeded: job_applications.cover_letter_needed,
       url: job_applications.url,
       applyBy: job_applications.apply_by,
@@ -135,6 +143,7 @@ export async function listJobApplications(
     reqId: row.reqId,
     appId: row.appId,
     progress: row.progress,
+    stageColor: row.stageColor,
     coverLetterNeeded: row.coverLetterNeeded,
     url: row.url,
     applyBy: row.applyBy,

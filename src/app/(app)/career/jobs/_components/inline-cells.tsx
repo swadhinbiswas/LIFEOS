@@ -77,6 +77,23 @@ function useInline<T>(initial: T, save: (value: T) => Promise<{ ok: boolean; mes
 }
 
 /**
+ * A stage colour token, as a class. Written out rather than constructed: `text-${token}` is
+ * assembled at runtime, and Tailwind only emits classes it can see written down, so the constructed
+ * form silently produces no rule at all. Every token a template may name is a key here.
+ */
+const STAGE_TEXT: Record<string, string> = {
+  primary: "text-primary",
+  secondary: "text-secondary",
+  accent: "text-accent",
+  success: "text-success",
+  warning: "text-warning",
+  info: "text-info",
+  destructive: "text-destructive",
+  "muted-foreground": "text-muted-foreground",
+  foreground: "text-foreground",
+};
+
+/**
  * The dropdown marker. `appearance-none` took the platform's arrow away, so one is drawn — as a
  * glyph on the text baseline, the same `▾` `TuiSelect` uses, rather than a gradient assembled from
  * two 45° stops that renders at a different offset on every engine.
@@ -97,20 +114,28 @@ const cellState = (busy: boolean, error: string | null) =>
   busy ? "opacity-60" : error ? "border-warning" : "";
 
 /**
- * Stage, as a select over the pipeline's own columns.
+ * Stage, as a select over the pipeline's own columns, **in that column's own colour**.
  *
  * The options are the board's real columns rather than a hardcoded list, because a user who renamed
  * a stage must not find the table offering a name their board does not have. The write goes through
  * `moveJobToStageAction`, which resolves the name against the job board at the moment of the call.
+ *
+ * The colour is a **theme token name** stored on the column, not a hex, so a stage reads the same in
+ * every theme and a renamed or hand-made column simply has none. It cannot be applied as
+ * `text-${color}`: Tailwind scans source for complete class names, so a constructed one is invisible
+ * to the compiler and the class never exists. Hence the lookup — the same trick as `FIT_CLASS`.
  */
 export function InlineStage({
   applicationId,
   value,
   stages,
+  color,
 }: {
   applicationId: string;
   value: string;
   stages: string[];
+  /** The current stage's token name, from `board_columns.color`. */
+  color: string | null;
 }) {
   const t = useTranslations("Pages.Career");
   const {
@@ -135,7 +160,14 @@ export function InlineStage({
           setValue(next);
           void commit(next);
         }}
-        className={`${controlCellSelect} w-full ${cellState(busy, error)}`}
+        className={cn(
+          controlCellSelect,
+          "w-full",
+          // The selected stage's own colour, so the row says where it is without being read. The
+          // caret stays muted: it is a control affordance, not part of the answer.
+          STAGE_TEXT[color ?? ""],
+          cellState(busy, error),
+        )}
       >
         {stages.map((name) => (
           <option key={name} value={name}>
@@ -160,68 +192,37 @@ export function InlineStage({
  * release: a range input's change event fires continuously while dragging, and firing a server
  * action per pixel would be both slow and wrong (a half-finished drag is not a decision).
  */
-export function InlineProgress({
-  applicationId,
-  value,
-}: {
-  applicationId: string;
-  value: number | null;
-}) {
+/**
+ * Progress, derived from the stage and therefore **read-only** (ADR-128).
+ *
+ * This was a slider, and that was the wrong control. Progress is a *consequence* of which column
+ * the card is in: a card in Offer is further along than one in Applied, whatever anybody types. A
+ * manual control for it is a second source of truth for a number the stage already determines, and
+ * the two drift — you move a card to Offer and the meter still says 30 because nobody dragged it.
+ * The same argument that made `fit` a derived band (ADR-114) applies here, and it applies harder,
+ * because unlike a fit score nobody has an independent opinion about how far through a pipeline a
+ * card is. To change it, change the stage.
+ *
+ * `null` is not zero. A stage that is an outcome rather than a step — Rejected, Withdrawn — has no
+ * percentage, and drawing a meter for it would put a number on the end of a process.
+ */
+export function StageProgress({ value }: { value: number | null }) {
   const t = useTranslations("Pages.Career");
-  const initial = value ?? 0;
-  const {
-    value: current,
-    setValue,
-    busy,
-    error,
-    commit,
-    edited,
-  } = useInline(initial, async (next: number) => {
-    const result = await updateJobAction({ applicationId, progress: next });
-    return result.ok ? { ok: true } : { ok: false, message: result.message };
-  });
-  // The slider rests at zero because a range input has no empty state, so the meter above it is what
-  // distinguishes "not recorded" from "recorded as nothing done yet". Drawing `░░░░░░░░░░ 0%` for an
-  // application nobody has scored is a measurement that was never taken.
-  const recorded = value !== null || edited;
-
+  if (value === null) {
+    return (
+      <span className="text-[10px] text-muted-foreground" data-slot="stage-progress">
+        {t("dbNotAPercentage")}
+      </span>
+    );
+  }
   return (
-    <span className="grid w-32 gap-1" data-slot="inline-progress">
-      {recorded ? (
-        <AsciiMeter
-          value={current / 100}
-          label={t("dbProgressOf", { count: current })}
-          cells={10}
-          className="text-[10px]"
-        />
-      ) : (
-        <span className="text-[10px] text-muted-foreground">{t("dbUnset")}</span>
-      )}
-      <input
-        type="range"
-        min={0}
-        max={100}
-        step={5}
-        value={current}
-        disabled={busy}
-        aria-label={t("dbProgress")}
-        // The filled portion of the track is pure CSS driven by this one custom property, so the bar
-        // reads as a value at a glance instead of a uniform dim line with a dot somewhere on it.
-        style={{ "--tui-slider-pct": `${current}%` } as React.CSSProperties}
-        onChange={(event) => setValue(Number(event.target.value))}
-        onPointerUp={() => void commit(current)}
-        onKeyUp={() => void commit(current)}
-        onBlur={() => void commit(current)}
-        // `.tui-slider` (globals.css) owns the box: a 24px hit area with a 6px track painted inside
-        // it. The thumb and track are UA pseudo-elements, so their styling cannot live in a class
-        // string — see the note there.
-        className={cn("tui-slider", cellState(busy, error))}
+    <span className="grid w-32 gap-0.5" data-slot="stage-progress">
+      <AsciiMeter
+        value={value / 100}
+        label={t("dbProgressOf", { count: value })}
+        cells={10}
+        className="text-[10px]"
       />
-      {error ? (
-        <span role="alert" className="text-[10px] text-warning">
-          {error}
-        </span>
-      ) : null}
     </span>
   );
 }

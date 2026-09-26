@@ -10,9 +10,9 @@ import {
   InlineCoverLetter,
   InlineEnum,
   InlineFit,
-  InlineProgress,
   InlineStage,
   InlineText,
+  StageProgress,
 } from "./inline-cells";
 
 /**
@@ -186,6 +186,7 @@ export async function JobDatabase({
                     applicationId={row.applicationId}
                     value={row.stage}
                     stages={stageNames}
+                    color={row.stageColor}
                   />
                 </td>
                 <td className="min-w-28">
@@ -214,7 +215,7 @@ export async function JobDatabase({
                   </span>
                 </td>
                 <td className="min-w-32">
-                  <InlineProgress applicationId={row.applicationId} value={row.progress} />
+                  <StageProgress value={row.progress} />
                 </td>
                 <td className="min-w-48">
                   <InlineText

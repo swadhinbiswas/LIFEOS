@@ -3045,6 +3045,68 @@ message out of all of them: `Pages.Activity.sender_opencode_code`, whose value i
     shared vocabulary. The one thing that class carries is `min-h-6`. Re-implementing a control the
     repo already had is how a size floor gets lost.
 
+## ADR-128 — Progress is derived from the stage, and a stage carries its own colour
+
+- **Context:**
+  ADR-127 shipped the applications table with a **manual progress slider** and a `progress` column
+  on `job_applications`. Both were wrong, and the reason is the one ADR-114 already gave for `fit`:
+  a stored copy of a number something else already determines is a second truth, and the two drift.
+  Move a card to Offer and the meter still said 30, because nobody had dragged it. Nothing in the
+  slider said that either — a number you set by hand looks exactly like a number that was measured.
+
+  The difference from `fit` is that nobody has an _independent_ opinion about how far through a
+  pipeline a card is. Fit is a judgement; progress is a consequence of the column.
+
+  Separately: `board_columns` has carried a `color` column since the boards shipped and **nothing has
+  ever read it**. `seedColumns` wrote a hardcoded `color: null`. So every stage in the tracker
+  rendered in the same default foreground, and a column's identity was carried entirely by its text
+  — which is the thing an at-a-glance view is worst at.
+
+- **Decision:**
+  - **`progress_pct` moves onto `board_columns`, seeded from the template.** The job pipeline's ten
+    stages carry a weight: Wishlist 5, Applied 15, Screening 30, Interview 50, Technical 65,
+    Onsite/Final 80, Offer 92, Accepted 100. The template is the single source, exactly as `isDone`
+    and `wipLimit` already are (ADR-042) — adding a field to a template must not need a migration.
+  - **`null` is a result, not a gap.** Rejected and Withdrawn are _outcomes_, not steps, and have no
+    weight. "30% through" on an application that was turned down is not a small number, it is a wrong
+    one. A card in such a column reads as its outcome and no meter is drawn.
+  - **`job_applications.progress` is dropped** (migration 0018) and the read model derives the value
+    from the joined column. The write path is gone from the service, the Zod schema and the MCP tool
+    — not deprecated, absent. A `BoardError`-shaped argument for keeping it: the storage layer cannot
+    hold a second answer even if a caller tries.
+  - **`progress` is therefore no longer an editable column.** `StageProgress` is a meter. To change
+    it, change the stage — which is one action, already in the table, and cannot disagree with itself.
+  - **A column's colour is a theme token name, never a hex.** `--primary`, `--success`, `--info`,
+    `--secondary`, `--accent`, `--warning`, `--destructive`, `--muted-foreground`. A stored hex would
+    freeze one theme's green into every other theme; a token names a _role_. The pipeline uses them
+    to group into phases — grey before you have acted, cyan once it is out, purple through the
+    conversation, green at the offer, red for the outcomes — rather than handing out ten unrelated
+    hues, because adjacent stages sharing a token reads as deliberate and ten distinct ones reads as
+    a paint box.
+  - **The colour is applied through a lookup, not `text-${token}`.** Tailwind emits only classes it
+    finds written in source, so a runtime-assembled class name silently produces no rule at all. Same
+    reason as `FIT_CLASS`.
+  - **`ensureJobBoard` backfills an existing board.** A board seeded before the template carried
+    weights has null columns, and every application on it would read "no progress recorded" — a
+    different and wrong statement. The backfill is keyed on the column's **name**, only writes where
+    the value is currently null, and therefore leaves a renamed or hand-added column alone rather
+    than inventing a weight for it. Without the "only where null" rule it would fight the user on
+    every page load.
+
+- **Consequences:**
+  - The slider, and with it `.tui-slider` and its 24px-hit-area work, is no longer used. The CSS stays
+    — it is a correct control and the next range input should not have to rediscover it — but nothing
+    renders it, which is a loose end worth naming rather than pretending about.
+  - `listJobApplications` now reports `stageColor` alongside `progress`, so every view that shows a
+    stage can colour it from the same read model rather than re-deriving from a stage name.
+  - The MCP `update_job_application` tool dropped `progress` from its schema and says so in its
+    description, pointing at `move_job_stage`. A patch carrying only `progress` is an error, not a
+    silent success.
+  - Progress is now only meaningful on a board whose template defines weights. A hand-made job board
+    shows no meter, which is honest: nobody defined what its columns are worth.
+  - The stage colour is available to any surface that shows a stage, so the board's column headers
+    and the card chips can adopt it. They still do not — a follow-up, not a claim.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

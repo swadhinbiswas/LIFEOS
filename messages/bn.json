@@ -1094,7 +1094,8 @@
       "seniority_senior": "সিনিয়র",
       "seniority_not_stated": "উল্লেখ নেই",
       "dbUnset": "সেট করা নেই",
-      "dbScrollRegion": "আবেদনসমূহের টেবিল, বাকি কলামের জন্য পাশে স্ক্রল করুন"
+      "dbScrollRegion": "আবেদনসমূহের টেবিল, বাকি কলামের জন্য পাশে স্ক্রল করুন",
+      "dbNotAPercentage": "শতাংশ নয়"
     },
     "Copilot": {
       "title": "কোপাইলট",

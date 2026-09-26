@@ -132,12 +132,6 @@ export const job_applications = sqliteTable(
      */
     app_id: text("app_id"),
     /**
-     * How far along this application is, 0–100. Deliberately a *human* judgement, not something
-     * derived from the stage: two applications sitting in "Interview" are not equally far along, and
-     * a number the owner types is the only thing that knows.
-     */
-    progress: integer("progress"),
-    /**
      * Whether a cover letter is owed, as distinct from `cover_letter` which holds the text. Having
      * the text without this meant a blank text field and "not needed yet" were indistinguishable.
      */

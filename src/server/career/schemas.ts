@@ -89,10 +89,10 @@ export const updateJobInput = z.object({
   reqId: optionalText(80),
   location: optionalText(200),
   contactId: z.string().min(1).nullable().optional(),
-  // The three fields the reference tracker has and the table now shows. Writable for the same reason
-  // the table shows them: a column nobody can edit is a column nobody fills in.
+  // The two fields the reference tracker has that are a *fact about this application*. `progress`
+  // was here and is not any more: it is derived from the stage column (ADR-128), so accepting a
+  // write would be the second source of truth for a number the column already determines.
   appId: optionalText(80),
-  progress: z.number().int().min(0).max(100).nullable().optional(),
   coverLetterNeeded: z.boolean().nullable().optional(),
 });
 

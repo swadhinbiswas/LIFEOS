@@ -165,7 +165,7 @@ export const MCP_TOOLS: McpTool[] = [
   {
     name: "update_job_application",
     description:
-      "Change fields on one application: progress, fit, the next action, salary, ids, and the rest. Omit a field to leave it alone. Returns the updated application.",
+      "Change fields on one application: fit, the next action, salary, ids, and the rest. Omit a field to leave it alone. Progress is not a field here because it is derived from the stage - move the stage with move_job_stage. Returns the updated application.",
     requiredScope: "write:jobs",
     inputSchema: {
       type: "object",
@@ -174,7 +174,6 @@ export const MCP_TOOLS: McpTool[] = [
           type: "string",
           description: "The application id, from list_job_applications.",
         },
-        progress: { type: "number", description: "0-100, how far along this is." },
         fitScore: { type: "number", description: "0-100." },
         excitement: { type: "number", description: "1-5." },
         companyName: { type: "string" },
@@ -422,7 +421,6 @@ async function dispatch(
         return fail("update_job_application requires an `applicationId` string");
       }
       const input = pick(args, [
-        "progress",
         "fitScore",
         "excitement",
         "companyName",
@@ -453,7 +451,7 @@ async function dispatch(
       // `updateJob` returns the application row, and the position lives on the card it hangs off —
       // so this reports the fields it actually wrote rather than a name it would have to re-read.
       return text(
-        `updated application ${row.id} — progress ${row.progress ?? "—"}, fit score ${row.fit_score ?? "—"}`,
+        `updated application ${row.id} — fit score ${row.fit_score ?? "—"} (progress is derived from the stage, not written)`,
       );
     }
 

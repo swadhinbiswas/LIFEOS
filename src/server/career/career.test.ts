@@ -13,7 +13,8 @@ for (const suffix of ["", "-journal", "-wal", "-shm"]) {
 const { migrate } = await import("drizzle-orm/libsql/migrator");
 const { and, eq } = await import("drizzle-orm");
 const { db } = await import("@/server/db");
-const { job_applications, users } = await import("@/server/db/schema");
+const { board_columns, job_applications, users } = await import("@/server/db/schema");
+const { listJobApplications } = await import("./applications");
 const { getBoard } = await import("@/server/boards");
 const { createJob, ensureCompany, ensureJobBoard, getFunnel, moveJobStage, updateJob } =
   await import("./index");
@@ -222,5 +223,101 @@ describe("career service (spec 6.3, adr-044)", () => {
     const funnel = await getFunnel(NEVER_SENT_USER, new Date("2026-09-06T00:00:00.000Z"));
     expect(funnel.sent).toBe(0);
     expect(funnel.responseRate).toBe(0);
+  });
+});
+
+/**
+ * Stage semantics are data on the column, so an existing board has to acquire them (ADR-128).
+ * This is the path every user with applications predating the migration depends on, and the e2e
+ * probes cannot cover it: they sign up a fresh account, which always gets a brand-new board.
+ */
+describe("job board stage semantics (adr-128)", () => {
+  const LEGACY_USER = "01HCAREER000000000000000005";
+  let boardId = "";
+
+  beforeAll(async () => {
+    await db
+      .insert(users)
+      .values({
+        id: LEGACY_USER,
+        email: "legacy@example.test",
+        name: "legacy",
+        created_at: new Date(),
+        updated_at: new Date(),
+      })
+      .onConflictDoNothing();
+
+    // A board as it looked before the migration: correct columns, no weights, no colours.
+    boardId = (await ensureJobBoard(LEGACY_USER)).id;
+    await db
+      .update(board_columns)
+      .set({ progress_pct: null, color: null })
+      .where(eq(board_columns.board_id, boardId));
+    // A column the user added themselves, which no template knows about.
+    await db.insert(board_columns).values({
+      id: "col-legacy-custom",
+      board_id: boardId,
+      user_id: LEGACY_USER,
+      name: "Ghosted by them",
+      position: "zzzz",
+      is_done: false,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+  });
+
+  it("gives an existing board's columns a weight and a colour, keyed on the template's name", async () => {
+    await ensureJobBoard(LEGACY_USER);
+    const columns = await db
+      .select({
+        name: board_columns.name,
+        pct: board_columns.progress_pct,
+        color: board_columns.color,
+      })
+      .from(board_columns)
+      .where(eq(board_columns.board_id, boardId));
+    const byName = new Map(columns.map((c) => [c.name, c]));
+
+    expect(byName.get("Applied")).toMatchObject({ pct: 15, color: "info" });
+    expect(byName.get("Offer")).toMatchObject({ pct: 92, color: "success" });
+    expect(byName.get("Rejected")).toMatchObject({ pct: null, color: "destructive" });
+  });
+
+  it("leaves a column the template does not know about alone", async () => {
+    // Giving a hand-made column another stage's weight would be a fabrication. Null is the honest
+    // answer, and it is also what stops the backfill fighting the user on every page load.
+    const custom = await db
+      .select({ pct: board_columns.progress_pct, color: board_columns.color })
+      .from(board_columns)
+      .where(eq(board_columns.id, "col-legacy-custom"));
+    expect(custom[0]).toMatchObject({ pct: null, color: null });
+  });
+
+  it("does not overwrite a value the user has since chosen", async () => {
+    await db
+      .update(board_columns)
+      .set({ progress_pct: 42, color: "warning" })
+      .where(and(eq(board_columns.board_id, boardId), eq(board_columns.name, "Applied")));
+    await ensureJobBoard(LEGACY_USER);
+    const applied = await db
+      .select({ pct: board_columns.progress_pct, color: board_columns.color })
+      .from(board_columns)
+      .where(and(eq(board_columns.board_id, boardId), eq(board_columns.name, "Applied")));
+    expect(applied[0]).toMatchObject({ pct: 42, color: "warning" });
+  });
+
+  it("derives a row's progress from its column rather than storing one", async () => {
+    await createJob(LEGACY_USER, { title: "Staff Engineer", companyName: "Legacy Co" });
+    const rows = await listJobApplications(LEGACY_USER);
+    const row = rows.find((r) => r.position === "Staff Engineer");
+    // Wishlist, straight from the template. There is no `progress` column on the application at all.
+    expect(row).toMatchObject({ progress: 5, stage: "Wishlist", stageColor: "muted-foreground" });
+    // And there is no per-application copy to drift: the column was dropped in migration 0018, so
+    // the storage layer cannot hold a second answer even if a caller tried.
+    const [stored] = await db
+      .select()
+      .from(job_applications)
+      .where(eq(job_applications.card_id, row!.cardId));
+    expect(Object.keys(stored ?? {})).not.toContain("progress");
   });
 });

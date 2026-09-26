@@ -1,6 +1,7 @@
 import { and, desc, eq, isNotNull, isNull, notInArray, sql } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
+import { BOARD_TEMPLATES } from "@/config/board-templates";
 import { db } from "@/server/db";
 import {
   board_columns,
@@ -60,7 +61,16 @@ function parseHistory(raw: string): StageEntry[] {
   }
 }
 
-/** The user's job board, created from the spec's pipeline template on first use. */
+/**
+ * The user's job board, created from the spec's pipeline template on first use.
+ *
+ * An existing board is also **backfilled** (ADR-128). A board seeded before the template carried
+ * weights and colours has columns with `progress_pct` and `color` set to null, and every
+ * application on it would read as "no progress recorded" — which is a different statement from "not
+ * measured", and wrong. The backfill is keyed on the column's *name*, so a column the user renamed
+ * or added is left null rather than being given some other stage's weight, and it only writes where
+ * the value is currently null so it never overwrites a choice the user has since made.
+ */
 export async function ensureJobBoard(userId: string): Promise<Board> {
   const [existing] = await db
     .select()
@@ -69,8 +79,41 @@ export async function ensureJobBoard(userId: string): Promise<Board> {
       and(eq(boards.user_id, userId), eq(boards.template, JOB_TEMPLATE), isNull(boards.deleted_at)),
     )
     .limit(1);
-  if (existing) return existing;
-  return createBoard(userId, { name: "Jobs", template: JOB_TEMPLATE });
+  if (!existing) return createBoard(userId, { name: "Jobs", template: JOB_TEMPLATE });
+  await backfillStageSemantics(userId, existing.id);
+  return existing;
+}
+
+/** Apply the template's colour and weight to job-board columns that do not have them yet. */
+async function backfillStageSemantics(userId: string, boardId: string): Promise<void> {
+  const template = BOARD_TEMPLATES.find((candidate) => candidate.id === JOB_TEMPLATE);
+  if (!template) return;
+  // Case-insensitive, because the template is the source of the spelling and a board created by an
+  // older template version may have drifted in case.
+  const byName = new Map(template.columns.map((column) => [column.name.toLowerCase(), column]));
+
+  const columns = await db
+    .select({
+      id: board_columns.id,
+      name: board_columns.name,
+      color: board_columns.color,
+      progressPct: board_columns.progress_pct,
+    })
+    .from(board_columns)
+    .where(and(eq(board_columns.board_id, boardId), eq(board_columns.user_id, userId)));
+
+  for (const column of columns) {
+    const source = byName.get(column.name.toLowerCase());
+    if (!source) continue;
+    // `null` is a *result* here, not a gap: Rejected and Withdrawn are template-null, and writing
+    // nothing for them is correct. Only a column that has never been assigned anything is filled.
+    if (column.color !== null || column.progressPct !== null) continue;
+    if (source.color === undefined && source.progressPct === undefined) continue;
+    await db
+      .update(board_columns)
+      .set({ color: source.color ?? null, progress_pct: source.progressPct ?? null })
+      .where(and(eq(board_columns.id, column.id), eq(board_columns.user_id, userId)));
+  }
 }
 
 /** Companies are matched case-insensitively so "Acme" and "acme" are one record. */
@@ -204,7 +247,6 @@ export async function updateJob(userId: string, input: UpdateJobInput): Promise<
   if (input.applyEmail !== undefined) patch.apply_email = input.applyEmail;
   if (input.reqId !== undefined) patch.req_id = input.reqId;
   if (input.appId !== undefined) patch.app_id = input.appId;
-  if (input.progress !== undefined) patch.progress = input.progress;
   if (input.coverLetterNeeded !== undefined) patch.cover_letter_needed = input.coverLetterNeeded;
   if (input.location !== undefined) patch.location = input.location;
   if (input.contactId !== undefined) {

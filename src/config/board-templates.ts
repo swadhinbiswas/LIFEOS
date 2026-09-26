@@ -11,6 +11,22 @@ export interface BoardTemplateColumn {
   isDone?: boolean;
   /** Soft WIP warning, never a hard block. */
   wipLimit?: number;
+  /**
+   * A **theme token name**, never a hex value — `primary`, `success`, `info`, `warning`, `accent`,
+   * `secondary`, `destructive`, `muted-foreground`. A stored hex would freeze one theme's idea of
+   * "green" into every other theme, and the whole point of the token layer is that a value names a
+   * role rather than a colour.
+   */
+  color?: string;
+  /**
+   * How far through the work a card in this column is, 0-100 (ADR-128).
+   *
+   * **`null` is meaningful and is not the same as 0.** A terminal column that is an *outcome*
+   * rather than a step — Rejected, Withdrawn — has no percentage, because "30% through" on an
+   * application that was turned down is not a small number, it is a wrong one. A card sitting in
+   * such a column reads as its outcome and no meter is drawn.
+   */
+  progressPct?: number | null;
 }
 
 export interface BoardTemplate {
@@ -45,17 +61,22 @@ export const BOARD_TEMPLATES: BoardTemplate[] = [
   {
     id: "job-pipeline",
     name: "Job Pipeline",
+    // The colours group the pipeline into phases rather than handing out ten unrelated hues: grey
+    // before you have acted, cyan once it is out, purple through the conversation, green at the
+    // offer, red for the outcomes. Adjacent stages sharing a token reads as deliberate; ten
+    // distinct ones reads as a paint box. The weights are the same story in numbers — how much of
+    // the work is genuinely behind you at each step.
     columns: [
-      { name: "Wishlist" },
-      { name: "Applied" },
-      { name: "Screening" },
-      { name: "Interview" },
-      { name: "Technical" },
-      { name: "Onsite/Final" },
-      { name: "Offer" },
-      { name: "Accepted", isDone: true },
-      { name: "Rejected" },
-      { name: "Withdrawn" },
+      { name: "Wishlist", color: "muted-foreground", progressPct: 5 },
+      { name: "Applied", color: "info", progressPct: 15 },
+      { name: "Screening", color: "secondary", progressPct: 30 },
+      { name: "Interview", color: "primary", progressPct: 50 },
+      { name: "Technical", color: "primary", progressPct: 65 },
+      { name: "Onsite/Final", color: "accent", progressPct: 80 },
+      { name: "Offer", color: "success", progressPct: 92 },
+      { name: "Accepted", color: "success", progressPct: 100, isDone: true },
+      { name: "Rejected", color: "destructive", progressPct: null },
+      { name: "Withdrawn", color: "muted-foreground", progressPct: null },
     ],
   },
   {

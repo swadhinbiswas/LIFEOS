@@ -103,19 +103,33 @@ describe("MCP server /api/mcp (spec 9.2, adr-064)", () => {
 
     const updated = await callTool("update_job_application", {
       applicationId,
-      progress: 65,
       appId: "R100705",
     });
     expect(updated.isError).toBe(false);
-    expect(updated.text).toContain("progress 65");
+    expect(updated.text).toContain("fit score 80");
+
+    // Progress is derived from the stage, so it is not a writable field (ADR-128). A patch carrying
+    // only `progress` therefore has nothing left to change, and must say so rather than quietly
+    // reporting success on a write that never happened.
+    const progressWrite = await callTool("update_job_application", { applicationId, progress: 65 });
+    expect(progressWrite.isError).toBe(true);
+    expect(progressWrite.text).toContain("at least one field");
 
     // A patch with nothing in it is a read, not a write: saying so beats silently succeeding.
     const empty = await callTool("update_job_application", { applicationId });
     expect(empty.isError).toBe(true);
 
+    // A new application lands in the first column, Wishlist, which the template weights at 5%. The
+    // row must read that — a derived number, not a stored one.
+    const inWishlist = await callTool("list_job_applications", { stage: "Wishlist" });
+    expect(inWishlist.text).toContain("progress 5%");
+
     const moved = await callTool("move_job_stage", { applicationId, toStage: "interview" });
     expect(moved.isError).toBe(false);
     expect(moved.text).toContain("now in Interview");
+
+    const inInterview = await callTool("list_job_applications", { stage: "Interview" });
+    expect(inInterview.text).toContain("progress 50%");
 
     // A stage that does not exist must not silently file the job somewhere plausible, and the error
     // has to name the real stages or the agent can only guess again.
