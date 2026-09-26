@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { globSync } from "node:fs";
 
 import { createRequire } from "node:module";
 
@@ -107,5 +108,48 @@ describe("message catalogues", () => {
       }
       expect({ locale, malformed }).toEqual({ locale, malformed: [] });
     }
+  });
+
+  it("is called with every placeholder its message declares", () => {
+    // `t("key")` where the message contains `{days}` throws FORMATTING_ERROR at *render* time, so
+    // it surfaces as a broken dashboard rather than a type error — which is how two empty-state
+    // labels shipped claiming "no coding activity in the last {days} days" with no `days` given.
+    //
+    // A static scan, because the alternative is waiting for a page to render. The repo already
+    // source-scans in `src/lib/forms.test.ts`, so this is the same shape: the compiler cannot see
+    // a missing runtime argument, so something has to.
+    const sources = globSync("src/**/*.tsx");
+    const namespaced = /\b(?:useTranslations|getTranslations)\(\s*"([^"]+)"/gu;
+    const bareCall = /\bt\(\s*(['"])([A-Za-z0-9_.\-]+)\1\s*\)/gu;
+    const placeholder = /\{(\w+)/gu;
+
+    const lookup = (dotted: string): string | null => {
+      let node: unknown = read("en");
+      for (const part of dotted.split(".")) {
+        if (node === null || typeof node !== "object" || !(part in node)) return null;
+        node = (node as Record<string, unknown>)[part];
+      }
+      return typeof node === "string" ? node : null;
+    };
+
+    const omissions: Array<{ file: string; key: string; missing: string[] }> = [];
+    for (const file of sources) {
+      const src = readFileSync(file, "utf8");
+      const namespaces = [...src.matchAll(namespaced)].map((match) => match[1] as string);
+      if (namespaces.length === 0) continue;
+      for (const call of src.matchAll(bareCall)) {
+        const key = call[2] as string;
+        for (const namespace of namespaces) {
+          const message = lookup(`${namespace}.${key}`);
+          if (message === null) continue;
+          const needed = [...new Set([...message.matchAll(placeholder)].map((m) => m[1]!))];
+          if (needed.length > 0) {
+            omissions.push({ file, key, missing: needed });
+            break;
+          }
+        }
+      }
+    }
+    expect(omissions).toEqual([]);
   });
 });

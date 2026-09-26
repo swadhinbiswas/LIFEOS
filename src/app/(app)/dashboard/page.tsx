@@ -770,7 +770,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         valueLabel={t("minutes")}
         unit={t("min")}
         tableToggle={t("tableView")}
-        emptyLabel={activityConnection ? t("noCodingYet") : t("notConnected")}
+        emptyLabel={
+          activityConnection ? t("noCodingYet", { days: ACTIVITY_WINDOW_DAYS }) : t("notConnected")
+        }
         emptyAction={
           activityConnection
             ? { href: "/settings/activity", label: t("syncNow") }
@@ -793,7 +795,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         valueLabel={t("aiLines")}
         unit={t("lines")}
         tableToggle={t("tableView")}
-        emptyLabel={activityConnection ? t("noAiLines") : t("notConnected")}
+        emptyLabel={
+          activityConnection ? t("noAiLines", { days: ACTIVITY_WINDOW_DAYS }) : t("notConnected")
+        }
         emptyAction={{
           href: "/settings/activity",
           label: activityConnection ? t("syncNow") : t("connect"),
