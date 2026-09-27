@@ -36,6 +36,7 @@ import { type MoveDirection } from "./card-tile";
 import { GridView } from "./grid-view";
 import { SavedViews } from "./saved-views";
 import { TableView } from "./table-view";
+import { TimelineView } from "./timeline-view";
 import { useBoardKeys } from "./use-board-keys";
 import { useBoard } from "./use-board";
 import { useUndoRedo } from "./use-undo-redo";
@@ -379,6 +380,11 @@ export function BoardView({
         />
       ) : view === "calendar" ? (
         <CalendarView
+          payload={{ ...payload, cards: visibleCards }}
+          onOpen={(cardId) => void setCardParam(cardId)}
+        />
+      ) : view === "timeline" ? (
+        <TimelineView
           payload={{ ...payload, cards: visibleCards }}
           onOpen={(cardId) => void setCardParam(cardId)}
         />

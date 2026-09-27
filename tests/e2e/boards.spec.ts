@@ -1,6 +1,22 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { column, createVerifiedUser, serverCard, signIn, uniqueEmail } from "./helpers";
+
+/**
+ * Press a board view key until the URL answers.
+ *
+ * The key listener attaches when React hydrates, and `goto` resolves before that, so a single
+ * `keyboard.press` can land before anything is listening and be lost for good. Polling the press is
+ * the deterministic form of "press it once the app is actually awake".
+ */
+async function pressViewKey(page: Page, key: string, expected: string): Promise<void> {
+  await expect
+    .poll(async () => {
+      await page.keyboard.press(key);
+      return page.url();
+    })
+    .toContain(`view=${expected}`);
+}
 
 /**
  * Phase 2 first slice (spec §6.1/§6.2, ADR-042): the Tasks board accepts a quick add and the
@@ -200,8 +216,7 @@ test("grid view: a tile per card, reachable by the keyboard", async ({ page }) =
   // The `3` key is spec §4.3's grid shortcut. Blur the adder first, because a shortcut typed into
   // an input is deliberately inert.
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
-  await page.keyboard.press("3");
-  await expect(page).toHaveURL(/view=grid/u);
+  await pressViewKey(page, "3", "grid");
 
   const grid = page.locator('[data-slot="board-grid"]');
   await expect(grid.locator('[data-slot="grid-tile"]')).toHaveCount(2);
@@ -273,6 +288,54 @@ test("calendar view: dated cards land on their day and undated cards stay reacha
   await expect(agenda.locator(`[data-day="${due}"]`)).toContainText("dated milestone");
   await agenda.locator('[data-slot="calendar-card"]', { hasText: "dated milestone" }).click();
   await expect(page.getByRole("dialog").getByLabel("title")).toHaveValue("dated milestone");
+});
+
+/** The timeline draws a start→due bar, a milestone for one date, and keeps undated cards. */
+test("timeline view: a bar spans start to due and opens the card", async ({ page }) => {
+  test.setTimeout(90_000);
+  const email = uniqueEmail("timeline");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/tasks");
+
+  const adder = page.getByLabel("add a card to Inbox");
+  for (const title of ["ranged work", "someday work"]) {
+    await adder.click();
+    await adder.fill(title);
+    await adder.press("Enter");
+  }
+  await expect(serverCard(page, "Inbox", "someday work")).toBeVisible();
+
+  const day = (offset: number) =>
+    new Date(Date.now() + offset * 86_400_000).toISOString().slice(0, 10);
+  const rangedId = await serverCard(page, "Inbox", "ranged work").getAttribute("data-card-id");
+  await page.goto(`/tasks?card=${rangedId}`);
+  await page.getByRole("dialog").getByLabel("start").fill(day(-1));
+  await page.getByRole("dialog").getByLabel("due").fill(day(2));
+  await page.waitForLoadState("networkidle");
+
+  // `5` is spec §4.3's timeline key, which also proves the whole `1`…`5` map is wired.
+  await page.goto("/tasks");
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await pressViewKey(page, "5", "timeline");
+
+  const timeline = page.locator('[data-slot="board-timeline"]');
+  await expect(timeline).toBeVisible();
+
+  // A start and a due date make a bar wider than the milestone mark a single date would draw.
+  const bar = timeline.locator(`[data-slot="timeline-bar"][data-card-id="${rangedId}"]`);
+  await expect(bar).toHaveAttribute("title", /→/u);
+  const box = await bar.boundingBox();
+  expect(box?.width ?? 0).toBeGreaterThan(32);
+
+  // The undated card is not on the axis, and is not hidden either.
+  await expect(timeline.locator('[data-slot="timeline-unscheduled"]')).toContainText(
+    "someday work",
+  );
+
+  await bar.click();
+  await expect(page.getByRole("dialog").getByLabel("title")).toHaveValue("ranged work");
 });
 
 /** The Trash is the durable route back for anything deleted outside the undo window. */
