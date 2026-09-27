@@ -119,6 +119,19 @@ export const checklistItemTextInput = z.object({
   text: checklistText,
 });
 
+/** Board labels (spec §6.1). */
+export const createBoardLabelInput = z.object({
+  boardId: z.string().min(1),
+  name: z.string().trim().min(1).max(60),
+  color: z.string().trim().max(40).nullable().optional(),
+});
+export const labelIdInput = z.object({ labelId: z.string().min(1) });
+export const setCardLabelsInput = z.object({
+  cardId: z.string().min(1),
+  /** The whole selection, not a delta: idempotent, so a double-click cannot duplicate or drop. */
+  labelIds: z.array(z.string().min(1)).max(50),
+});
+
 export const savedViewScopeSchema = z.enum(["tasks", "jobs", "board"]);
 
 export const boardIdInput = z.object({ boardId: z.string().min(1) });

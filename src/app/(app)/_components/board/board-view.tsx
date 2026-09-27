@@ -378,6 +378,7 @@ export function BoardView({
           onOpen={(cardId) => void setCardParam(cardId)}
           cardMeta={cardMeta}
           checklistProgress={payload.checklistProgress}
+          labelsByCard={payload.labelsByCard}
         />
       ) : view === "calendar" ? (
         <CalendarView
@@ -441,6 +442,7 @@ export function BoardView({
                 selectedCardIds={selectedIds}
                 cardMeta={cardMeta}
                 checklistProgress={payload.checklistProgress}
+                labelsByCard={payload.labelsByCard}
                 onToggleSelect={toggleSelect}
                 onAdd={(columnId, title) => {
                   createCard.mutate({ columnId, title });

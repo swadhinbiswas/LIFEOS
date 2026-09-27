@@ -24,7 +24,10 @@ import {
   checklistItemDoneInput,
   checklistItemIdInput,
   checklistItemTextInput,
+  createBoardLabelInput,
   createBoardInput,
+  labelIdInput,
+  setCardLabelsInput,
   createCardInput,
   moveCardInput,
   revertMoveInput,
@@ -48,6 +51,13 @@ import {
   setChecklistItemText,
   type CardChecklist,
 } from "@/server/boards/checklists";
+import {
+  cardLabelsFor,
+  createBoardLabel,
+  deleteBoardLabel,
+  setCardLabels,
+  type Label,
+} from "@/server/boards/labels";
 import { carryOverOverdue } from "@/server/boards/brief";
 import { revertMove, revertUpdate } from "@/server/boards/revert";
 import { listTrash, purgeCard, purgeTrash } from "@/server/boards/trash";
@@ -125,6 +135,36 @@ export async function removeChecklistItemAction(
   input: unknown,
 ): Promise<ActionResult<CardChecklist>> {
   return run((userId) => removeChecklistItem(userId, checklistItemIdInput.parse(input).itemId));
+}
+
+/** Board labels (spec §6.1). The editor gets the board's labels and the card's set in one call. */
+export async function cardLabelsAction(
+  input: unknown,
+): Promise<ActionResult<{ available: Label[]; selected: string[] }>> {
+  return run((userId) => cardLabelsFor(userId, cardIdInput.parse(input).cardId));
+}
+
+export async function setCardLabelsAction(
+  input: unknown,
+): Promise<ActionResult<{ available: Label[]; selected: string[] }>> {
+  return run((userId) => {
+    const { cardId, labelIds } = setCardLabelsInput.parse(input);
+    return setCardLabels(userId, cardId, labelIds);
+  });
+}
+
+export async function createBoardLabelAction(input: unknown): Promise<ActionResult<Label>> {
+  return run((userId) => {
+    const { boardId, name, color } = createBoardLabelInput.parse(input);
+    return createBoardLabel(userId, boardId, { name, color });
+  });
+}
+
+export async function deleteBoardLabelAction(input: unknown): Promise<ActionResult<null>> {
+  return run(async (userId) => {
+    await deleteBoardLabel(userId, labelIdInput.parse(input).labelId);
+    return null;
+  });
 }
 
 export async function listBoardsAction(): Promise<ActionResult<Board[]>> {

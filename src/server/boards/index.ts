@@ -23,7 +23,9 @@ import type {
   UpdateColumnInput,
 } from "./schemas";
 import { BoardError } from "./errors";
+import type { Label } from "./labels";
 import { checklistProgressForBoard, type ChecklistProgress } from "./checklists";
+import { labelsForBoard } from "./labels";
 import { nextOccurrence, shiftStart } from "./recurrence";
 
 export { BoardError } from "./errors";
@@ -160,6 +162,8 @@ export interface BoardPayload {
    * one grouped query for the board, not one per card.
    */
   checklistProgress: Record<string, ChecklistProgress>;
+  /** Each card's labels, for the card face. Absent for cards with none — one query per board. */
+  labelsByCard: Record<string, Label[]>;
 }
 
 export async function getBoard(userId: string, boardId: string): Promise<BoardPayload> {
@@ -187,6 +191,7 @@ export async function getBoard(userId: string, boardId: string): Promise<BoardPa
     columns,
     cards: cardRows,
     checklistProgress: await checklistProgressForBoard(userId, boardId),
+    labelsByCard: await labelsForBoard(userId, boardId),
   };
 }
 

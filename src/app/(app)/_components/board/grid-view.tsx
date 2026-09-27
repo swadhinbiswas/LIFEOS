@@ -4,6 +4,8 @@ import { useTranslations } from "next-intl";
 
 import type { BoardPayload, Card } from "@/server/boards";
 import type { ChecklistProgress } from "@/server/boards/checklists";
+import type { Label } from "@/server/boards/labels";
+import { labelChip } from "./label-tone";
 
 /**
  * Grid view (spec §6.1): the same cards as square tiles, grouped by column, for the boards whose
@@ -27,6 +29,7 @@ export function GridView({
   onOpen,
   cardMeta,
   checklistProgress,
+  labelsByCard,
 }: {
   payload: BoardPayload;
   onOpen: (cardId: string) => void;
@@ -34,6 +37,8 @@ export function GridView({
   cardMeta?: Record<string, Array<{ label: string }>>;
   /** Checklist progress per card, drawn on the tile (spec §6.1). */
   checklistProgress?: Record<string, ChecklistProgress>;
+  /** Each card's labels, drawn as chips on the tile. */
+  labelsByCard?: Record<string, Label[]>;
 }) {
   const t = useTranslations("Pages.Board");
 
@@ -72,6 +77,20 @@ export function GridView({
                       {card.description ? (
                         <span className="line-clamp-2 text-[10px] text-muted-foreground">
                           {card.description}
+                        </span>
+                      ) : null}
+
+                      {labelsByCard?.[card.id]?.length ? (
+                        <span className="flex flex-wrap gap-1">
+                          {labelsByCard[card.id]!.map((label) => (
+                            <span
+                              key={label.id}
+                              data-slot="card-label"
+                              className={labelChip(label.color)}
+                            >
+                              {label.name}
+                            </span>
+                          ))}
                         </span>
                       ) : null}
 

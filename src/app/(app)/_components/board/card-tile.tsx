@@ -6,7 +6,9 @@ import { useTranslations } from "next-intl";
 
 import type { Card } from "@/server/boards";
 import type { ChecklistProgress } from "@/server/boards/checklists";
+import type { Label } from "@/server/boards/labels";
 import { controlGhost } from "@/components/tui/controls";
+import { labelChip } from "./label-tone";
 import { cn } from "@/lib/utils";
 
 export type MoveDirection = "up" | "down" | "left" | "right";
@@ -28,6 +30,7 @@ export function CardTile({
   selected,
   meta,
   checklist,
+  labels,
   onMove,
   onOpen,
   onToggleSelect,
@@ -39,6 +42,8 @@ export function CardTile({
   meta?: Array<{ label: string; href?: string }>;
   /** Subtask progress for the card face (spec §6.1). Absent when the card has no subtasks. */
   checklist?: ChecklistProgress;
+  /** The card's labels, drawn as chips on the face (spec §6.1 card fields include labels). */
+  labels?: Label[];
   onMove: (cardId: string, direction: MoveDirection) => void;
   onOpen?: (cardId: string) => void;
   onToggleSelect?: (cardId: string) => void;
@@ -82,6 +87,15 @@ export function CardTile({
         </button>
         <div className="min-w-0 flex-1">
           <p className="line-clamp-2 font-mono text-xs">{card.title}</p>
+          {labels && labels.length > 0 ? (
+            <p className="mt-1 flex flex-wrap gap-1">
+              {labels.map((label) => (
+                <span key={label.id} data-slot="card-label" className={labelChip(label.color)}>
+                  {label.name}
+                </span>
+              ))}
+            </p>
+          ) : null}
           <p className="mt-1 flex items-center gap-2 font-mono text-[10px] text-muted-foreground">
             {card.priority ? (
               <span

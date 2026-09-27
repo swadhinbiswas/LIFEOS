@@ -8,6 +8,7 @@ import { useRef, useState } from "react";
 
 import type { BoardColumn as Column, Card } from "@/server/boards";
 import type { ChecklistProgress } from "@/server/boards/checklists";
+import type { Label } from "@/server/boards/labels";
 import { cn } from "@/lib/utils";
 
 import { CardTile, type MoveDirection } from "./card-tile";
@@ -35,6 +36,7 @@ export function BoardColumn({
   selectedCardIds,
   cardMeta,
   checklistProgress,
+  labelsByCard,
   onToggleSelect,
   onAdd,
 }: {
@@ -49,6 +51,8 @@ export function BoardColumn({
   cardMeta?: Record<string, Array<{ label: string; href?: string }>>;
   /** Checklist progress per card, drawn on the card face (spec §6.1). */
   checklistProgress?: Record<string, ChecklistProgress>;
+  /** Each card's labels, drawn as chips on the face. */
+  labelsByCard?: Record<string, Label[]>;
   onToggleSelect?: (cardId: string) => void;
   onAdd: (columnId: string, title: string) => Promise<void> | void;
 }) {
@@ -82,6 +86,7 @@ export function BoardColumn({
       selected={selectedCardIds?.includes(card.id) ?? false}
       meta={cardMeta?.[card.id]}
       checklist={checklistProgress?.[card.id]}
+      labels={labelsByCard?.[card.id]}
       onMove={onMove}
       onOpen={onOpen}
       onToggleSelect={onToggleSelect}

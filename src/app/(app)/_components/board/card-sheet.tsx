@@ -18,6 +18,7 @@ import type { Card } from "@/server/boards";
 
 import { CardGoals } from "./card-goals";
 import { CardChecklist } from "./card-checklist";
+import { CardLabels } from "./card-labels";
 import { CardLinks } from "./card-links";
 import { CardReminder } from "./card-reminder";
 import { CardTags } from "./card-tags";
@@ -210,6 +211,7 @@ export function CardSheet({
 
           <div className="flex flex-col gap-3 border-t border-border pt-3">
             <CardChecklist cardId={card.id} boardId={card.board_id} />
+            <CardLabels cardId={card.id} boardId={card.board_id} />
             <CardGoals cardId={card.id} />
             <CardReminder cardId={card.id} />
             <CardTags cardId={card.id} />

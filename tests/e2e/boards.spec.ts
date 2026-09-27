@@ -330,6 +330,49 @@ test("checklist: subtasks count progress on the card face", async ({ page }) => 
   ).toHaveText("▰ 1/2");
 });
 
+/** Labels (spec §6.1): created in the sheet, and the chip reaches the card face. */
+test("labels: a new label attaches to the card and shows on its face", async ({ page }) => {
+  test.setTimeout(90_000);
+  const email = uniqueEmail("labels");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/tasks");
+
+  const adder = page.getByLabel("add a card to Inbox");
+  await adder.click();
+  await adder.fill("label the work");
+  await adder.press("Enter");
+  const card = serverCard(page, "Inbox", "label the work");
+  await expect(card).toBeVisible();
+  const cardId = await card.getAttribute("data-card-id");
+  await page.goto(`/tasks?card=${cardId}`);
+
+  const labels = page.getByRole("dialog").locator('[data-slot="card-labels"]');
+  await expect(labels).toContainText("no labels yet");
+
+  // Creating a label attaches it in the same action chain — a label you just named but did not
+  // apply is a label you have to go and find again.
+  await labels.getByLabel("new label").fill("urgent");
+  await labels.getByLabel("colour").selectOption("destructive");
+  await labels.getByRole("button", { name: "add" }).click();
+
+  const chip = labels.locator('[data-slot="label-chip"][data-label-name="urgent"]');
+  await expect(chip).toHaveAttribute("aria-pressed", "true");
+
+  // Detaching leaves the label on the board, so it can be put back.
+  await chip.click();
+  await expect(chip).toHaveAttribute("aria-pressed", "false");
+  await chip.click();
+  await expect(chip).toHaveAttribute("aria-pressed", "true");
+
+  // The card face carries the chip, and it survives closing the sheet.
+  await page.goto("/tasks");
+  await expect(
+    serverCard(page, "Inbox", "label the work").locator('[data-slot="card-label"]'),
+  ).toHaveText("urgent");
+});
+
 /** The timeline draws a start→due bar, a milestone for one date, and keeps undated cards. */
 test("timeline view: a bar spans start to due and opens the card", async ({ page }) => {
   test.setTimeout(90_000);
