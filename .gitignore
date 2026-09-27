@@ -1,6 +1,11 @@
 .env
 .env.*
 !.env.example
+# ADR-131 named this file as a committed deliverable and docs/SELF_HOSTING.md tells people to
+# `cp .env.selfhost.example .env.selfhost`, but `.env.*` above swallowed it: the file existed on
+# disk and had never been tracked, so the instruction failed on a fresh clone. The ADR was right
+# and the ignore rule was not.
+!.env.selfhost.example
 node_modules/
 .next/
 coverage/
