@@ -23,6 +23,7 @@ import {
   parseQuickFilters,
   serializeQuickFilters,
 } from "@/config/board-filters";
+import { RENDERED_VIEWS, type BoardView } from "@/config/boards";
 import type { BoardPayload, Card } from "@/server/boards";
 
 import { BoardColumn } from "./board-column";
@@ -31,6 +32,7 @@ import { BoardUtils } from "./board-utils";
 import { controlBoxed, controlGhost, ToolbarGroup } from "@/components/tui/controls";
 import { CardSheet } from "./card-sheet";
 import { type MoveDirection } from "./card-tile";
+import { GridView } from "./grid-view";
 import { SavedViews } from "./saved-views";
 import { TableView } from "./table-view";
 import { useBoardKeys } from "./use-board-keys";
@@ -70,7 +72,7 @@ export function BoardView({
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const view = viewParam === "table" ? "table" : "kanban";
+  const view: BoardView = RENDERED_VIEWS.find((candidate) => candidate === viewParam) ?? "kanban";
   const filters = useMemo(() => parseQuickFilters(filterParam), [filterParam]);
   const group: GroupBy = groupParam === "column" || groupParam === "priority" ? groupParam : "none";
 
@@ -184,15 +186,16 @@ export function BoardView({
   /** The current URL state, captured by "save view" and replayed by "apply". */ const currentQuery =
     useMemo(() => {
       const state: Record<string, string> = {};
-      if (viewParam === "table") state.view = "table";
+      if (view !== "kanban") state.view = view;
       if (filterParam) state.filter = filterParam;
       if (groupParam) state.group = groupParam;
       if (query) state.q = query;
       return state;
-    }, [viewParam, filterParam, groupParam, query]);
+    }, [view, filterParam, groupParam, query]);
 
   const applyView = (state: Record<string, string>) => {
-    void setViewParam(state.view === "table" ? "table" : null);
+    const next = RENDERED_VIEWS.find((candidate) => candidate === state.view);
+    void setViewParam(next && next !== "kanban" ? next : null);
     void setFilterParam(state.filter ?? null);
     void setGroupParam(state.group ?? null);
     void setQuery(state.q ?? null);
@@ -253,7 +256,7 @@ export function BoardView({
     onToggleSelect: (card) => toggleSelect(card.id),
     onClearSelection: () => setSelectedIds([]),
     hasSelection: selectedIds.length > 0,
-    onView: (next) => void setViewParam(next === "kanban" ? null : "table"),
+    onView: (next) => void setViewParam(next === "kanban" ? null : next),
     onUndo: undo,
     onRedo: redo,
     enabled: view === "kanban",
@@ -366,6 +369,12 @@ export function BoardView({
           payload={{ ...payload, cards: visibleCards }}
           group={group}
           onOpen={(cardId) => void setCardParam(cardId)}
+        />
+      ) : view === "grid" ? (
+        <GridView
+          payload={{ ...payload, cards: visibleCards }}
+          onOpen={(cardId) => void setCardParam(cardId)}
+          cardMeta={cardMeta}
         />
       ) : (
         <DndContext

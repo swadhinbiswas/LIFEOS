@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { QUICK_FILTERS, type QuickFilterId } from "@/config/board-filters";
-import { BOARD_VIEWS, type BoardView } from "@/config/boards";
+import { RENDERED_VIEWS, type BoardView } from "@/config/boards";
 
 import { cn } from "cn";
 
@@ -66,19 +66,17 @@ export function BoardToolbar({
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1" data-slot="board-toolbar">
       <fieldset className="flex items-center gap-1">
         <legend className="sr-only">{t("view")}</legend>
-        {BOARD_VIEWS.filter((candidate) => candidate === "kanban" || candidate === "table").map(
-          (candidate) => (
-            <button
-              key={candidate}
-              type="button"
-              aria-pressed={view === candidate}
-              className={chipState(view === candidate)}
-              onClick={() => onView(candidate)}
-            >
-              {t(candidate)}
-            </button>
-          ),
-        )}
+        {RENDERED_VIEWS.map((candidate) => (
+          <button
+            key={candidate}
+            type="button"
+            aria-pressed={view === candidate}
+            className={chipState(view === candidate)}
+            onClick={() => onView(candidate)}
+          >
+            {t(candidate)}
+          </button>
+        ))}
       </fieldset>
 
       <fieldset className="flex flex-wrap items-center gap-1">

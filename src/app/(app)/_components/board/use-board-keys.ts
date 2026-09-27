@@ -4,8 +4,14 @@ import { useEffect } from "react";
 
 import type { BoardColumn, Card } from "@/server/boards";
 
+import { RENDERED_VIEWS, VIEW_KEYS, type BoardView } from "@/config/boards";
+
 const byPosition = (a: Card, b: Card) =>
   a.position < b.position ? -1 : a.position > b.position ? 1 : 0;
+
+/** The view a `1`…`5` key selects, for the views that have a renderer. */
+const viewForKey = (key: string): BoardView | null =>
+  RENDERED_VIEWS.find((view) => VIEW_KEYS[view] === key) ?? null;
 
 /** Cards in reading order: columns left→right, cards top→bottom (spec §4.3 `j`/`k`). */
 function orderedCards(cards: Card[], columns: BoardColumn[]): Card[] {
@@ -32,7 +38,7 @@ export interface BoardKeyHandlers {
   onToggleSelect: (card: Card) => void;
   onClearSelection: () => void;
   hasSelection: boolean;
-  onView: (view: "kanban" | "table") => void;
+  onView: (view: BoardView) => void;
   /** Board history (spec §6.1): Ctrl+Z / Ctrl+Shift+Z. */
   onUndo: () => void;
   onRedo: () => void;
@@ -41,8 +47,8 @@ export interface BoardKeyHandlers {
 }
 /**
  * Board list keys (spec §4.3): `j`/`k` move focus, `h`/`l` cross columns, Enter opens the card,
- * Space toggles done, Shift+J/K reorder, Del deletes (with the standard undo toast), `1`/`2`
- * switch between the two views that exist, and Ctrl+Z / Ctrl+Shift+Z walk the history stack.
+ * Space toggles done, Shift+J/K reorder, Del deletes (with the standard undo toast), `1`…`5`
+ * switch views, and Ctrl+Z / Ctrl+Shift+Z walk the history stack.
  *
  * Every action delegates to the same service-backed mutation a drag or button uses.
  */
@@ -84,29 +90,22 @@ export function useBoardKeys({
       if (event.metaKey || event.ctrlKey || event.altKey) return;
 
       const flat = orderedCards(cards, columns);
+      const viewKey = viewForKey(event.key);
       if (flat.length === 0) {
         // View keys still work on an empty board.
-        if (event.key === "1") {
+        if (viewKey) {
           event.preventDefault();
-          onView("table");
-        } else if (event.key === "2") {
-          event.preventDefault();
-          onView("kanban");
+          onView(viewKey);
         }
         return;
       }
       const focused = focusedId ? (cards.find((card) => card.id === focusedId) ?? null) : null;
       const index = focused ? flat.findIndex((card) => card.id === focused.id) : -1;
 
-      // View switches are always live (they work from the table view too, which has no keys).
-      if (event.key === "1") {
+      // View switches are always live (they work from the table and grid views too).
+      if (viewKey) {
         event.preventDefault();
-        onView("table");
-        return;
-      }
-      if (event.key === "2") {
-        event.preventDefault();
-        onView("kanban");
+        onView(viewKey);
         return;
       }
 

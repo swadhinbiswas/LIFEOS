@@ -180,6 +180,50 @@ test("table view: sorting, quick filters and grouping", async ({ page }) => {
   await expect(table.locator("section h2")).toHaveCount(2);
 });
 
+/** The grid is the browsing lens over the same cards: a tile each, and a tile opens the same sheet. */
+test("grid view: a tile per card, reachable by the keyboard", async ({ page }) => {
+  test.setTimeout(90_000);
+  const email = uniqueEmail("grid");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/tasks");
+
+  const adder = page.getByLabel("add a card to Inbox");
+  for (const title of ["grid alpha", "grid beta"]) {
+    await adder.click();
+    await adder.fill(title);
+    await adder.press("Enter");
+  }
+  await expect(serverCard(page, "Inbox", "grid alpha")).toBeVisible();
+
+  // The `3` key is spec §4.3's grid shortcut. Blur the adder first, because a shortcut typed into
+  // an input is deliberately inert.
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await page.keyboard.press("3");
+  await expect(page).toHaveURL(/view=grid/u);
+
+  const grid = page.locator('[data-slot="board-grid"]');
+  await expect(grid.locator('[data-slot="grid-tile"]')).toHaveCount(2);
+  await expect(grid).toContainText("grid alpha");
+
+  // A tile is one button, and it opens the card sheet exactly as a kanban card does.
+  await expect(grid.locator('[data-slot="grid-tile"]', { hasText: "grid beta" })).toHaveAttribute(
+    "aria-label",
+    "open grid beta",
+  );
+  await grid.locator('[data-slot="grid-tile"]', { hasText: "grid beta" }).click();
+  await expect(page).toHaveURL(/card=/u);
+  await expect(page.getByRole("dialog").getByLabel("title")).toHaveValue("grid beta");
+
+  // The switcher reflects the URL state too, so a shared link loads with the right chip lit.
+  await page.goto("/tasks?view=grid");
+  await expect(page.getByRole("button", { name: "grid", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});
+
 /** The Trash is the durable route back for anything deleted outside the undo window. */
 test("trash: a deleted card restores from the trash panel", async ({ page }) => {
   test.setTimeout(90_000);
