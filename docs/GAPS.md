@@ -23,7 +23,7 @@ the product is judged on; **P2** = polish and completeness.
 | §4.3 keyboard model          | PARTIAL     | core shortcuts bound; `g`-prefix set differs; no remapping; no vim mode    |
 | §4.4 accessibility           | DONE        | axe on every route/theme, target-size spec, focus visible                  |
 | §5 routes                    | PARTIAL     | most routes exist; several spec routes absent (below)                      |
-| §6.1 board engine            | PARTIAL     | strong core; missing views, card anatomy, column CRUD UI                   |
+| §6.1 board engine            | PARTIAL     | all five views render; card anatomy + column CRUD UI missing               |
 | §6.2 tasks/planning          | PARTIAL     | capture/inbox/recurrence strong; subtasks, time-blocking missing           |
 | §6.3 career/CV               | PARTIAL     | pipeline strong; offer scoring, company pages, CV build/PDF/import/AI weak |
 | §6.4 habits/goals            | PARTIAL     | goal engine done; habit schedules/heatmap/stats thin                       |
@@ -89,8 +89,9 @@ needs a product decision, not a bug fix.
 
 **Board engine (§6.1)**
 
-- No **Calendar, Timeline/Gantt or Grid** board views; `BOARD_VIEWS` lists them but only kanban and
-  table render. Calendar exists only as a separate module.
+- **Calendar, Timeline/Gantt and Grid board views** — shipped 2026-09-27: all five views render over
+  the same payload (`grid-view.tsx`, `calendar-view.tsx`, `timeline-view.tsx`), keyed by spec §4.3's
+  `1`…`5` and restricted by `RENDERED_VIEWS` so the switcher never offers a blank one.
 - No **column management UI**: create/rename/recolor/reorder columns have service functions
   (`createColumn`…`deleteColumn`) but no Server Actions or UI. WIP limits, collapse and done flags
   are not editable.
@@ -184,8 +185,8 @@ Ordered by (hard requirement first, then user-visible value per unit of work). E
 5. **Decide the demo question** (product, S) — restore a read-only labelled sample workspace (which
    also restores `db:seed`) or amend the spec; either way, delete the false CHANGELOG claim. §16
    "try it without an account" is otherwise permanently unmet.
-6. **Board views: Calendar, Timeline and Grid over the same data** (P1, M–L) — the largest single
-   "this feels real now" win, because §2's "one core, many lenses" is the product promise.
+6. **Board views: Calendar, Timeline and Grid over the same data** (P1, M–L) — **done 2026-09-27**;
+   §2's "one core, many lenses" now holds for every board.
 7. **Card anatomy: checklists, attachments, comments/activity, custom fields, labels UI** (P1, M).
 8. **Column management UI + grouping/swimlanes + table power features** (P1, M).
 9. **CV: server-side PDF, versions/variants, split-screen editor, imports** (P1, L) — the Phase 3
