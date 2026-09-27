@@ -18,8 +18,12 @@ import {
   updateCard as updateCardService,
 } from "@/server/boards";
 import {
+  addChecklistItemInput,
   cardIdInput,
   boardIdInput,
+  checklistItemDoneInput,
+  checklistItemIdInput,
+  checklistItemTextInput,
   createBoardInput,
   createCardInput,
   moveCardInput,
@@ -36,6 +40,14 @@ import {
   listSavedViews,
   type SavedView,
 } from "@/server/boards/views";
+import {
+  addChecklistItem,
+  listCardChecklist,
+  removeChecklistItem,
+  setChecklistItemDone,
+  setChecklistItemText,
+  type CardChecklist,
+} from "@/server/boards/checklists";
 import { carryOverOverdue } from "@/server/boards/brief";
 import { revertMove, revertUpdate } from "@/server/boards/revert";
 import { listTrash, purgeCard, purgeTrash } from "@/server/boards/trash";
@@ -75,6 +87,44 @@ async function run<T>(fn: (userId: string) => Promise<T>): Promise<ActionResult<
 
 export async function fetchBoardAction(boardId: string): Promise<ActionResult<BoardPayload>> {
   return run((userId) => getBoardService(userId, boardId));
+}
+
+/** Subtasks (spec §6.1). Each returns the whole checklist, so the client caches one shape. */
+export async function listCardChecklistAction(
+  input: unknown,
+): Promise<ActionResult<CardChecklist>> {
+  return run((userId) => listCardChecklist(userId, cardIdInput.parse(input).cardId));
+}
+
+export async function addChecklistItemAction(input: unknown): Promise<ActionResult<CardChecklist>> {
+  return run((userId) => {
+    const { cardId, text } = addChecklistItemInput.parse(input);
+    return addChecklistItem(userId, cardId, text);
+  });
+}
+
+export async function setChecklistItemDoneAction(
+  input: unknown,
+): Promise<ActionResult<CardChecklist>> {
+  return run((userId) => {
+    const { itemId, done } = checklistItemDoneInput.parse(input);
+    return setChecklistItemDone(userId, itemId, done);
+  });
+}
+
+export async function setChecklistItemTextAction(
+  input: unknown,
+): Promise<ActionResult<CardChecklist>> {
+  return run((userId) => {
+    const { itemId, text } = checklistItemTextInput.parse(input);
+    return setChecklistItemText(userId, itemId, text);
+  });
+}
+
+export async function removeChecklistItemAction(
+  input: unknown,
+): Promise<ActionResult<CardChecklist>> {
+  return run((userId) => removeChecklistItem(userId, checklistItemIdInput.parse(input).itemId));
 }
 
 export async function listBoardsAction(): Promise<ActionResult<Board[]>> {

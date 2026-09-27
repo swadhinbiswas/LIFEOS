@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useTranslations } from "next-intl";
 
 import type { Card } from "@/server/boards";
+import type { ChecklistProgress } from "@/server/boards/checklists";
 import { controlGhost } from "@/components/tui/controls";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,7 @@ export function CardTile({
   focused,
   selected,
   meta,
+  checklist,
   onMove,
   onOpen,
   onToggleSelect,
@@ -35,6 +37,8 @@ export function CardTile({
   focused?: boolean;
   selected?: boolean;
   meta?: Array<{ label: string; href?: string }>;
+  /** Subtask progress for the card face (spec §6.1). Absent when the card has no subtasks. */
+  checklist?: ChecklistProgress;
   onMove: (cardId: string, direction: MoveDirection) => void;
   onOpen?: (cardId: string) => void;
   onToggleSelect?: (cardId: string) => void;
@@ -95,6 +99,11 @@ export function CardTile({
               </time>
             ) : null}
             {card.estimate_min ? <span className="tabular-nums">{card.estimate_min}m</span> : null}
+            {checklist ? (
+              <span className="tabular-nums" data-slot="card-checklist-progress">
+                ▰ {checklist.done}/{checklist.total}
+              </span>
+            ) : null}
             {matches ? <span className="text-primary">{t("match")}</span> : null}
           </p>
           {meta && meta.length > 0 ? (

@@ -290,6 +290,46 @@ test("calendar view: dated cards land on their day and undated cards stay reacha
   await expect(page.getByRole("dialog").getByLabel("title")).toHaveValue("dated milestone");
 });
 
+/** Subtasks (spec §6.1): items live in the sheet, and the card face carries the count. */
+test("checklist: subtasks count progress on the card face", async ({ page }) => {
+  test.setTimeout(90_000);
+  const email = uniqueEmail("checklist");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/tasks");
+
+  const adder = page.getByLabel("add a card to Inbox");
+  await adder.click();
+  await adder.fill("plan the release");
+  await adder.press("Enter");
+  const card = serverCard(page, "Inbox", "plan the release");
+  await expect(card).toBeVisible();
+  const cardId = await card.getAttribute("data-card-id");
+  await page.goto(`/tasks?card=${cardId}`);
+
+  const checklist = page.getByRole("dialog").locator('[data-slot="card-checklist"]');
+  await expect(checklist).toContainText("no subtasks yet");
+
+  const input = checklist.getByLabel("add a subtask");
+  for (const item of ["cut the branch", "write the notes"]) {
+    await input.fill(item);
+    await input.press("Enter");
+    await expect(checklist).toContainText(item);
+  }
+  await expect(checklist).toContainText("0 of 2");
+
+  // The item text is the checkbox's own label, so the row is one click target.
+  await checklist.getByRole("checkbox", { name: "cut the branch" }).check();
+  await expect(checklist).toContainText("1 of 2");
+
+  // The card face shows the same count, and it survives closing the sheet.
+  await page.goto("/tasks");
+  await expect(
+    serverCard(page, "Inbox", "plan the release").locator('[data-slot="card-checklist-progress"]'),
+  ).toHaveText("▰ 1/2");
+});
+
 /** The timeline draws a start→due bar, a milestone for one date, and keeps undated cards. */
 test("timeline view: a bar spans start to due and opens the card", async ({ page }) => {
   test.setTimeout(90_000);

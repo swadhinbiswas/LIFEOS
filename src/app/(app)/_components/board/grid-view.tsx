@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import type { BoardPayload, Card } from "@/server/boards";
+import type { ChecklistProgress } from "@/server/boards/checklists";
 
 /**
  * Grid view (spec §6.1): the same cards as square tiles, grouped by column, for the boards whose
@@ -25,11 +26,14 @@ export function GridView({
   payload,
   onOpen,
   cardMeta,
+  checklistProgress,
 }: {
   payload: BoardPayload;
   onOpen: (cardId: string) => void;
   /** Extra chips per card (the job board passes company/excitement; the task board none). */
   cardMeta?: Record<string, Array<{ label: string }>>;
+  /** Checklist progress per card, drawn on the tile (spec §6.1). */
+  checklistProgress?: Record<string, ChecklistProgress>;
 }) {
   const t = useTranslations("Pages.Board");
 
@@ -83,6 +87,11 @@ export function GridView({
                           their metadata up across the row. */}
                       <span className="mt-auto flex flex-wrap items-center gap-x-2 pt-1 text-[10px] text-muted-foreground">
                         {card.completed_at ? <span>✓ {t("cardDone")}</span> : null}
+                        {checklistProgress?.[card.id] ? (
+                          <span className="tabular-nums" data-slot="grid-checklist-progress">
+                            ▰ {checklistProgress[card.id]!.done}/{checklistProgress[card.id]!.total}
+                          </span>
+                        ) : null}
                         {card.due_at ? (
                           <span className="tabular-nums">{dayLabel(card.due_at)}</span>
                         ) : null}

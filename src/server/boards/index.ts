@@ -22,7 +22,12 @@ import type {
   UpdateCardInput,
   UpdateColumnInput,
 } from "./schemas";
+import { BoardError } from "./errors";
+import { checklistProgressForBoard, type ChecklistProgress } from "./checklists";
 import { nextOccurrence, shiftStart } from "./recurrence";
+
+export { BoardError } from "./errors";
+export type { BoardErrorCode } from "./errors";
 
 /**
  * The board service: the only writer of boards/columns/cards (ADR-042, spec §7.2). Server
@@ -32,18 +37,6 @@ import { nextOccurrence, shiftStart } from "./recurrence";
  * Every function takes `userId` first and composes `where(user_id = …)` — a query that cannot
  * be scoped to the caller must not exist (spec line 350 / ADR-026).
  */
-
-export type BoardErrorCode = "not_found" | "conflict" | "invalid";
-
-export class BoardError extends Error {
-  constructor(
-    readonly code: BoardErrorCode,
-    message: string,
-  ) {
-    super(message);
-    this.name = "BoardError";
-  }
-}
 
 export type Board = typeof boards.$inferSelect;
 export type BoardColumn = typeof board_columns.$inferSelect;
@@ -162,6 +155,11 @@ export interface BoardPayload {
   columns: BoardColumn[];
   /** Live (not trashed, not archived) cards, ordered by column then fractional position. */
   cards: Card[];
+  /**
+   * Checklist progress per card, for the card face (spec §6.1). Absent for cards with no items —
+   * one grouped query for the board, not one per card.
+   */
+  checklistProgress: Record<string, ChecklistProgress>;
 }
 
 export async function getBoard(userId: string, boardId: string): Promise<BoardPayload> {
@@ -184,7 +182,12 @@ export async function getBoard(userId: string, boardId: string): Promise<BoardPa
     )
     // ADR-009: byte comparison in SQL — never localeCompare in JS.
     .orderBy(asc(cards.column_id), asc(cards.position));
-  return { board, columns, cards: cardRows };
+  return {
+    board,
+    columns,
+    cards: cardRows,
+    checklistProgress: await checklistProgressForBoard(userId, boardId),
+  };
 }
 
 async function seedColumns(

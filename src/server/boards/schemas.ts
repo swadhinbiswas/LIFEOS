@@ -103,6 +103,22 @@ export const moveCardInput = z.object({
 
 export const cardIdInput = z.object({ cardId: z.string().min(1) });
 
+/** Subtasks (spec §6.1). The text is a single line — a checklist item is not a second description. */
+const checklistText = z.string().trim().min(1).max(500);
+export const addChecklistItemInput = z.object({
+  cardId: z.string().min(1),
+  text: checklistText,
+});
+export const checklistItemIdInput = z.object({ itemId: z.string().min(1) });
+export const checklistItemDoneInput = z.object({
+  itemId: z.string().min(1),
+  done: z.boolean(),
+});
+export const checklistItemTextInput = z.object({
+  itemId: z.string().min(1),
+  text: checklistText,
+});
+
 export const savedViewScopeSchema = z.enum(["tasks", "jobs", "board"]);
 
 export const boardIdInput = z.object({ boardId: z.string().min(1) });
