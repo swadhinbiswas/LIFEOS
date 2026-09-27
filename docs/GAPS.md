@@ -95,7 +95,7 @@ needs a product decision, not a bug fix.
 - No **column management UI**: create/rename/recolor/reorder columns have service functions
   (`createColumn`…`deleteColumn`) but no Server Actions or UI. WIP limits, collapse and done flags
   are not editable.
-- Card anatomy incomplete: no **checklists/subtasks** (tables exist, unused), no attachments, no
+- Card anatomy incomplete: **checklists/subtasks shipped 2026-09-27**; still no attachments, no
   comments/activity log, no custom fields, no assignee, no cover colour; labels can be captured but
   are not displayed or edited; `card_fields` config is stored but never read.
 - No **swimlanes/grouping** on the kanban (table groups only), no **table** column resize/reorder/
