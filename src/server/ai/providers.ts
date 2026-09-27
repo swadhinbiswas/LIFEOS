@@ -6,6 +6,7 @@ import type { LanguageModel } from "ai";
 
 import { aiScripted, env } from "@/env";
 
+import { COMMANDCODE_BASE_URL, looksLikeClaude, ZDR_HEADER } from "./commandcode";
 import { getDecryptedCredential } from "./credentials";
 import type { AiPrefs, AiProvider } from "./prefs";
 import { scriptedModel } from "./providers/scripted";
@@ -38,6 +39,7 @@ const PROVIDERS: readonly AiProvider[] = [
   "anthropic",
   "google",
   "openrouter",
+  "commandcode",
   "compatible",
 ];
 
@@ -54,13 +56,25 @@ export function platformKey(provider: AiProvider): string | undefined {
       return env.GOOGLE_GENERATIVE_AI_API_KEY;
     case "openrouter":
       return env.OPENROUTER_API_KEY;
+    case "commandcode":
+      return env.COMMANDCODE_API_KEY;
     case "compatible":
       return env.AI_COMPATIBLE_API_KEY;
   }
 }
 
+export interface BuildOptions {
+  /** Command Code only: request zero data retention (ADR-134). */
+  zdr?: boolean;
+}
+
 /** Exported so a test can prove the live request shape without a provider key. */
-export function buildModel(provider: AiProvider, apiKey: string, modelId: string): LanguageModel {
+export function buildModel(
+  provider: AiProvider,
+  apiKey: string,
+  modelId: string,
+  options: BuildOptions = {},
+): LanguageModel {
   switch (provider) {
     case "openai":
       return createOpenAI({ apiKey })(modelId);
@@ -74,6 +88,23 @@ export function buildModel(provider: AiProvider, apiKey: string, modelId: string
         baseURL: OPENROUTER_BASE_URL,
         apiKey,
       })(modelId);
+    case "commandcode": {
+      // Two documented shapes behind one base URL. Their docs are explicit that a Claude model
+      // answers on `/v1/messages` only and is a 400 on `/v1/chat/completions`, so the shape is part
+      // of addressing rather than a detail. `shapeFor` in ./commandcode is the decision function and
+      // prefers their live catalog; this is the request-time fallback, and it is a naming rule the
+      // code names as a rule.
+      const headers = options.zdr ? { [ZDR_HEADER]: "1" } : undefined;
+      if (looksLikeClaude(modelId)) {
+        return createAnthropic({ apiKey, baseURL: COMMANDCODE_BASE_URL, headers })(modelId);
+      }
+      return createOpenAICompatible({
+        name: "commandcode",
+        baseURL: COMMANDCODE_BASE_URL,
+        apiKey,
+        ...(headers ? { headers } : {}),
+      })(modelId);
+    }
     case "compatible": {
       const baseURL = env.AI_COMPATIBLE_BASE_URL;
       if (!baseURL) throw new Error("AI_COMPATIBLE_BASE_URL is not set");
@@ -98,7 +129,12 @@ export async function resolveModel(userId: string, prefs: AiPrefs): Promise<Reso
     const modelId = prefs.model ?? credential?.model ?? env.AI_DEFAULT_MODEL;
     if (key && modelId) {
       const source: ModelSource = credential ? "byo" : "platform";
-      return { model: buildModel(provider, key, modelId), provider, modelId, source };
+      return {
+        model: buildModel(provider, key, modelId, { zdr: prefs.commandCodeZdr }),
+        provider,
+        modelId,
+        source,
+      };
     }
   }
 

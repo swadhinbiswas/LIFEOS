@@ -44,12 +44,17 @@ describe("AI approval policy (spec §8, adr-076)", () => {
 
 describe("AI preferences (adr-073)", () => {
   it("falls back to defaults for missing or corrupt JSON", () => {
+    // The whole object is pinned, not a subset, so adding a preference fails here until someone
+    // decides what its default is. That is the point: `commandCodeZdr` arrived as `false` for a
+    // stated reason (ADR-134 — ZDR is a routing constraint, and defaulting it on would mean some
+    // requests start failing with a 422), and this assertion is what makes that a decision.
     const defaults = parseAiPrefs(null);
     expect(defaults).toEqual({
       autoApprove: [],
       memoryEnabled: false,
       morningBrief: "off",
       fridayReview: false,
+      commandCodeZdr: false,
     });
     expect(parseAiPrefs("{not json")).toEqual(defaults);
     expect(parseAiPrefs(JSON.stringify({ autoApprove: ["delete_card"] }))).toEqual(defaults);

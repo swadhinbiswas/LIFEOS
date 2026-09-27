@@ -8,7 +8,15 @@ import { AUTO_APPROVABLE_TOOLS } from "./tools/catalog";
  * `ai_credentials` (ADR-074).
  */
 
-export const AI_PROVIDERS = ["openai", "anthropic", "google", "openrouter", "compatible"] as const;
+export const AI_PROVIDERS = [
+  "openai",
+  "anthropic",
+  "google",
+  "openrouter",
+  /** Command Code's Provider API: every top model behind one OpenAI- and Anthropic-shaped endpoint. */
+  "commandcode",
+  "compatible",
+] as const;
 export type AiProvider = (typeof AI_PROVIDERS)[number];
 
 const autoApproveEnum = z.enum(AUTO_APPROVABLE_TOOLS as unknown as [string, ...string[]]);
@@ -21,6 +29,14 @@ export const aiPrefsSchema = z.object({
   autoApprove: z.array(autoApproveEnum).max(AUTO_APPROVABLE_TOOLS.length).default([]),
   /** Whether the copilot may keep durable memory items (spec §8). */
   memoryEnabled: z.boolean().default(false),
+  /**
+   * Ask Command Code for zero data retention and no prompt training (ADR-134). Off by default,
+   * because it is a routing constraint: their docs are explicit that a model with no ZDR-capable
+   * upstream **fails with a 422** rather than quietly falling back, and that turning it on can change
+   * which upstream serves a request and therefore what it costs. A default of "on" would be a
+   * default of "some requests start failing", which is nobody's idea of a sensible default.
+   */
+  commandCodeZdr: z.boolean().default(false),
   /** Proactive, off by default (spec §8): morning brief delivery. */
   morningBrief: z.enum(["off", "in_app", "email"]).default("off"),
   /** Proactive, off by default (spec §8): Friday review draft. */

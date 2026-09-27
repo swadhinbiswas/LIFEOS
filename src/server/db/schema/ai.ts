@@ -30,7 +30,7 @@ export const ai_credentials = sqliteTable(
     user_id: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    /** openai | anthropic | google | openrouter | compatible */
+    /** openai | anthropic | google | openrouter | commandcode | compatible */
     provider: text("provider").notNull(),
     /** iv.tag.ciphertext, base64 (ADR-074). */
     secret_encrypted: text("secret_encrypted").notNull(),

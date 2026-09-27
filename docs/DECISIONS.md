@@ -3415,6 +3415,63 @@ defect this repo treats as a bug rather than a flourish.
     `overview` while the day strip leads `today`. Both are judgement calls left alone rather than
     changed blind.
 
+## ADR-134 — Command Code's Provider API, and why "add a provider" was a routing decision
+
+- **Context:** Command Code sells one API in front of Claude, GPT, Gemini and the open models, at
+  `https://api.commandcode.ai/provider/v1`. It is OpenAI- **and** Anthropic-shaped, which is the whole
+  design problem. Their documentation is explicit that a Claude model answers on `/v1/messages`
+  **only**, and that sending one to `/v1/chat/completions` is a `400 invalid_request_error`. So
+  adding it is not one `createOpenAICompatible` call; the _shape_ is part of addressing, and a wrong
+  guess does not degrade the answer, it fails the request.
+
+- **Decision:**
+  - **`commandcode` is a first-class `AiProvider`**, alongside `openrouter` and `compatible`, with
+    `COMMANDCODE_API_KEY` in env, in `.env.example`, in the compose stack and in `docs/SELF_HOSTING.md`
+    — a provider that only worked in dev would be a provider half-added.
+  - **The shape comes from their catalog, not from a name.** Every entry in
+    `GET /provider/v1/models` carries `supported_endpoints`, and their docs point at that field for
+    exactly this decision ("check there before you pick an endpoint"). `shapeFor` prefers it. The
+    fallback is a `^claude[-/]` prefix rule, and it is **named as a heuristic**: `shapeFor` returns
+    `fromCatalog: false` when it had to guess, so a caller can tell a decision from a guess instead
+    of being told a shape it cannot verify. A model serving both shapes takes `/messages`, the one
+    that only some models can use.
+  - **`/systemone` is not wired.** Their decision model returns typed probabilities rather than text
+    and never streams, so it is not a language model this app can call. Exposing a control that
+    cannot do anything would be the dead-UI rule; it belongs in a future feature, not in a provider
+    dropdown.
+  - **The model list is read live, server-side.** `fetchCommandCodeModels` runs in a server action
+    with the user's own decrypted credential (falling back to the platform key) and returns model
+    ids only. A hardcoded list is wrong by their next release, and inventing model names is exactly
+    what spec §1 forbids. It **returns an empty list rather than throwing** on a rejected key, a 500,
+    malformed JSON or a network failure, and the model field stays a free-text input — a page that
+    throws because a key is rate-limited is worse than a page with no list, and a model released
+    after the page loaded must still be typeable.
+  - **ZDR is a user preference, defaulting off, and the UI says why.** Their documented opt-in is the
+    `x-cmd-zdr: 1` header. It is a _routing constraint_, not a free privacy win: their docs state
+    that a model with no ZDR-capable upstream **fails with a 422** rather than falling back, and
+    that turning it on can change which upstream serves a request and therefore what it costs. A
+    default of "on" would be a default of "some requests start failing". It lives in `ai_prefs`
+    rather than an env var because it is a decision about a user's own requests, and the hint
+    explaining the tradeoff sits next to the checkbox rather than in a doc.
+  - **`buildModel` gained an options bag**, not a fourth positional argument, so the header does not
+    get threaded through every provider's call site.
+  - **Tests assert the wire, not the wiring.** `providers.test.ts` captures `fetch` and pins the two
+    URLs (`/chat/completions` vs `/messages`), the bearer header, `max_tokens` on the Anthropic
+    shape, and that `x-cmd-zdr` is absent by default and present on **both** shapes — a privacy flag
+    that quietly stopped applying to Claude models would be the worst version of this feature. The
+    Claude tests stub an **Anthropic-shaped response**, because reusing the OpenAI stub fails in
+    the SDK's parser before any routing assertion runs.
+
+- **Consequences:**
+  - A Claude-shaped model on this provider costs one extra request-time string test. Correct routing
+    depends on their catalog being read, which only happens on demand in the settings page, so a
+    first-ever call on an unknown model id uses the naming rule.
+  - `AI_PROVIDERS` is the single source for the Zod enums, the credential enum, the platform-key
+    switch and the settings labels; adding a provider means adding one entry there and the two
+    switch cases the compiler then points at.
+  - Pricing, plans and per-model discounts are deliberately **not** in the UI. They change, they are
+    commercial, and a stale copy in a settings page is worse than a link to their pricing page.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

@@ -73,6 +73,8 @@ const envSchema = z
     ANTHROPIC_API_KEY: z.string().min(1).optional(),
     GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1).optional(),
     OPENROUTER_API_KEY: z.string().min(1).optional(),
+    /** Command Code Provider API. Optional: one key in front of Claude, GPT, Gemini and open models. */
+    COMMANDCODE_API_KEY: z.string().min(1).optional(),
     // Ollama or any OpenAI-compatible endpoint (ADR-075).
     AI_COMPATIBLE_BASE_URL: z.url().optional(),
     AI_COMPATIBLE_API_KEY: z.string().min(1).optional(),

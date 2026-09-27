@@ -43,6 +43,7 @@ services:
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
       GOOGLE_GENERATIVE_AI_API_KEY: "${GOOGLE_GENERATIVE_AI_API_KEY:-}"
       OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      COMMANDCODE_API_KEY: "${COMMANDCODE_API_KEY:-}"
       AI_DEFAULT_PROVIDER: "${AI_DEFAULT_PROVIDER:-}"
       AI_DEFAULT_MODEL: "${AI_DEFAULT_MODEL:-}"
       # Generate once and keep it: rotating it makes every stored WakaTime key and AI credential

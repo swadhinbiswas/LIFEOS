@@ -17,6 +17,7 @@ import {
   saveAiPrefsAction,
   saveCredentialAction,
   testAiConnectionAction,
+  listCommandCodeModelsAction,
 } from "@/server/ai/actions";
 
 const PROVIDER_LABELS: Record<AiProvider, string> = {
@@ -24,6 +25,7 @@ const PROVIDER_LABELS: Record<AiProvider, string> = {
   anthropic: "Anthropic",
   google: "Google",
   openrouter: "OpenRouter",
+  commandcode: "Command Code",
   compatible: "Ollama / OpenAI-compatible",
 };
 
@@ -47,10 +49,13 @@ export function AiSettingsForm({
   const [memoryEnabled, setMemoryEnabled] = useState(prefs.memoryEnabled);
   const [morningBrief, setMorningBrief] = useState(prefs.morningBrief);
   const [fridayReview, setFridayReview] = useState(prefs.fridayReview);
+  const [zdr, setZdr] = useState(prefs.commandCodeZdr);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [testStatus, setTestStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [catalog, setCatalog] = useState<Array<{ id: string; shape: string }>>([]);
+  const [catalogNote, setCatalogNote] = useState("");
 
   const stored = credentials.find((credential) => credential.provider === provider);
 
@@ -91,9 +96,30 @@ export function AiSettingsForm({
           memoryEnabled,
           morningBrief,
           fridayReview,
+          commandCodeZdr: zdr,
         }),
       t("saved"),
     );
+
+  // Their catalog is the only trustworthy model list (ADR-134), so it is read on request rather
+  // than typed here. A failure is a note, not an error state: the model field stays a free-text box,
+  // because a model this page has never heard of is still a model the user can call.
+  const loadCatalog = async () => {
+    setBusy(true);
+    const result = await listCommandCodeModelsAction();
+    setBusy(false);
+    if (!result.ok || !result.models) {
+      setCatalog([]);
+      setCatalogNote(result.message ?? t("catalogNone"));
+      return;
+    }
+    setCatalog(result.models);
+    setCatalogNote(
+      result.models.length === 0
+        ? t("catalogNone")
+        : t("catalogCount", { count: result.models.length }),
+    );
+  };
 
   return (
     <form
@@ -130,10 +156,57 @@ export function AiSettingsForm({
             value={model}
             onChange={(event) => setModel(event.target.value)}
             placeholder={t("modelPlaceholder")}
+            // The list is a suggestion, never a limit: it stays a text input so a model released
+            // after this page loaded can still be typed.
+            list={
+              provider === "commandcode" && catalog.length > 0 ? "commandcode-models" : undefined
+            }
             className={`${controlField} w-56`}
           />
+          {provider === "commandcode" && catalog.length > 0 ? (
+            <datalist id="commandcode-models">
+              {catalog.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.shape === "anthropic" ? t("shapeMessages") : t("shapeChat")}
+                </option>
+              ))}
+            </datalist>
+          ) : null}
         </div>
+        {provider === "commandcode" ? (
+          <div className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] text-muted-foreground" id="catalog-label">
+              {catalogNote || t("catalogHint")}
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={busy}
+              aria-describedby="catalog-label"
+              onClick={() => void loadCatalog()}
+            >
+              {busy ? t("loading") : t("loadModels")}
+            </Button>
+          </div>
+        ) : null}
       </div>
+
+      {provider === "commandcode" ? (
+        <div className="flex flex-col gap-1 border-t border-border pt-3">
+          <TuiCheckbox
+            checked={zdr}
+            onCheckedChange={(checked) => setZdr(checked)}
+            className="normal-case"
+          >
+            {t("zdr")}
+          </TuiCheckbox>
+          {/* Why it is off by default, in the place the person is about to turn it on. Their docs
+              are explicit that a model with no ZDR-capable upstream fails with a 422 rather than
+              falling back, so this is a tradeoff and not a free privacy win. */}
+          <p className="font-mono text-[10px] text-muted-foreground">{t("zdrHint")}</p>
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-1">
         <Label htmlFor="ai-key">{t("key")}</Label>
