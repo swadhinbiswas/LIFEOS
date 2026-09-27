@@ -826,6 +826,7 @@
       "timeline": "টাইমলাইন",
       "estimateMin": "{minutes} মিনিট",
       "cardDone": "সম্পন্ন",
+      "unscheduled": "তারিখ নেই",
       "quickFilters": "দ্রুত ফিল্টার",
       "dueTodayFilter": "আজ শেষ",
       "overdueFilter": "সময় পার",

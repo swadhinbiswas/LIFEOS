@@ -826,6 +826,7 @@
       "timeline": "timeline",
       "estimateMin": "{minutes} min",
       "cardDone": "done",
+      "unscheduled": "no due date",
       "quickFilters": "quick filters",
       "dueTodayFilter": "Due today",
       "overdueFilter": "Overdue",

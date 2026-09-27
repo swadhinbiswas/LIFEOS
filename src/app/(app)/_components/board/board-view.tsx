@@ -31,6 +31,7 @@ import { BoardToolbar, type GroupBy } from "./board-toolbar";
 import { BoardUtils } from "./board-utils";
 import { controlBoxed, controlGhost, ToolbarGroup } from "@/components/tui/controls";
 import { CardSheet } from "./card-sheet";
+import { CalendarView } from "./calendar-view";
 import { type MoveDirection } from "./card-tile";
 import { GridView } from "./grid-view";
 import { SavedViews } from "./saved-views";
@@ -375,6 +376,11 @@ export function BoardView({
           payload={{ ...payload, cards: visibleCards }}
           onOpen={(cardId) => void setCardParam(cardId)}
           cardMeta={cardMeta}
+        />
+      ) : view === "calendar" ? (
+        <CalendarView
+          payload={{ ...payload, cards: visibleCards }}
+          onOpen={(cardId) => void setCardParam(cardId)}
         />
       ) : (
         <DndContext

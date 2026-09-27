@@ -224,6 +224,57 @@ test("grid view: a tile per card, reachable by the keyboard", async ({ page }) =
   );
 });
 
+/** The calendar places dated cards by their authored day, and never drops the undated ones. */
+test("calendar view: dated cards land on their day and undated cards stay reachable", async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  const email = uniqueEmail("calendar");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/tasks");
+
+  const adder = page.getByLabel("add a card to Inbox");
+  for (const title of ["dated milestone", "undated idea"]) {
+    await adder.click();
+    await adder.fill(title);
+    await adder.press("Enter");
+  }
+  await expect(serverCard(page, "Inbox", "undated idea")).toBeVisible();
+
+  // Due today: inside the current month's grid *and* inside the agenda's forward window, which
+  // starts at the anchor rather than at the first of the month.
+  const due = new Date().toISOString().slice(0, 10);
+  const datedId = await serverCard(page, "Inbox", "dated milestone").getAttribute("data-card-id");
+  await page.goto(`/tasks?card=${datedId}`);
+  await page.getByRole("dialog").getByLabel("due").fill(due);
+  await page.waitForLoadState("networkidle");
+
+  await page.goto("/tasks?view=calendar");
+  const calendar = page.locator('[data-slot="board-calendar"]');
+  await expect(calendar).toBeVisible();
+  await expect(page.getByRole("button", { name: "calendar", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  // The dated card sits in its authored cell; the undated one is in the pile, not lost.
+  await expect(calendar.locator(`[data-day="${due}"] [data-slot="calendar-card"]`)).toContainText(
+    "dated milestone",
+  );
+  const unscheduled = calendar.locator('[data-slot="calendar-unscheduled"]');
+  await expect(unscheduled).toContainText("undated idea");
+  await expect(unscheduled).toContainText("no due date");
+
+  // The agenda sub-view lists the same day, and a chip opens the card sheet.
+  await calendar.getByRole("button", { name: "agenda", exact: true }).click();
+  const agenda = calendar.locator('[data-slot="board-agenda"]');
+  await expect(agenda.locator(`[data-day="${due}"]`)).toContainText("dated milestone");
+  await agenda.locator('[data-slot="calendar-card"]', { hasText: "dated milestone" }).click();
+  await expect(page.getByRole("dialog").getByLabel("title")).toHaveValue("dated milestone");
+});
+
 /** The Trash is the durable route back for anything deleted outside the undo window. */
 test("trash: a deleted card restores from the trash panel", async ({ page }) => {
   test.setTimeout(90_000);

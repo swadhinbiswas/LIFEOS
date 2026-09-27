@@ -13,7 +13,7 @@ export type BoardView = (typeof BOARD_VIEWS)[number];
  * renderer exists, so the switcher never offers a control that opens nothing (spec §1 — no
  * placeholder UI). The keyboard map below is the same list in spec §4.3's `1`…`5` order.
  */
-export const RENDERED_VIEWS: BoardView[] = ["kanban", "table", "grid"];
+export const RENDERED_VIEWS: BoardView[] = ["kanban", "table", "grid", "calendar"];
 
 /** Spec §4.3: `1`…`5` switch Table / Kanban / Grid / Calendar / Timeline. */
 export const VIEW_KEYS: Partial<Record<BoardView, string>> = {
