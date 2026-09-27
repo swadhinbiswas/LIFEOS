@@ -38,6 +38,15 @@ describe("control vocabulary (adr-117)", () => {
     expect(base().filter((t) => t.startsWith("border"))).toEqual(["border", "border-transparent"]);
   });
 
+  it("declares the display its call sites' layout utilities require", () => {
+    // `flex-1`, `justify-start`, `gap-2` and `ml-auto` are flex-only, and the shell's footer rows
+    // passed all four to a base that declared no display at all — so the label, the key caps and the
+    // unread count rendered flush ("searchCtrlK", "notifications2"). The vocabulary owns the display;
+    // the call site owns only what it changes.
+    expect(base()).toContain("inline-flex");
+    expect(base()).toContain("items-center");
+  });
+
   it("reserves the border width so hover cannot shift siblings", () => {
     // `hover:border` on a borderless element grows the box 2px and nudges everything to its right.
     // The base already carries the width, so hover only has to recolour it …

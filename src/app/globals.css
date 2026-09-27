@@ -304,6 +304,41 @@ html[data-sidebar-mode="icon"] .app-sidebar nav a {
   justify-content: center;
 }
 
+/* Icon rail, above the drawer breakpoint: the 48px rail has room for one 32px control per line, so
+   the footer's two paired rows become a single centred column rather than fighting over the same
+   32px. The key caps are a labelled row's affordance and leave with the labels (they are `hidden`
+   below `lg` for the same reason), and the unread count becomes the dot it has room to be instead
+   of a digit that pushed the row 62px past the rail and over the fold control beside it. The count
+   is not lost: it remains in the bell's `aria-label`. Scoped above the breakpoint because the
+   drawer below it is 17rem wide and keeps its rows. */
+@media (min-width: 48rem) {
+  html[data-sidebar-mode="icon"] .app-sidebar [data-slot="sidebar-footer"] > div {
+    flex-direction: column;
+  }
+  html[data-sidebar-mode="icon"] .app-sidebar [data-slot="sidebar-footer"] :is(a, button) {
+    width: 100%;
+    flex: none;
+    justify-content: center;
+  }
+  html[data-sidebar-mode="icon"] .app-sidebar [data-slot="kbd"] {
+    display: none;
+  }
+  html[data-sidebar-mode="icon"] .app-sidebar [data-slot="notification-bell"] {
+    position: relative;
+  }
+  html[data-sidebar-mode="icon"] .app-sidebar [data-slot="notification-count"] {
+    position: absolute;
+    top: 0.125rem;
+    right: 0.375rem;
+    width: 0.375rem;
+    height: 0.375rem;
+    overflow: hidden;
+    border-radius: 9999px;
+    background: var(--warning);
+    font-size: 0;
+  }
+}
+
 /* Mode `full`: the bar leaves the flow (content full-width) and opens as an overlay. */
 html[data-sidebar-mode="full"] .app-shell {
   display: block;

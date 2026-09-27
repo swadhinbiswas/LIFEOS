@@ -21,6 +21,12 @@ import { cn } from "cn";
  * unusable with a keyboard and invisible on touch, and this app is keyboard-first (spec §4.4).
  */
 export const controlGhost = cn(
+  // The display belongs to the vocabulary, not to the call site. `flex-1`, `justify-start`, `gap-2`
+  // and `ml-auto` are flex-only, and the shell's footer rows passed all four to a base that declared
+  // no display at all — so none of them applied, and the icon, the label, the key caps and the unread
+  // count all rendered flush ("searchCtrlK", "notifications2"). A control the call sites lay out as
+  // a row has to *be* a row.
+  "inline-flex items-center",
   // `border border-transparent` rather than no border at all. The border's *width* is reserved from
   // the start, so hovering changes the ink and nothing else: with `hover:border` on a borderless
   // element the box grew by 2px and nudged every sibling to its right, which is exactly the sort of
