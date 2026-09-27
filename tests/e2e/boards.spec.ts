@@ -373,6 +373,43 @@ test("labels: a new label attaches to the card and shows on its face", async ({ 
   ).toHaveText("urgent");
 });
 
+/** Comments (spec §6.1): written in the sheet, kept as text, and deletable. */
+test("comments: a note is kept as written and can be deleted", async ({ page }) => {
+  test.setTimeout(90_000);
+  const email = uniqueEmail("comments");
+
+  await createVerifiedUser(page, email);
+  await signIn(page, email);
+  await page.goto("/tasks");
+
+  const adder = page.getByLabel("add a card to Inbox");
+  await adder.click();
+  await adder.fill("discuss this");
+  await adder.press("Enter");
+  const card = serverCard(page, "Inbox", "discuss this");
+  await expect(card).toBeVisible();
+  const cardId = await card.getAttribute("data-card-id");
+  await page.goto(`/tasks?card=${cardId}`);
+
+  const comments = page.getByRole("dialog").locator('[data-slot="card-comments"]');
+  await expect(comments).toContainText("no comments yet");
+
+  // A body with a blank line, because it is rendered as text with its whitespace kept rather than
+  // half-rendered as Markdown.
+  await comments.getByLabel("add a comment").fill("line one\n\nline two");
+  await comments.getByRole("button", { name: "comment" }).click();
+  await expect(comments.locator('[data-slot="comment"]')).toHaveCount(1);
+  await expect(comments.locator('[data-slot="comment"] p')).toHaveText("line one\n\nline two");
+
+  // It survives closing the sheet: the thread is persisted, not component state.
+  await page.goto(`/tasks?card=${cardId}`);
+  await expect(comments.locator('[data-slot="comment"]')).toHaveCount(1);
+
+  await comments.getByRole("button", { name: "delete comment" }).click();
+  await expect(comments.locator('[data-slot="comment"]')).toHaveCount(0);
+  await expect(comments).toContainText("no comments yet");
+});
+
 /** The timeline draws a start→due bar, a milestone for one date, and keeps undated cards. */
 test("timeline view: a bar spans start to due and opens the card", async ({ page }) => {
   test.setTimeout(90_000);

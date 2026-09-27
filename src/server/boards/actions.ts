@@ -19,11 +19,13 @@ import {
 } from "@/server/boards";
 import {
   addChecklistItemInput,
+  addCommentInput,
   cardIdInput,
   boardIdInput,
   checklistItemDoneInput,
   checklistItemIdInput,
   checklistItemTextInput,
+  commentIdInput,
   createBoardLabelInput,
   createBoardInput,
   labelIdInput,
@@ -58,6 +60,12 @@ import {
   setCardLabels,
   type Label,
 } from "@/server/boards/labels";
+import {
+  addComment,
+  listComments,
+  removeComment,
+  type CardComment,
+} from "@/server/boards/comments";
 import { carryOverOverdue } from "@/server/boards/brief";
 import { revertMove, revertUpdate } from "@/server/boards/revert";
 import { listTrash, purgeCard, purgeTrash } from "@/server/boards/trash";
@@ -165,6 +173,22 @@ export async function deleteBoardLabelAction(input: unknown): Promise<ActionResu
     await deleteBoardLabel(userId, labelIdInput.parse(input).labelId);
     return null;
   });
+}
+
+/** Card comments (spec §6.1). */
+export async function listCommentsAction(input: unknown): Promise<ActionResult<CardComment[]>> {
+  return run((userId) => listComments(userId, cardIdInput.parse(input).cardId));
+}
+
+export async function addCommentAction(input: unknown): Promise<ActionResult<CardComment[]>> {
+  return run((userId) => {
+    const { cardId, body } = addCommentInput.parse(input);
+    return addComment(userId, cardId, body);
+  });
+}
+
+export async function removeCommentAction(input: unknown): Promise<ActionResult<CardComment[]>> {
+  return run((userId) => removeComment(userId, commentIdInput.parse(input).commentId));
 }
 
 export async function listBoardsAction(): Promise<ActionResult<Board[]>> {

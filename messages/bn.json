@@ -839,6 +839,11 @@
       "newLabel": "নতুন লেবেল…",
       "labelColor": "রং",
       "addLabel": "যোগ",
+      "comments": "মন্তব্য",
+      "noComments": "এখনো কোনো মন্তব্য নেই",
+      "newComment": "মন্তব্য লিখুন…",
+      "addComment": "মন্তব্য",
+      "removeComment": "মন্তব্য মুছুন",
       "labelColors": {
         "primary": "প্রধান",
         "info": "তথ্য",

@@ -132,6 +132,13 @@ export const setCardLabelsInput = z.object({
   labelIds: z.array(z.string().min(1)).max(50),
 });
 
+/** Card comments (spec §6.1). Prose, so the ceiling is generous but finite. */
+export const addCommentInput = z.object({
+  cardId: z.string().min(1),
+  body: z.string().trim().min(1).max(4_000),
+});
+export const commentIdInput = z.object({ commentId: z.string().min(1) });
+
 export const savedViewScopeSchema = z.enum(["tasks", "jobs", "board"]);
 
 export const boardIdInput = z.object({ boardId: z.string().min(1) });

@@ -839,6 +839,11 @@
       "newLabel": "new label…",
       "labelColor": "colour",
       "addLabel": "add",
+      "comments": "comments",
+      "noComments": "no comments yet",
+      "newComment": "add a comment…",
+      "addComment": "comment",
+      "removeComment": "delete comment",
       "labelColors": {
         "primary": "primary",
         "info": "info",
