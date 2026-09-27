@@ -5,6 +5,7 @@ import { ZodError, z } from "zod";
 import { getServerSession } from "@/server/auth/session";
 import type { ActionResult } from "@/server/boards/actions";
 
+import { BlockedUrlError } from "./ssrf";
 import { createWebhook, deleteWebhook, retryDelivery, WEBHOOK_EVENTS } from "./index";
 
 /** Webhook adapters (spec §7.2): the service owns signing, delivery and the log. */
@@ -24,6 +25,11 @@ async function run<T>(fn: (userId: string) => Promise<T>): Promise<ActionResult<
   } catch (error) {
     if (error instanceof ZodError) {
       return { ok: false, code: "invalid", message: "that input is not valid" };
+    }
+    // A blocked target is the user's own typo (a localhost or private address), and the guard's
+    // message says exactly what to change — never flatten it into "something went wrong" (ADR-135).
+    if (error instanceof BlockedUrlError) {
+      return { ok: false, code: "invalid", message: error.message };
     }
     console.error("[webhooks] action failed", error);
     return { ok: false, code: "invalid", message: "something went wrong — please retry" };

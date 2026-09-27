@@ -3474,6 +3474,48 @@ defect this repo treats as a bug rather than a flourish.
 
 ---
 
+## ADR-135 — Outgoing webhooks refuse private targets, resolved at delivery time
+
+- **Status:** accepted (2026-09-27)
+- **Context:** `createWebhook` stores a URL the user types; `emitEvent` later fetches it from inside
+  the deployment. Until now that URL was only checked by `z.url()`, so `http://127.0.0.1:8080/` or
+  `http://169.254.169.254/latest/meta-data/` was fetched from the server's own network, and the
+  HTTP status recorded in the delivery log silently reported whether an internal service answered.
+  That is an SSRF primitive with an exfiltration channel — spec §10 requires private IP ranges and
+  metadata endpoints to be blocked for any URL-fetching feature.
+- **Decision:**
+  - **Only global unicast addresses are reachable.** A new `src/server/webhooks/ssrf.ts` enumerates
+    the denied ranges — `0/8`, `10/8`, `100.64/10`, `127/8`, `169.254/16` (the cloud metadata
+    address lives here), `172.16/12`, `192.0.0/24`, `192.0.2/24`, `192.168/16`, `198.18/15`,
+    `198.51.100/24`, `203.0.113/24`, `224/4` and above, plus IPv6 loopback/unspecified, `fc00::/7`,
+    `fe80::/10`, `ff00::/8` and the IPv4-mapped forms (`::ffff:127.0.0.1` is unwrapped and checked
+    as IPv4). It is a deny-list so each range can be pinned by its own test line.
+  - **The host is resolved at delivery time, not just at creation.** A webhook URL can be saved
+    today and fired next week, and DNS can change in between, so the address the connection will
+    actually use is checked immediately before every attempt. Delivery also sets
+    `redirect: "manual"`: a public URL that 302s to `http://localhost/` is recorded as a failed
+    delivery rather than followed, closing the other half of the hole.
+  - **A blocked URL fails at the form, with the reason.** `createWebhook` runs the synchronous half
+    so the user is told "Webhook URLs cannot point at a link-local metadata address." while they can
+    still fix it; the action surfaces a `BlockedUrlError` verbatim instead of the generic "something
+    went wrong" (spec §16's copy rule).
+  - **The operator can opt out, explicitly and off by default.** `WEBHOOK_ALLOW_PRIVATE_TARGETS`
+    (ADR-135) relaxes the address checks for a developer delivering to a local listener and for the
+    suite that proves signing and retries against a real `127.0.0.1` server. It does not relax the
+    scheme or embedded-credential rules, and `.env.example` says never to set it in a deployment.
+- **Consequences:**
+  - The residual risk — a resolver that answers the check publicly and the connection privately
+    (DNS rebinding in the millisecond window between them) — is recorded in the module comment
+    rather than hidden. Pinning the connection to the checked address needs a custom undici
+    dispatcher; it is not attempted, and an attacker would already have to control DNS for the
+    webhook's own hostname.
+  - Any future URL-fetching feature (job clipper, link previews) reuses `assertDeliverableUrl`
+    instead of re-deriving "the private network".
+  - Delivery to a redirecting endpoint now fails loudly where it previously followed the redirect.
+    No legitimate webhook endpoint should redirect a POST, and the message says so.
+
+---
+
 ### Appendix — deferred/scheduled ADRs
 
 | Will be written                                                            | When                                                              |

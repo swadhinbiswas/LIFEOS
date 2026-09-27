@@ -28,4 +28,9 @@ export function setup(): void {
   // database module. So pointing the app at a remote database has to leave `pnpm test` runnable —
   // and a unit test must never be able to reach a real remote database, whatever it forgets to pin.
   process.env.TURSO_AUTH_TOKEN = "";
+
+  // The webhook delivery suite proves signing and retries against a real listener on 127.0.0.1,
+  // which the SSRF guard (ADR-135) blocks by default. This is exactly the case the operator opt-out
+  // exists for, and the guard's own tests cover the blocked path with an injected resolver.
+  process.env.WEBHOOK_ALLOW_PRIVATE_TARGETS = "true";
 }

@@ -56,6 +56,13 @@ const envSchema = z
     AUTH_RATE_LIMIT_MAX: z.coerce.number().int().positive().optional(),
     // ADR-069: guards the webhook retry cron route. Absent = the route is hidden (404).
     CRON_SECRET: z.string().min(16).optional(),
+    // ADR-135: the webhook SSRF guard blocks loopback/private/link-local targets by default. A
+    // developer pointing a webhook at a local listener — and the suite that proves delivery works
+    // against a real server — turns it off explicitly. A deployment never should.
+    WEBHOOK_ALLOW_PRIVATE_TARGETS: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((v) => v === "true"),
     // --- AI copilot (ADR-073…078) ---
     // ADR-074: 32-byte key (base64) for AES-256-GCM at-rest secrets. Absent = a dev/test key
     // derived from BETTER_AUTH_SECRET; in production, absent disables saving provider keys.
@@ -149,6 +156,8 @@ export const isCloudDb =
 export const billingEnabled = env.BILLING_ENABLED;
 /** ADR-075 — the scripted model is available when explicitly enabled (dev/demo/e2e). */
 export const aiScripted = env.AI_SCRIPTED;
+/** ADR-135 — the webhook SSRF guard, downgradable for a developer's own machine and the suite. */
+export const webhookAllowPrivateTargets = env.WEBHOOK_ALLOW_PRIVATE_TARGETS;
 /** ADR-074 — at-rest encryption is usable (real key, or the documented dev/test fallback). */
 export const hasAiEncryption =
   Boolean(env.AI_ENCRYPTION_KEY) || process.env.NODE_ENV !== "production";

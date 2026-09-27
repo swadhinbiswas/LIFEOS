@@ -3,9 +3,12 @@ import { createHmac, randomBytes } from "node:crypto";
 import { and, asc, desc, eq, isNull, lte } from "drizzle-orm";
 
 import { newId } from "@/lib/id";
+import { webhookAllowPrivateTargets } from "@/env";
 import { decryptSecret, encryptSecret, isEncryptionConfigured } from "@/server/ai/crypto";
 import { db } from "@/server/db";
 import { webhook_deliveries, webhooks_out } from "@/server/db/schema";
+
+import { assertDeliverableUrl, assertDeliverableUrlShape } from "./ssrf";
 
 /**
  * Outgoing webhooks (spec §9.3, ADR-066/069). `emitEvent` is called from the services that own a
@@ -75,13 +78,16 @@ export async function createWebhook(
   userId: string,
   input: { url: string; events: string[] },
 ): Promise<WebhookRow> {
+  const url = input.url.trim();
+  // Fail at creation, not in the delivery log: the user is at the form and can fix it (ADR-135).
+  assertDeliverableUrlShape(url, { allowPrivate: webhookAllowPrivateTargets });
   const secret = createSecret();
   const [row] = await db
     .insert(webhooks_out)
     .values({
       id: newId(),
       user_id: userId,
-      url: input.url.trim(),
+      url,
       // Encrypted at rest (ADR-074/083); shown once in plaintext to the caller that created it.
       secret: isEncryptionConfigured() ? encryptSecret(secret) : secret,
       events: JSON.stringify(input.events),
@@ -122,7 +128,12 @@ async function attempt(
   payload: string,
 ): Promise<{ status: number; error: string | null }> {
   try {
-    const response = await fetch(row.url, {
+    // Resolved immediately before the connection, because a hostname can change between the day a
+    // webhook is saved and the day it fires (ADR-135).
+    const target = await assertDeliverableUrl(row.url, {
+      allowPrivate: webhookAllowPrivateTargets,
+    });
+    const response = await fetch(target, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -131,8 +142,15 @@ async function attempt(
       },
       body: payload,
       signal: AbortSignal.timeout(5_000),
+      // A public URL that 302s to `http://localhost/` must not be followed. The redirect is a
+      // failed delivery, and the address is re-checked if a retry happens (spec §10).
+      redirect: "manual",
     });
-    return { status: response.status, error: null };
+    const redirected = response.status >= 300 && response.status < 400;
+    return {
+      status: response.status,
+      error: redirected ? "the endpoint redirected; a webhook must answer directly" : null,
+    };
   } catch (caught) {
     return { status: 0, error: caught instanceof Error ? caught.message : String(caught) };
   }
