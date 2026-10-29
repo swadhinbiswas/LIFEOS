@@ -542,7 +542,18 @@
       "startOpen": "start open",
       "of": "of {value}:00",
       "sessionRunning": "session running",
-      "noSession": "no session running"
+      "noSession": "no session running",
+      "landscape": "landscape — {time}",
+      "soundOn": "sound on",
+      "soundOff": "sound off",
+      "showLandscape": "show landscape",
+      "hideLandscape": "hide landscape",
+      "ambienceHint": "brown noise, synthesised locally — no audio files to host.",
+      "timeDawn": "dawn",
+      "timeDay": "day",
+      "timeDusk": "dusk",
+      "timeNight": "night",
+      "ambience": "ambience"
     },
     "Api": {
       "title": "API reference",

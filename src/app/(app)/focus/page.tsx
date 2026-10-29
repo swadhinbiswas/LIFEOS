@@ -9,6 +9,7 @@ import { getRegionalSettings } from "@/server/settings";
 
 import { FocusTimer } from "./_components/focus-timer";
 import { FocusChart } from "./_components/focus-chart";
+import { FocusAmbience } from "./_components/focus-ambience";
 
 import { pageMetadata } from "@/lib/page-metadata";
 
@@ -52,6 +53,10 @@ export default async function FocusPage() {
             startedAt={running ? new Date(running.started_at).toISOString() : null}
             plannedMin={running?.planned_min ?? null}
           />
+        </Panel>
+
+        <Panel title={t("ambience")} hint={t("ambienceHint")}>
+          <FocusAmbience />
         </Panel>
 
         {series.some((row) => row.minutes > 0) ? (

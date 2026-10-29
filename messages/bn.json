@@ -542,7 +542,18 @@
       "startOpen": "খোলা শুরু",
       "of": "{value}:০০-এর মধ্যে",
       "sessionRunning": "সেশন চলছে",
-      "noSession": "কোনো সেশন চলছে না"
+      "noSession": "কোনো সেশন চলছে না",
+      "landscape": "ল্যান্ডস্কেপ — {time}",
+      "soundOn": "সাউন্ড চালু",
+      "soundOff": "সাউন্ড বন্ধ",
+      "showLandscape": "ল্যান্ডস্কেপ দেখাও",
+      "hideLandscape": "ল্যান্ডস্কেপ লুকাও",
+      "ambienceHint": "ব্রাউন নয়েজ, লোকালি সিন্থেসাইজড — হোস্ট করার মতো কোনো অডিও ফাইল নেই।",
+      "timeDawn": "ভোর",
+      "timeDay": "দিন",
+      "timeDusk": "সন্ধ্যা",
+      "timeNight": "রাত",
+      "ambience": "পরিবেশ"
     },
     "Api": {
       "title": "এপিআই রেফারেন্স",
