@@ -31,6 +31,8 @@ export const users = sqliteTable("users", {
   week_start: text("week_start"),
   onboarded_at: integer("onboarded_at", { mode: "timestamp_ms" }),
   is_demo: integer("is_demo", { mode: "boolean" }).notNull().default(false),
+  /** `admin` | `user`. The first account created is an admin (ADR-145). */
+  role: text("role").notNull().default("user"),
   // spec line 426: early users must be recorded true while BILLING_ENABLED=false
   // (ADR-013); Phase 7 flips this default when paid plans exist.
   joined_during_free_period: integer("joined_during_free_period", { mode: "boolean" })

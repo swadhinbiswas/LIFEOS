@@ -16,6 +16,7 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
     { href: "/settings/activity", key: "activity" },
     { href: "/settings/ai", key: "aiSettings" },
     { href: "/settings/email", key: "email" },
+    { href: "/settings/admin", key: "admin" },
     { href: "/settings/data", key: "data" },
     ...(billingReady ? [{ href: "/settings/billing", key: "billing" }] : []),
   ];

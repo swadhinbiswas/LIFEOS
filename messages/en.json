@@ -87,7 +87,8 @@
     "data": "Data",
     "about": "About",
     "contacts": "Contacts",
-    "email": "Email"
+    "email": "Email",
+    "admin": "Admin"
   },
   "Shortcuts": {
     "groupGlobal": "Global",
