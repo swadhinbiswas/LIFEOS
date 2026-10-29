@@ -608,3 +608,63 @@ export const obligation_history = sqliteTable(
   },
   (t) => [index("obligation_history_plan_idx").on(t.plan_id, t.created_at)],
 );
+
+// ---------------------------------------------------------------------------
+// Growth workspace (ADR-144, Phase 6 of FEATURE-PARITY.md)
+// ---------------------------------------------------------------------------
+export const growth_plans = sqliteTable(
+  "growth_plans",
+  {
+    id: text("id").primaryKey(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** One of the six fixed dimensions (see src/server/growth/dimensions.ts). */
+    dimension_id: text("dimension_id").notNull(),
+    title: text("title").notNull(),
+    why: text("why"),
+    target_date: text("target_date"),
+    /** `active` | `achieved` | `archived`. */
+    status: text("status").notNull().default("active"),
+    ...timestamps(),
+  },
+  (t) => [index("growth_plans_user_dim_idx").on(t.user_id, t.dimension_id)],
+);
+
+export const growth_plan_links = sqliteTable(
+  "growth_plan_links",
+  {
+    id: text("id").primaryKey(),
+    plan_id: text("plan_id")
+      .notNull()
+      .references(() => growth_plans.id, { onDelete: "cascade" }),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** `goal` (SMART goal) | `habit`. */
+    entity_type: text("entity_type").notNull(),
+    entity_id: text("entity_id").notNull(),
+    ...timestamps(),
+  },
+  (t) => [index("growth_plan_links_plan_idx").on(t.plan_id)],
+);
+
+export const growth_reviews = sqliteTable(
+  "growth_reviews",
+  {
+    id: text("id").primaryKey(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** `weekly` | `monthly` | `quarterly`. */
+    cadence: text("cadence").notNull(),
+    /** Tehran date YYYY-MM-DD. */
+    review_date: text("review_date").notNull(),
+    /** JSON: { [dimensionId]: { reflection, next } }. */
+    notes_json: text("notes_json").notNull().default("{}"),
+    /** JSON: { [dimensionId]: { goalPct, habitPct, habitAvailable, goals, habits, completed, eligible } }. */
+    snapshot_json: text("snapshot_json").notNull().default("{}"),
+    ...timestamps(),
+  },
+  (t) => [index("growth_reviews_user_cadence_idx").on(t.user_id, t.cadence, t.review_date)],
+);
