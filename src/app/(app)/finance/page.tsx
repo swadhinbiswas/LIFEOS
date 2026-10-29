@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getTranslations, getLocale } from "next-intl/server";
 
 import { Panel } from "@/components/tui/panel";
@@ -76,6 +77,15 @@ export default async function FinancePage() {
   return (
     <>
       <PageHeader title={t("title")} />
+
+      <div className="mb-2">
+        <Link
+          href="/finance/obligations"
+          className="font-mono text-xs text-primary hover:underline"
+        >
+          Debts & credits →
+        </Link>
+      </div>
 
       <div className="grid max-w-4xl gap-4">
         <p className="font-mono text-[10px] text-muted-foreground" data-slot="finance-disclaimer">

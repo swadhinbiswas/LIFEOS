@@ -523,3 +523,88 @@ export const email_cache = sqliteTable(
   },
   (t) => [index("email_cache_user_idx").on(t.user_id)],
 );
+
+// ---------------------------------------------------------------------------
+// Obligations / debts & credits (ADR-142, Phase 5 of FEATURE-PARITY.md)
+// ---------------------------------------------------------------------------
+export const obligation_plans = sqliteTable(
+  "obligation_plans",
+  {
+    id: text("id").primaryKey(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** `debt` (I owe) | `credit` (owed to me). */
+    direction: text("direction").notNull().default("debt"),
+    name: text("name").notNull(),
+    person: text("person"),
+    notes: text("notes"),
+    /** `one_time` | `recurring` (same amount) | `split` (total divided). */
+    schedule_type: text("schedule_type").notNull().default("one_time"),
+    /** Signed minor units: negative for debts (money out), positive for credits (money in). */
+    amount_minor: integer("amount_minor").notNull(),
+    currency: text("currency").notNull(),
+    /** `daily` | `weekly` | `monthly` | `yearly` for recurring/split. */
+    cadence: text("cadence"),
+    /** Every N periods (1-12). */
+    interval_count: integer("interval_count").notNull().default(1),
+    /** Total number of payments (for split, or recurring with a count). Null = no end. */
+    total_payments: integer("total_payments"),
+    /** End date for recurring (YYYY-MM-DD). Null = no end. */
+    end_date: text("end_date"),
+    /** First due date (YYYY-MM-DD). */
+    start_date: text("start_date").notNull(),
+    /** `active` | `stopped`. */
+    status: text("status").notNull().default("active"),
+    /** Optional subscription flag (skip single periods). */
+    optional_subscription: integer("optional_subscription", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    ...timestamps(),
+  },
+  (t) => [index("obligation_plans_user_idx").on(t.user_id, t.status)],
+);
+
+export const obligation_decisions = sqliteTable(
+  "obligation_decisions",
+  {
+    /** `${planId}:${index}` — stable occurrence identity. */
+    occurrence_id: text("occurrence_id").primaryKey(),
+    plan_id: text("plan_id")
+      .notNull()
+      .references(() => obligation_plans.id, { onDelete: "cascade" }),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** `pending` | `paid` | `rejected`. */
+    status: text("status").notNull().default("pending"),
+    /** Linked transaction id (for paid). */
+    linked_transaction_id: text("linked_transaction_id"),
+    /** When paid/rejected. */
+    decided_at: integer("decided_at", { mode: "timestamp_ms" }),
+    /** Note for rejection (deferred/late). */
+    rejection_note: text("rejection_note"),
+    ...timestamps(),
+  },
+  (t) => [index("obligation_decisions_plan_idx").on(t.plan_id)],
+);
+
+export const obligation_history = sqliteTable(
+  "obligation_history",
+  {
+    id: text("id").primaryKey(),
+    plan_id: text("plan_id")
+      .notNull()
+      .references(() => obligation_plans.id, { onDelete: "cascade" }),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    occurrence_id: text("occurrence_id"),
+    action: text("action").notNull(),
+    details: text("details"),
+    created_at: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => [index("obligation_history_plan_idx").on(t.plan_id, t.created_at)],
+);
