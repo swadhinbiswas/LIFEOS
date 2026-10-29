@@ -86,7 +86,8 @@
     "aiSettings": "এআই সেটিংস",
     "data": "ডেটা",
     "about": "পরিচিতি",
-    "contacts": "পরিচিত"
+    "contacts": "পরিচিত",
+    "email": "ইমেইল"
   },
   "Shortcuts": {
     "groupGlobal": "গ্লোবাল",
@@ -1556,6 +1557,23 @@
       "followUpRemindShort": "মনে করিয়ে দিন",
       "followUpRemind": "{name} এর জন্য নতুন রিমাইন্ডার ঠিক করুন",
       "followUpInDays": "{count} দিনে"
+    },
+    "EmailSettings": {
+      "title": "ইমেইল",
+      "connect": "মেইলবক্স সংযুক্ত করো",
+      "disconnect": "সংযোগ বিচ্ছিন্ন",
+      "host": "IMAP সার্ভার",
+      "port": "পোর্ট",
+      "username": "ইউজারনেম / ইমেইল",
+      "password": "অ্যাপ পাসওয়ার্ড",
+      "mailbox": "মেইলবক্স",
+      "testAndSave": "পরীক্ষা করে সেভ",
+      "connected": "সংযুক্ত",
+      "notConnected": "কোনো মেইলবক্স সংযুক্ত নেই।",
+      "encryptionOff": "সার্ভারে এনক্রিপশন কনফিগার করা নেই।",
+      "refresh": "ইনবক্স রিফ্রেশ",
+      "summarize": "আজকের সারাংশ",
+      "hint": "IMAP over TLS (পোর্ট 993)। LifeOS শুধু পড়ে; কখনো পাঠায়, মুছে, সরায় বা পড়া হিসেবে চিহ্নিত করে না।"
     }
   },
   "About": {

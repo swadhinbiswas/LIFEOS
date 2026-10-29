@@ -86,7 +86,8 @@
     "aiSettings": "AI settings",
     "data": "Data",
     "about": "About",
-    "contacts": "Contacts"
+    "contacts": "Contacts",
+    "email": "Email"
   },
   "Shortcuts": {
     "groupGlobal": "Global",
@@ -1556,6 +1557,23 @@
       "followUpRemindShort": "remind",
       "followUpRemind": "Set a new reminder for {name}",
       "followUpInDays": "in {count}d"
+    },
+    "EmailSettings": {
+      "title": "Email",
+      "connect": "Connect mailbox",
+      "disconnect": "Disconnect",
+      "host": "IMAP server",
+      "port": "Port",
+      "username": "Username / email",
+      "password": "App password",
+      "mailbox": "Mailbox",
+      "testAndSave": "Test and save",
+      "connected": "Connected",
+      "notConnected": "No mailbox connected.",
+      "encryptionOff": "Encryption is not configured on the server.",
+      "refresh": "Refresh inbox",
+      "summarize": "Summarize today",
+      "hint": "IMAP over TLS (port 993). LifeOS only reads; it never sends, deletes, moves or marks mail as read."
     }
   },
   "About": {

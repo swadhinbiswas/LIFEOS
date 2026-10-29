@@ -479,3 +479,47 @@ export const notifications = sqliteTable(
     uniqueIndex("notifications_dedupe_unq").on(t.user_id, t.dedupe_key),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// Email inbox and daily summary (ADR-141)
+// ---------------------------------------------------------------------------
+export const email_accounts = sqliteTable(
+  "email_accounts",
+  {
+    id: text("id").primaryKey(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    host: text("host").notNull(),
+    port: integer("port").notNull().default(993),
+    username: text("username").notNull(),
+    /** AES-256-GCM encrypted app password (ADR-074). Never returned to the client. */
+    password_encrypted: text("password_encrypted").notNull(),
+    /** IMAP mailbox to read (default INBOX). */
+    mailbox: text("mailbox").notNull().default("INBOX"),
+    ...timestamps(),
+  },
+  (t) => [index("email_accounts_user_idx").on(t.user_id)],
+);
+
+export const email_cache = sqliteTable(
+  "email_cache",
+  {
+    id: text("id").primaryKey(),
+    user_id: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** When the recent-mail list was fetched. */
+    fetched_at: integer("fetched_at", { mode: "timestamp_ms" }).notNull(),
+    /** JSON array of recent messages. */
+    messages_json: text("messages_json").notNull().default("[]"),
+    /** The day key for which a summary was generated (null if none yet). */
+    summary_date: text("summary_date"),
+    /** When the summary was generated. */
+    summary_at: integer("summary_at", { mode: "timestamp_ms" }),
+    /** JSON object with the four buckets. */
+    summary_json: text("summary_json"),
+    ...timestamps(),
+  },
+  (t) => [index("email_cache_user_idx").on(t.user_id)],
+);
