@@ -10,6 +10,7 @@ import {
   subscriptions_tracked,
 } from "@/server/db/schema";
 import { shiftDay } from "@/server/habits/streak";
+import { allOccurrences } from "@/server/finance/obligations";
 
 /**
  * Calendar events (spec §6.9 / #24, ADR-052). One queried range, gathered from the services that
@@ -17,7 +18,7 @@ import { shiftDay } from "@/server/habits/streak";
  * focus sessions are deliberately out (they are records of what happened, not plans).
  */
 
-export type CalendarEventKind = "task" | "interview" | "subscription";
+export type CalendarEventKind = "task" | "interview" | "subscription" | "obligation";
 
 export interface CalendarEvent {
   id: string;
@@ -78,7 +79,7 @@ export async function getCalendar(
   const from = startOfDayInTimeZone(range.from, timeZone);
   const to = startOfDayInTimeZone(shiftDay(range.to, 1), timeZone); // exclusive upper bound
 
-  const [cardRows, interviewRows, subscriptionRows] = await Promise.all([
+  const [cardRows, interviewRows, subscriptionRows, obligationRows] = await Promise.all([
     db
       .select({
         id: cards.id,
@@ -136,6 +137,7 @@ export async function getCalendar(
           lt(subscriptions_tracked.renews_at, to),
         ),
       ),
+    allOccurrences(userId, range.from, range.to),
   ]);
 
   const events: CalendarEvent[] = [];
@@ -172,6 +174,20 @@ export async function getCalendar(
       title: row.name,
       ...instantOf(row.renewsAt, timeZone),
       href: "/finance",
+    });
+  }
+
+  for (const occ of obligationRows) {
+    // Only pending (unpaid) dues show as commitments; paid ones are done.
+    if (occ.status === "paid") continue;
+    events.push({
+      id: `obligation:${occ.id}`,
+      kind: "obligation",
+      title: `${occ.amountMinor < 0 ? "pay" : "collect"} ${Math.abs(occ.amountMinor) / 100}`,
+      at: `${occ.dueDate}T00:00:00.000Z`,
+      date: occ.dueDate,
+      time: null,
+      href: "/finance/obligations",
     });
   }
 

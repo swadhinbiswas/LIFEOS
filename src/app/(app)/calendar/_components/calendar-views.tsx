@@ -46,6 +46,7 @@ const KIND_RULE: Record<CalendarEventKind, string> = {
   task: "border-l-info",
   interview: "border-l-warning",
   subscription: "border-l-primary",
+  obligation: "border-l-destructive",
 };
 
 function EventLink({ event }: { event: CalendarEvent }) {
