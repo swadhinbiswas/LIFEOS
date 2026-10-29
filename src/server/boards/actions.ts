@@ -20,6 +20,7 @@ import {
 import {
   addAttachmentInput,
   attachmentIdInput,
+  addChecklistItemInput,
   addCommentInput,
   cardIdInput,
   boardIdInput,
