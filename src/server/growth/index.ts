@@ -177,7 +177,6 @@ export async function unlinkFromPlan(
 export async function dimensionProgress(
   userId: string,
   dimensionId: DimensionId,
-  _today: string,
 ): Promise<DimensionProgress> {
   const plans = (await listPlans(userId)).filter(
     (p) => p.dimensionId === dimensionId && p.status !== "archived",
@@ -268,13 +267,10 @@ export async function dimensionProgress(
   };
 }
 
-export async function allDimensionProgress(
-  userId: string,
-  today: string,
-): Promise<DimensionProgress[]> {
+export async function allDimensionProgress(userId: string): Promise<DimensionProgress[]> {
   const results: DimensionProgress[] = [];
   for (const d of DIMENSIONS) {
-    results.push(await dimensionProgress(userId, d.id, today));
+    results.push(await dimensionProgress(userId, d.id));
   }
   return results;
 }
