@@ -249,7 +249,7 @@ export async function uploadAttachmentAction(
       storageKey: key,
     });
     return { ok: true, data: row };
-  } catch (error) {
+  } catch {
     // Roll back the bytes if the row insert failed, so we don't leak files.
     await deleteAttachmentBytes(key).catch(() => undefined);
     return { ok: false, code: "invalid", message: "could not save the attachment" };
