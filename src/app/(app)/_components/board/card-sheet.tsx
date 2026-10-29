@@ -20,6 +20,7 @@ import { CardGoals } from "./card-goals";
 import { CardChecklist } from "./card-checklist";
 import { CardComments } from "./card-comments";
 import { CardLabels } from "./card-labels";
+import { CardAttachments } from "./card-attachments";
 import { CardLinks } from "./card-links";
 import { CardReminder } from "./card-reminder";
 import { CardTags } from "./card-tags";
@@ -214,6 +215,7 @@ export function CardSheet({
             <CardChecklist cardId={card.id} boardId={card.board_id} />
             <CardLabels cardId={card.id} boardId={card.board_id} />
             <CardComments cardId={card.id} />
+            <CardAttachments cardId={card.id} />
             <CardGoals cardId={card.id} />
             <CardReminder cardId={card.id} />
             <CardTags cardId={card.id} />

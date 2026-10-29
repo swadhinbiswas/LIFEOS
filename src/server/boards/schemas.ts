@@ -139,6 +139,14 @@ export const addCommentInput = z.object({
 });
 export const commentIdInput = z.object({ commentId: z.string().min(1) });
 
+/** Card attachments (spec §6.1): links only in v1 (see attachments.ts). */
+export const addAttachmentInput = z.object({
+  cardId: z.string().min(1),
+  url: z.string().trim().url().max(2_000),
+  name: z.string().trim().max(200).optional(),
+});
+export const attachmentIdInput = z.object({ attachmentId: z.string().min(1) });
+
 export const savedViewScopeSchema = z.enum(["tasks", "jobs", "board"]);
 
 export const boardIdInput = z.object({ boardId: z.string().min(1) });

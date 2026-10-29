@@ -18,7 +18,8 @@ import {
   updateCard as updateCardService,
 } from "@/server/boards";
 import {
-  addChecklistItemInput,
+  addAttachmentInput,
+  attachmentIdInput,
   addCommentInput,
   cardIdInput,
   boardIdInput,
@@ -66,6 +67,12 @@ import {
   removeComment,
   type CardComment,
 } from "@/server/boards/comments";
+import {
+  addAttachment,
+  listAttachments,
+  removeAttachment,
+  type CardAttachment,
+} from "@/server/boards/attachments";
 import { carryOverOverdue } from "@/server/boards/brief";
 import { revertMove, revertUpdate } from "@/server/boards/revert";
 import { listTrash, purgeCard, purgeTrash } from "@/server/boards/trash";
@@ -189,6 +196,24 @@ export async function addCommentAction(input: unknown): Promise<ActionResult<Car
 
 export async function removeCommentAction(input: unknown): Promise<ActionResult<CardComment[]>> {
   return run((userId) => removeComment(userId, commentIdInput.parse(input).commentId));
+}
+
+/** Card attachments (spec §6.1): links only in v1. */
+export async function listAttachmentsAction(
+  input: unknown,
+): Promise<ActionResult<CardAttachment[]>> {
+  return run((userId) => listAttachments(userId, cardIdInput.parse(input).cardId));
+}
+
+export async function addAttachmentAction(input: unknown): Promise<ActionResult<CardAttachment[]>> {
+  const { cardId, url, name } = addAttachmentInput.parse(input);
+  return run((userId) => addAttachment(userId, cardId, { url, name }));
+}
+
+export async function removeAttachmentAction(
+  input: unknown,
+): Promise<ActionResult<CardAttachment[]>> {
+  return run((userId) => removeAttachment(userId, attachmentIdInput.parse(input).attachmentId));
 }
 
 export async function listBoardsAction(): Promise<ActionResult<Board[]>> {

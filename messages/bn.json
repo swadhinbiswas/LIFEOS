@@ -985,7 +985,15 @@
       "isOver": "{title} এখন {column}-এর উপরে।",
       "dropped": "{title} রাখা হলো। {position}।",
       "droppedNoPosition": "{title} রাখা হলো।",
-      "cancelled": "{title} সরানো বাতিল হলো।"
+      "cancelled": "{title} সরানো বাতিল হলো।",
+      "attachments": "সংযুক্তি",
+      "noAttachments": "এখনো কোনো সংযুক্তি নেই",
+      "attachmentUrl": "লিংক URL",
+      "attachmentUrlPlaceholder": "https://…",
+      "attachmentName": "প্রদর্শিত নাম",
+      "attachmentNamePlaceholder": "ঐচ্ছিক নাম",
+      "addAttachment": "লিংক যোগ করো",
+      "removeAttachment": "সংযুক্তি সরাও"
     },
     "Boards": {
       "title": "বোর্ড",

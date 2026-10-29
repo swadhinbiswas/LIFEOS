@@ -985,7 +985,15 @@
       "isOver": "{title} is over {column}.",
       "dropped": "Dropped {title}. {position}.",
       "droppedNoPosition": "Dropped {title}.",
-      "cancelled": "Cancelled moving {title}."
+      "cancelled": "Cancelled moving {title}.",
+      "attachments": "attachments",
+      "noAttachments": "no attachments yet",
+      "attachmentUrl": "link URL",
+      "attachmentUrlPlaceholder": "https://…",
+      "attachmentName": "display name",
+      "attachmentNamePlaceholder": "optional name",
+      "addAttachment": "add link",
+      "removeAttachment": "remove attachment"
     },
     "Boards": {
       "title": "Boards",
