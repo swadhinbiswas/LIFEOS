@@ -27,12 +27,33 @@ const updateGoalInput = z.object({
   status: z.enum(["active", "done", "dropped"]).optional(),
 });
 
-const keyResultInput = z.object({
-  goalId: z.string().min(1),
-  title: z.string().trim().min(1).max(300),
-  kind: z.enum(["number", "percent", "linked"]),
-  target: z.number().int().min(0).max(100_000_000),
-});
+const keyResultInput = z
+  .object({
+    goalId: z.string().min(1),
+    title: z.string().trim().min(1).max(300),
+    kind: z.enum(["number", "percent", "linked", "habit"]),
+    target: z.number().int().min(0).max(100_000_000),
+    habitId: z.string().min(1).max(64).optional(),
+    habitTargetDays: z.number().int().min(1).max(10_000).optional(),
+    habitStart: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+    habitDeadline: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+  })
+  .refine(
+    (value) =>
+      value.kind !== "habit" ||
+      (value.habitId !== undefined &&
+        value.habitTargetDays !== undefined &&
+        value.habitStart !== undefined &&
+        value.habitDeadline !== undefined &&
+        value.habitStart <= value.habitDeadline),
+    { message: "habit key results need a habit, a target and a valid window" },
+  );
 
 const keyResultValueInput = z.object({
   keyResultId: z.string().min(1),
@@ -77,7 +98,17 @@ export async function updateGoalAction(input: unknown): Promise<ActionResult<nul
 
 export async function createKeyResultAction(input: unknown): Promise<ActionResult<null>> {
   return run(async (userId) => {
-    await createKeyResult(userId, keyResultInput.parse(input));
+    const parsed = keyResultInput.parse(input);
+    await createKeyResult(userId, {
+      goalId: parsed.goalId,
+      title: parsed.title,
+      kind: parsed.kind,
+      target: parsed.target,
+      habitId: parsed.habitId ?? null,
+      habitTargetDays: parsed.habitTargetDays ?? null,
+      habitStart: parsed.habitStart ?? null,
+      habitDeadline: parsed.habitDeadline ?? null,
+    });
     return null;
   });
 }

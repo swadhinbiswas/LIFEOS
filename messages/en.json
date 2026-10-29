@@ -585,7 +585,17 @@
       "ariaCycle": "goal cycle",
       "ariaKeyResult": "key result",
       "ariaMeasure": "key result measure",
-      "ariaTarget": "key result target"
+      "ariaTarget": "key result target",
+      "habitAttendance": "habit attendance",
+      "habit": "habit",
+      "targetDays": "target days",
+      "startDate": "start",
+      "deadline": "deadline",
+      "chooseHabit": "choose a habit…",
+      "ariaHabit": "habit for this key result",
+      "ariaTargetDays": "target completed days",
+      "ariaStartDate": "attendance window start",
+      "ariaDeadline": "attendance window end"
     },
     "Habits": {
       "title": "Habits",

@@ -100,10 +100,18 @@ export const key_results = sqliteTable(
       .notNull()
       .references(() => goals.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
-    /** `number` | `percent` | `linked` — linked progress is computed from goal_links. */
+    /** `number` | `percent` | `linked` | `habit` — habit progress is derived from habit_logs. */
     kind: text("kind").notNull().default("number"),
     current: integer("current").notNull().default(0),
     target: integer("target").notNull().default(1),
+    /** Set when kind = `habit`: the habit whose attendance drives this key result. */
+    habit_id: text("habit_id"),
+    /** Set when kind = `habit`: number of completed days required. */
+    habit_target_days: integer("habit_target_days"),
+    /** Set when kind = `habit`: inclusive start of the attendance window (YYYY-MM-DD). */
+    habit_start: text("habit_start"),
+    /** Set when kind = `habit`: inclusive end of the attendance window (YYYY-MM-DD). */
+    habit_deadline: text("habit_deadline"),
     ...timestamps(),
   },
   (t) => [index("key_results_goal_idx").on(t.goal_id)],

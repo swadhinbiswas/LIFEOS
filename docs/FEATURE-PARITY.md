@@ -81,3 +81,58 @@ other project ships and where we stand, so the work is visible rather than impli
 
 Secret notes → habit-driven goals → attachments → focus soundtrack → email summary → obligations
 → Growth → multi-admin. Each gets its own ADR and its own commit; none should be bundled.
+
+## Plan (self-hosting is a constraint on every phase)
+
+Self-hosting (ADR-131, docs/SELF_HOSTING.md) is not a final step — it is a gate on each
+phase. Every feature must:
+
+- add a migration that applies cleanly to a fresh Turso database (run `pnpm db:migrate` against
+  an empty DB before declaring done);
+- ship with no new required env var that has no default, or document it in `.env.example` and
+  `docs/SELF_HOSTING.md`;
+- keep `pnpm build` green and the Docker image buildable;
+- not introduce a cloud-only dependency or a background job that only runs on the operator's
+  infrastructure.
+
+### Phase 1 — small, well-specified (done)
+
+- **Secret notes** (shipped, ADR-136).
+- **Habit-driven SMART goals** (shipped, ADR-137): a key result of kind `habit` derives its
+  progress from habit attendance over an inclusive window, instead of "done today". New columns
+  on `key_results` (`habit_id`, `habit_target_days`, `habit_start`, `habit_deadline`), migration
+  0022, `habitKeyResultProgress` in `src/server/goals/progress.ts`, and a habit picker in
+  `AddKeyResultForm`.
+
+### Phase 2 — small (next)
+
+- **Attachments on kanban cards.** Storage + a `card_attachments` table + UI. Needs a decision on
+  where bytes live (local volume vs. S3-compatible) for self-hosters; propose local-first with an
+  optional S3 endpoint, defaulting to the data volume.
+
+### Phase 3 — medium
+
+- **Focus soundtrack + time-of-day landscape.** UI + audio assets only; no data model change.
+  Assets must be self-hostable (no CDN dependency at runtime).
+- **Email / daily summary.** Wire the existing transport (`src/server/email`) to a daily summary
+  mailer and a per-user opt-in; cron route already exists.
+
+### Phase 4 — medium (depends on Phase 5)
+
+- **Calendar shows finance dues.** Finance dues filter + occurrence loader in the calendar view.
+
+### Phase 5 — large
+
+- **Obligations / debts & credits** (finance). New `edi_obligations_v1` document, recurrence +
+  generated dues, payment linking with atomic undo, reconciliation. Own ADR, own migration set,
+  own phase. Do not bundle with anything else.
+
+### Phase 6 — large
+
+- **Growth workspace** (six life dimensions + long-term goals + weekly/monthly/quarterly reviews).
+  Own route, own data model, own phase. The headline feature; deserves the time.
+
+### Phase 7 — large, high risk
+
+- **Multi-admin with private workspaces.** Touches auth and tenant scoping in every service.
+  Needs its own ADR and a security review before merging.

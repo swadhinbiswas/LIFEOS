@@ -585,7 +585,17 @@
       "ariaCycle": "লক্ষ্যের চক্র",
       "ariaKeyResult": "মূল ফলাফল",
       "ariaMeasure": "মূল ফলাফলের মাপ",
-      "ariaTarget": "মূল ফলাফলের লক্ষ্যমাত্রা"
+      "ariaTarget": "মূল ফলাফলের লক্ষ্যমাত্রা",
+      "habitAttendance": "অভ্যাসের উপস্থিতি",
+      "habit": "অভ্যাস",
+      "targetDays": "লক্ষ্য দিন",
+      "startDate": "শুরু",
+      "deadline": "শেষ তারিখ",
+      "chooseHabit": "একটি অভ্যাস বাছো…",
+      "ariaHabit": "এই ফলাফলের অভ্যাস",
+      "ariaTargetDays": "লক্ষ্য সম্পন্ন দিন",
+      "ariaStartDate": "উপস্থিতির শুরু",
+      "ariaDeadline": "উপস্থিতির শেষ"
     },
     "Habits": {
       "title": "অভ্যাস",

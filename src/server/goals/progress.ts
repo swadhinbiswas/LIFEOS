@@ -27,12 +27,18 @@ export interface KeyResultShape {
  * A key result's progress. `percent` results are already 0–100; `number` results scale against
  * their target; `linked` results take the linked-entity percentage.
  */
-export function keyResultProgress(keyResult: KeyResultShape, linked = 0): number {
+export function keyResultProgress(
+  keyResult: KeyResultShape,
+  linked = 0,
+  habitCompleted?: number | null,
+): number | null {
   switch (keyResult.kind) {
     case "percent":
       return clampPercent(keyResult.current);
     case "linked":
       return clampPercent(linked);
+    case "habit":
+      return habitKeyResultProgress(habitCompleted ?? null, keyResult.target);
     default:
       if (keyResult.target <= 0) return keyResult.current > 0 ? 100 : 0;
       return clampPercent(Math.round((keyResult.current / keyResult.target) * 100));
@@ -46,3 +52,14 @@ export function goalProgress(parts: number[]): number {
 }
 
 const clampPercent = (value: number): number => Math.max(0, Math.min(100, value));
+
+/**
+ * A habit key result's progress. `completed` unique days inside the inclusive window, capped at
+ * `target` (and at 100%). Returns null when the data could not be read, so the caller can show an
+ * "unavailable" state instead of a misleading 0%.
+ */
+export function habitKeyResultProgress(completed: number | null, target: number): number | null {
+  if (completed === null) return null;
+  if (target <= 0) return completed > 0 ? 100 : 0;
+  return clampPercent(Math.round((completed / target) * 100));
+}

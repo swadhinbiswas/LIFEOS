@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/tui/page-header";
 import { Progress } from "@/components/ui/progress";
 import { getServerSession } from "@/server/auth/session";
 import { listGoals } from "@/server/goals";
+import { listHabits } from "@/server/habits";
 
 import {
   AddGoalForm,
@@ -32,6 +33,7 @@ export default async function GoalsPage() {
 
   const t = await getTranslations("Pages.Goals");
   const goals = await listGoals(session.user.id);
+  const habits = await listHabits(session.user.id);
   const stale = goals.filter((goal) => goal.needsCheckIn).length;
 
   return (
@@ -95,7 +97,7 @@ export default async function GoalsPage() {
                       >
                         <span className="min-w-0 flex-1 truncate">{entry.row.title}</span>
                         <Progress
-                          value={entry.progress}
+                          value={entry.progress ?? 0}
                           aria-label={entry.row.title}
                           className="h-1.5 w-24"
                         />
@@ -105,13 +107,15 @@ export default async function GoalsPage() {
                           current={entry.row.current}
                           kind={entry.row.kind}
                         />
-                        <span className="w-10 text-right tabular-nums">{entry.progress}%</span>
+                        <span className="w-10 text-right tabular-nums">
+                          {entry.progress === null ? "—" : `${entry.progress}%`}
+                        </span>
                       </li>
                     ))}
                   </ul>
                 )}
 
-                <AddKeyResultForm goalId={goal.goal.id} />
+                <AddKeyResultForm goalId={goal.goal.id} habits={habits} />
               </div>
             </Panel>
           ))

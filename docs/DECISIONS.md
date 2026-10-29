@@ -3549,6 +3549,47 @@ defect this repo treats as a bug rather than a flourish.
   - `NoteSummary` gained a `secret` field; the notes tests still pass because they assert on
     specific fields rather than the whole object.
 
+## ADR-137 — Habit-driven SMART goals
+
+- **Context:** `edrisranjbar/lifeos` derives a goal's progress from habit attendance (unique
+  completed days inside an inclusive window, capped at 100%), with quarter milestones. We only had
+  `linked` key results, which read "done today" — a snapshot, not attendance. The gap is closed
+  without disturbing the existing checklist/measure/linked kinds.
+
+- **Decision:**
+  - **A new key-result kind, `habit`.** Progress is never stored (ADR-045): `key_results.habit_id`,
+    `habit_target_days`, `habit_start`, `habit_deadline` describe the window; the count comes from
+    `habit_logs` at read time. `target` keeps its existing meaning (the denominator) for the other
+    kinds, and `habit_target_days` is the denominator for habit ones.
+  - **`keyResultProgress` gained a `habitCompleted` parameter** and returns `number | null`. `null`
+    means "unavailable" (logs could not be read), so the UI can show "—" instead of a misleading
+    0%. `GoalView.keyResults[].progress` is now `number | null` to match; `GoalView.progress`
+    stays a number by averaging the available ones (0 when none are available).
+  - **Attendance is counted in `listGoals`**, not in a separate query per goal: one fetch of
+    `habit_logs` for all habit key results' habits, then distinct dates inside
+    `[start, min(deadline, today)]`. Historical logs still count after a habit is archived because
+    we read the log table, not the habit row.
+  - **Validation at the boundary.** `createKeyResultAction` requires `habitId`, `habitTargetDays`,
+    `habitStart`, `habitDeadline` with `start <= deadline` when `kind === "habit"`. The service
+    does not re-validate; a bad row is a data problem, not a request problem.
+  - **The UI adds a `habit` option to `AddKeyResultForm`** with a habit picker, target days and
+    start/deadline inputs; `KeyResultControls` hides +/- for habit results (they are derived, not
+    typed); the per-result line shows "—" when unavailable.
+  - **Quarter milestones and the Habittify link are deferred.** The attendance count and the
+    percentage are the load-bearing parts; the milestones are display polish and will land with the
+    next goals pass.
+
+- **Consequences:**
+  - `GoalView.keyResults[].progress` is now nullable, so any consumer that assumed a number must
+    handle null. The only consumer is the goals page, updated in the same commit.
+  - The habit key result's `target` column is left at its default (1) for habit rows; the real
+    denominator is `habit_target_days`. This keeps the existing `keyResultProgress` default branch
+    from dividing by zero if a habit row is ever read by old code.
+  - No MCP or API change yet: habit key results are created through the same `createKeyResultAction`
+    path, and GET goals already returns derived `progress`. The other repo's `progressSource` /
+    `effectiveStatus` fields are not added; our key-result-centric model already expresses the
+    same thing.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

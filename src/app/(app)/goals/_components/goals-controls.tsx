@@ -90,11 +90,21 @@ export function AddGoalForm() {
   );
 }
 
-export function AddKeyResultForm({ goalId }: { goalId: string }) {
+export function AddKeyResultForm({
+  goalId,
+  habits,
+}: {
+  goalId: string;
+  habits: Array<{ habit: { id: string; name: string } }>;
+}) {
   const t = useTranslations("Pages.Goals");
   const [title, setTitle] = useState("");
-  const [kind, setKind] = useState<"number" | "percent" | "linked">("number");
+  const [kind, setKind] = useState<"number" | "percent" | "linked" | "habit">("number");
   const [target, setTarget] = useState("");
+  const [habitId, setHabitId] = useState("");
+  const [habitTargetDays, setHabitTargetDays] = useState("");
+  const [habitStart, setHabitStart] = useState("");
+  const [habitDeadline, setHabitDeadline] = useState("");
   const { busy, error, submit } = useSubmit();
 
   return (
@@ -113,10 +123,22 @@ export function AddKeyResultForm({ goalId }: { goalId: string }) {
               title: title.trim(),
               kind,
               target: Number.isFinite(parsed) ? (parsed as number) : 0,
+              ...(kind === "habit"
+                ? {
+                    habitId,
+                    habitTargetDays: Number.parseInt(habitTargetDays, 10),
+                    habitStart,
+                    habitDeadline,
+                  }
+                : {}),
             }),
           () => {
             setTitle("");
             setTarget("");
+            setHabitId("");
+            setHabitTargetDays("");
+            setHabitStart("");
+            setHabitDeadline("");
           },
         );
       }}
@@ -135,16 +157,19 @@ export function AddKeyResultForm({ goalId }: { goalId: string }) {
         {t("measure")}
         <select
           value={kind}
-          onChange={(event) => setKind(event.target.value as "number" | "percent" | "linked")}
+          onChange={(event) =>
+            setKind(event.target.value as "number" | "percent" | "linked" | "habit")
+          }
           className={controlField}
           aria-label={t("ariaMeasure")}
         >
           <option value="number">{t("number")}</option>
           <option value="percent">{t("percent")}</option>
           <option value="linked">{t("linkedWork")}</option>
+          <option value="habit">{t("habitAttendance")}</option>
         </select>
       </label>
-      {kind !== "linked" ? (
+      {kind !== "linked" && kind !== "habit" ? (
         <label className={label}>
           {t("target")}
           <input
@@ -156,6 +181,57 @@ export function AddKeyResultForm({ goalId }: { goalId: string }) {
             aria-label={t("ariaTarget")}
           />
         </label>
+      ) : null}
+      {kind === "habit" ? (
+        <>
+          <label className={`${label} min-w-40`}>
+            {t("habit")}
+            <select
+              value={habitId}
+              onChange={(event) => setHabitId(event.target.value)}
+              className={controlField}
+              aria-label={t("ariaHabit")}
+            >
+              <option value="">{t("chooseHabit")}</option>
+              {habits.map((view) => (
+                <option key={view.habit.id} value={view.habit.id}>
+                  {view.habit.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={label}>
+            {t("targetDays")}
+            <input
+              inputMode="numeric"
+              value={habitTargetDays}
+              onChange={(event) => setHabitTargetDays(event.target.value)}
+              placeholder="20"
+              className={`${controlField} w-20`}
+              aria-label={t("ariaTargetDays")}
+            />
+          </label>
+          <label className={label}>
+            {t("startDate")}
+            <input
+              type="date"
+              value={habitStart}
+              onChange={(event) => setHabitStart(event.target.value)}
+              className={controlField}
+              aria-label={t("ariaStartDate")}
+            />
+          </label>
+          <label className={label}>
+            {t("deadline")}
+            <input
+              type="date"
+              value={habitDeadline}
+              onChange={(event) => setHabitDeadline(event.target.value)}
+              className={controlField}
+              aria-label={t("ariaDeadline")}
+            />
+          </label>
+        </>
       ) : null}
       <Button type="submit" size="sm" variant="outline" disabled={busy || title.trim() === ""}>
         {busy ? t("adding") : t("addResult")}
@@ -180,7 +256,7 @@ export function KeyResultControls({
 }) {
   const t = useTranslations("Pages.Goals");
   const { busy, submit } = useSubmit();
-  if (kind === "linked") return null;
+  if (kind === "linked" || kind === "habit") return null;
 
   const set = (next: number) =>
     void submit(() => setKeyResultValueAction({ keyResultId, current: Math.max(0, next) }));

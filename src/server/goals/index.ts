@@ -20,7 +20,7 @@ const CHECK_IN_DAYS = 7;
 
 export interface GoalView {
   goal: GoalRow;
-  keyResults: Array<{ row: KeyResultRow; progress: number }>;
+  keyResults: Array<{ row: KeyResultRow; progress: number | null }>;
   progress: number;
   links: { total: number; done: number };
   /** Active goal whose key results have not moved in a week (spec §6.4 check-in prompt). */
@@ -53,7 +53,12 @@ export async function listGoals(
     .filter((link) => link.entity_type === "habit")
     .map((link) => link.entity_id);
 
-  const [cardRows, habitRows] = await Promise.all([
+  const habitKeyResults = keyResultRows.filter(
+    (row) => row.kind === "habit" && row.habit_id && row.habit_start && row.habit_deadline,
+  );
+  const habitIdsForGoals = [...new Set(habitKeyResults.map((row) => row.habit_id!))];
+
+  const [cardRows, habitRows, habitKrLogs] = await Promise.all([
     cardIds.length > 0
       ? db
           .select({ id: cards.id, completedAt: cards.completed_at })
@@ -74,10 +79,34 @@ export async function listGoals(
             ),
           )
       : Promise.resolve([]),
+    habitIdsForGoals.length > 0
+      ? db
+          .select({ habitId: habit_logs.habit_id, date: habit_logs.date })
+          .from(habit_logs)
+          .where(
+            and(eq(habit_logs.user_id, userId), inArray(habit_logs.habit_id, habitIdsForGoals)),
+          )
+      : Promise.resolve([]),
   ]);
 
   const cardsById = new Map(cardRows.map((row) => [row.id, row]));
   const habitsDoneToday = new Set(habitRows.map((row) => row.habitId));
+
+  // Attendance per habit key result: distinct completed days inside [start, deadline],
+  // capped at today (Asia/Tehran day). Null means "could not read" — here we always read,
+  // so it is 0+; the null path is reserved for a future per-habit failure.
+  const habitAttendance = new Map<string, number>();
+  for (const kr of habitKeyResults) {
+    const start = kr.habit_start!;
+    const deadline = kr.habit_deadline!;
+    const end = deadline < day ? deadline : day;
+    const dates = new Set(
+      habitKrLogs
+        .filter((log) => log.habitId === kr.habit_id && log.date >= start && log.date <= end)
+        .map((log) => log.date),
+    );
+    habitAttendance.set(kr.id, dates.size);
+  }
 
   return goalRows.map((goal) => {
     const goalLinks = linkRows.filter((link) => link.goal_id === goal.id);
@@ -90,14 +119,25 @@ export async function listGoals(
 
     const resolved = keyResultRows
       .filter((row) => row.goal_id === goal.id)
-      .map((row) => ({ row, progress: keyResultProgress(row, linked) }));
+      .map((row) => {
+        // Habit key results derive their progress from attendance, not from a stored number.
+        let habitCompleted: number | null = null;
+        if (row.kind === "habit" && row.habit_id && row.habit_start && row.habit_deadline) {
+          habitCompleted = habitAttendance.get(row.id) ?? null;
+        }
+        return { row, progress: keyResultProgress(row, linked, habitCompleted) };
+      });
+
+    const availableProgress = resolved
+      .map((entry) => entry.progress)
+      .filter((value): value is number => value !== null);
 
     const ageDays = (now.getTime() - new Date(goal.updated_at).getTime()) / (24 * 60 * 60 * 1000);
 
     return {
       goal,
       keyResults: resolved,
-      progress: goalProgress(resolved.map((entry) => entry.progress)),
+      progress: goalProgress(availableProgress),
       links: { total: entities.length, done: entities.filter((entity) => entity.done).length },
       needsCheckIn: goal.status === "active" && ageDays >= CHECK_IN_DAYS,
     };
@@ -140,7 +180,16 @@ export async function updateGoal(
 
 export async function createKeyResult(
   userId: string,
-  input: { goalId: string; title: string; kind: "number" | "percent" | "linked"; target: number },
+  input: {
+    goalId: string;
+    title: string;
+    kind: "number" | "percent" | "linked" | "habit";
+    target: number;
+    habitId?: string | null;
+    habitTargetDays?: number | null;
+    habitStart?: string | null;
+    habitDeadline?: string | null;
+  },
 ): Promise<KeyResultRow> {
   const [goal] = await db
     .select({ id: goals.id })
@@ -158,6 +207,10 @@ export async function createKeyResult(
       title: input.title.trim(),
       kind: input.kind,
       target: input.target,
+      habit_id: input.habitId ?? null,
+      habit_target_days: input.habitTargetDays ?? null,
+      habit_start: input.habitStart ?? null,
+      habit_deadline: input.habitDeadline ?? null,
     })
     .returning();
   if (!row) throw new Error("key result insert returned no row");
