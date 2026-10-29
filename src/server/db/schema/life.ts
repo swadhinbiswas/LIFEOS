@@ -147,6 +147,8 @@ export const notes = sqliteTable(
     daily_date: text("daily_date"),
     /** Client-side encrypted entries are not server-searchable (spec §6.5). */
     encrypted: integer("encrypted", { mode: "boolean" }).notNull().default(false),
+    /** Secret notes are hidden from API/MCP reads by default (ADR-136). */
+    secret: integer("secret", { mode: "boolean" }).notNull().default(false),
     pinned: integer("pinned", { mode: "boolean" }).notNull().default(false),
     archived_at: integer("archived_at", { mode: "timestamp_ms" }),
     deleted_at: integer("deleted_at", { mode: "timestamp_ms" }),

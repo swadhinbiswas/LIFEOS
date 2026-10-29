@@ -22,6 +22,7 @@ export interface NoteSummary {
   excerpt: string;
   kind: string;
   pinned: boolean;
+  secret: boolean;
   dailyDate: string | null;
   updatedAt: Date;
 }
@@ -38,12 +39,16 @@ const toSummary = (note: NoteRow): NoteSummary => ({
   excerpt: excerpt(note.body),
   kind: note.kind,
   pinned: note.pinned,
+  secret: note.secret,
   dailyDate: note.daily_date,
   updatedAt: note.updated_at,
 });
 
 async function indexNote(note: NoteRow): Promise<void> {
   await db.run(sql`delete from search_index where note_id = ${note.id}`);
+  // Secret notes are never indexed, so they cannot surface through full-text search even if a
+  // caller holds a stale id (ADR-136). Flipping the flag re-runs this and rebuilds the row.
+  if (note.secret) return;
   await db.run(
     sql`insert into search_index (title, body, note_id) values (${note.title}, ${note.body}, ${note.id})`,
   );
@@ -96,10 +101,13 @@ async function resolveIncoming(userId: string, title: string): Promise<void> {
 
 export async function listNotes(
   userId: string,
-  options: { kind?: string; limit?: number } = {},
+  options: { kind?: string; limit?: number; includeSecret?: boolean } = {},
 ): Promise<NoteSummary[]> {
   const filters = [eq(notes.user_id, userId), isNull(notes.deleted_at)];
   if (options.kind) filters.push(eq(notes.kind, options.kind));
+  // Secret notes are hidden from API reads by default (ADR-136): the service's default is the safe
+  // one, and the owner opts in from the web UI. A caller that forgets the flag gets the safe list.
+  if (!options.includeSecret) filters.push(eq(notes.secret, false));
 
   const rows = await db
     .select()
@@ -114,6 +122,7 @@ export async function listNotes(
 export async function getNote(
   userId: string,
   noteId: string,
+  options: { includeSecret?: boolean } = {},
 ): Promise<{ note: NoteRow; backlinks: NoteSummary[] } | null> {
   const [note] = await db
     .select()
@@ -121,6 +130,9 @@ export async function getNote(
     .where(and(eq(notes.id, noteId), eq(notes.user_id, userId), isNull(notes.deleted_at)))
     .limit(1);
   if (!note) return null;
+  // A secret note requested without opt-in is indistinguishable from a missing one — the same
+  // answer the API gives for a note that does not exist, so a probe cannot tell them apart.
+  if (note.secret && !options.includeSecret) return null;
 
   const linking = await db
     .select({ srcNoteId: note_links.src_note_id })
@@ -146,7 +158,13 @@ export async function getNote(
 
 export async function createNote(
   userId: string,
-  input: { title?: string; body?: string; kind?: string; dailyDate?: string | null },
+  input: {
+    title?: string;
+    body?: string;
+    kind?: string;
+    dailyDate?: string | null;
+    secret?: boolean;
+  },
 ): Promise<NoteRow> {
   const [row] = await db
     .insert(notes)
@@ -157,6 +175,7 @@ export async function createNote(
       body: input.body ?? "",
       kind: input.kind ?? "note",
       daily_date: input.dailyDate ?? null,
+      secret: input.secret ?? false,
     })
     .returning();
   if (!row) throw new Error("note insert returned no row");
@@ -169,13 +188,21 @@ export async function createNote(
 
 export async function updateNote(
   userId: string,
-  input: { noteId: string; title?: string; body?: string; pinned?: boolean; archived?: boolean },
+  input: {
+    noteId: string;
+    title?: string;
+    body?: string;
+    pinned?: boolean;
+    archived?: boolean;
+    secret?: boolean;
+  },
 ): Promise<NoteRow> {
   const patch: Partial<typeof notes.$inferInsert> = {};
   if (input.title !== undefined) patch.title = input.title.trim();
   if (input.body !== undefined) patch.body = input.body;
   if (input.pinned !== undefined) patch.pinned = input.pinned;
   if (input.archived !== undefined) patch.archived_at = input.archived ? new Date() : null;
+  if (input.secret !== undefined) patch.secret = input.secret;
 
   const [row] = await db
     .update(notes)
@@ -292,7 +319,14 @@ export async function searchNotes(userId: string, query: string, limit = 20): Pr
   const rows = await db
     .select()
     .from(notes)
-    .where(and(eq(notes.user_id, userId), isNull(notes.deleted_at), inArray(notes.id, ids)));
+    .where(
+      and(
+        eq(notes.user_id, userId),
+        isNull(notes.deleted_at),
+        eq(notes.secret, false),
+        inArray(notes.id, ids),
+      ),
+    );
 
   const byId = new Map(rows.map((row) => [row.id, row]));
   return hits

@@ -3514,6 +3514,41 @@ defect this repo treats as a bug rather than a flourish.
   - Delivery to a redirecting endpoint now fails loudly where it previously followed the redirect.
     No legitimate webhook endpoint should redirect a POST, and the message says so.
 
+## ADR-136 — Secret notes are a visibility flag, not encryption
+
+- **Context:** the other project's notes can be marked secret and are "hidden from API reads by
+  default." We did not have this. The open question was what "secret" actually means in a system
+  where the database is already the user's own (spec §7) and the API is token-protected.
+
+- **Decision:**
+  - **A boolean column on `notes`, default false**, not a separate table or an encrypted blob.
+    "Secret" controls _visibility_, not confidentiality: the row is still in the user's database,
+    still backed up with everything else, and still readable by the owner in the UI. True
+    encryption would need key management we do not have, and pretending a toggle is encryption
+    is worse than not having it.
+  - **Hidden from API/MCP reads by default**, and indistinguishable from "not found." `getNote`
+    returns `null` for a secret note when the caller does not opt in, so a probe cannot tell a
+    secret note from a missing one. `listNotes` and `searchNotes` filter the same way. The owner
+    opts in from the web UI (`includeSecret: true`), which is the only caller that is the owner.
+  - **Never indexed.** `indexNote` deletes any existing FTS row and inserts nothing when the note
+    is secret, and re-runs on a flag flip, so a note made secret disappears from search and a note
+    made public reappears. This is what makes "hidden from search" true rather than aspirational.
+  - **The MCP catalog uses the default.** `lifeos://notes/{id}` calls `getNote` with no opt-in,
+    so an assistant cannot read a secret note even with its id. This is the point of the feature
+    and the reason the default is the safe one.
+  - **Zod at the boundary.** `secret: z.boolean().optional()` on both create and update inputs;
+    the service coerces `undefined` to `false` on create and leaves it untouched on update unless
+    supplied, so a partial save cannot accidentally clear the flag.
+
+- **Consequences:**
+  - A secret note is still in the trash, still linkable, still taggable and still counted in
+    note counts. "Secret" is about who can read it, not about lifecycle.
+  - The web UI always passes `includeSecret: true`, because the person looking at `/notes` is the
+    owner. If we ever add shared workspaces (see `docs/FEATURE-PARITY.md` gap 9), that assumption
+    must be revisited: the flag would have to become per-viewer, not per-note.
+  - `NoteSummary` gained a `secret` field; the notes tests still pass because they assert on
+    specific fields rather than the whole object.
+
 ---
 
 ### Appendix — deferred/scheduled ADRs

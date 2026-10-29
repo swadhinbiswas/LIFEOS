@@ -21,7 +21,7 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
 
   const t = await getTranslations("Pages.Notes");
   const { id } = await params;
-  const detail = await getNote(session.user.id, id).catch(() => null);
+  const detail = await getNote(session.user.id, id, { includeSecret: true }).catch(() => null);
   if (!detail) notFound();
 
   const { note, backlinks } = detail;
@@ -42,6 +42,7 @@ export default async function NotePage({ params }: { params: Promise<{ id: strin
             title={note.title}
             body={note.body}
             pinned={note.pinned}
+            secret={note.secret}
             tags={tags}
           />
         </Panel>

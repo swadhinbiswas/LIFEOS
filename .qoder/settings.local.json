@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"^## \\\\|^### \\\\|Still open\\\\|not built\\\\|missing\" docs/GAPS.md | head -40)",
+      "Bash(ls -la /home/swadhin/LIFEOS | head -50; echo ---; wc -l README.md 2>/dev/null; echo ---; ls public/ 2>/dev/null | head -30)",
+      "Bash(ls scripts/ visual-shots/ | head -40; echo ---; cat playwright.local.ts; echo ---; cat playwright.visual.ts)",
+      "Bash(cat package.json; echo ---; ls tests/e2e | head -60; echo ---; which ffmpeg; ls node_modules/.bin | grep -i -E \"playwright|ffmpeg\" )",
+      "Bash(cat tests/e2e/global-setup.ts; echo ---HEAD-BOARDS; sed -n 1,40p tests/e2e/boards.spec.ts; echo ---GITIGNORE; cat .gitignore; echo ---; ls tests/e2e/*.ts | grep -v spec)",
+      "Bash(ls src/app/\\\\\\(app\\\\\\) 2>/dev/null; echo ---; ls src/app; echo ---NAV; grep -rn \"href:\" src/config/nav* 2>/dev/null | head -30)",
+      "Bash(ls .github/workflows/ 2>/dev/null; echo \"--- LICENSE\"; ls | grep -i licen; git tag -l | tail -3; echo \"--- SHORTCUTS\"; grep -n \"id:\\\\|keys:\" src/config/shortcuts.ts 2>/dev/null | head -60; echo \"--- BROWSERS\"; ls ~/.cache/ms-playwright 2>/dev/null)",
+      "Bash(sed -n 1,60p src/server/ai/providers/scripted.ts; echo \"=== LICENSE decision\"; grep -rn \"license\" docs/DECISIONS.md | head -8; grep -rn \"License\" docs/RELEASE.md | head -8)",
+      "Bash(grep -n \"move \\\\${title}\\\\|right\\\\`\\\\|getByLabel\\(\\\\\"add a card\" tests/e2e/boards.spec.ts | head -8; grep -rn \"start 25:00\\\\|habit name\\\\|new note\\\\|daily kanban\" tests/e2e/*.spec.ts | head -8; grep -rn \"appearance\\\\|preset\" src/config/shortcuts.ts | head -5)"
+    ]
+  }
+}

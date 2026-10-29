@@ -1,0 +1,1 @@
+ALTER TABLE `notes` ADD `secret` integer DEFAULT false NOT NULL;

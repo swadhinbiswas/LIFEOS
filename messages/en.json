@@ -653,7 +653,11 @@
       "delete": "delete",
       "saved": "saved",
       "unsaved": "unsaved changes",
-      "upToDate": "up to date"
+      "upToDate": "up to date",
+      "secret": "secret",
+      "makeSecret": "make secret",
+      "makePublic": "make public",
+      "secretHint": "Hidden from API and search reads by default."
     },
     "Finance": {
       "title": "Finance",

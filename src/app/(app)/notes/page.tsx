@@ -37,7 +37,9 @@ export default async function NotesPage({ searchParams }: PageProps) {
 
   const [allTags, initialHits] = await Promise.all([
     listTags(session.user.id),
-    query === "" ? listNotes(session.user.id) : searchNotes(session.user.id, query),
+    query === ""
+      ? listNotes(session.user.id, { includeSecret: true })
+      : searchNotes(session.user.id, query),
   ]);
 
   const taggedIds =
@@ -158,6 +160,14 @@ export default async function NotesPage({ searchParams }: PageProps) {
                   {note.pinned ? (
                     <span className="rounded-[var(--radius)] border border-warning px-1 font-mono text-[10px] text-warning">
                       {t("pinned")}
+                    </span>
+                  ) : null}
+                  {note.secret ? (
+                    <span
+                      className="rounded-[var(--radius)] border border-destructive/40 px-1 font-mono text-[10px] text-destructive"
+                      title={t("secretHint")}
+                    >
+                      {t("secret")}
                     </span>
                   ) : null}
                   {(tagsByNote[note.id] ?? []).map((name) => (

@@ -20,12 +20,14 @@ export function NoteEditor({
   title: initialTitle,
   body: initialBody,
   pinned: initialPinned,
+  secret: initialSecret,
   tags: initialTags,
 }: {
   noteId: string;
   title: string;
   body: string;
   pinned: boolean;
+  secret: boolean;
   tags: string[];
 }) {
   const router = useRouter();
@@ -33,6 +35,7 @@ export function NoteEditor({
   const [title, setTitle] = useState(initialTitle);
   const [body, setBody] = useState(initialBody);
   const [pinned, setPinned] = useState(initialPinned);
+  const [secret, setSecret] = useState(initialSecret);
   const [tagText, setTagText] = useState(initialTags.join(", "));
   const [dirty, setDirty] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -46,7 +49,7 @@ export function NoteEditor({
       .split(/[,\n]/)
       .map((tag) => tag.trim())
       .filter((tag) => tag !== "");
-    const result = await updateNoteAction({ noteId, title, body, pinned });
+    const result = await updateNoteAction({ noteId, title, body, pinned, secret });
     if (!result.ok) {
       setBusy(false);
       setError(result.message);
@@ -127,6 +130,24 @@ export function NoteEditor({
         >
           {pinned ? t("unpin") : t("pin")}
         </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onClick={() => {
+            setSecret(!secret);
+            setDirty(true);
+          }}
+          title={t("secretHint")}
+        >
+          {secret ? t("makePublic") : t("makeSecret")}
+        </Button>
+        {secret ? (
+          <span className="rounded-[var(--radius)] border border-destructive/40 px-1 font-mono text-[10px] text-destructive">
+            {t("secret")}
+          </span>
+        ) : null}
         <Button
           type="button"
           size="sm"

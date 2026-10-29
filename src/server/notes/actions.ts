@@ -10,6 +10,7 @@ const createInput = z.object({
   title: z.string().trim().max(300).optional(),
   body: z.string().max(200_000).optional(),
   kind: z.enum(["note", "daily", "journal"]).optional(),
+  secret: z.boolean().optional(),
 });
 
 const updateInput = z.object({
@@ -17,6 +18,7 @@ const updateInput = z.object({
   title: z.string().trim().max(300).optional(),
   body: z.string().max(200_000).optional(),
   pinned: z.boolean().optional(),
+  secret: z.boolean().optional(),
 });
 
 const idInput = z.object({ noteId: z.string().min(1) });

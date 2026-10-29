@@ -282,7 +282,14 @@ describe("board service (spec 6.1 / adrs 009, 011, 042)", () => {
     const board = await createBoard(USER, { name: "Recurring", template: "blank" });
     const todo = await columnNamed(board.id, "To do");
     const done = await columnNamed(board.id, "Done");
-    const due = new Date("2026-10-01T09:00:00.000Z");
+    // Anchored on "tomorrow" rather than a fixed date so the assertion does not rot when the
+    // environment clock moves past it: the next daily occurrence must land one day after the
+    // completed card's own due date (anchored on the card, not on "today").
+    const due = new Date();
+    due.setUTCDate(due.getUTCDate() + 1);
+    due.setUTCHours(9, 0, 0, 0);
+    const expectedNext = new Date(due);
+    expectedNext.setUTCDate(expectedNext.getUTCDate() + 1);
 
     const card = await createCard(USER, {
       boardId: board.id,
@@ -304,7 +311,7 @@ describe("board service (spec 6.1 / adrs 009, 011, 042)", () => {
       (row) => row.title === "water plants" && row.column_id === todo.id,
     );
     expect(inTodo).toHaveLength(1); // the next occurrence, back in the first open column
-    expect(inTodo[0]?.due_at?.toISOString()).toBe("2026-10-02T09:00:00.000Z");
+    expect(inTodo[0]?.due_at?.toISOString()).toBe(expectedNext.toISOString());
     expect(inTodo[0]?.recurrence).toBe("FREQ=DAILY;INTERVAL=1");
     expect(inTodo[0]?.completed_at).toBeNull();
 

@@ -653,7 +653,11 @@
       "delete": "মুছো",
       "saved": "সেভ হয়েছে",
       "unsaved": "অসেভ করা পরিবর্তন",
-      "upToDate": "হালনাগাদ"
+      "upToDate": "হালনাগাদ",
+      "secret": "গোপন",
+      "makeSecret": "গোপন করো",
+      "makePublic": "প্রকাশ্য করো",
+      "secretHint": "ডিফল্টভাবে API ও সার্চ থেকে লুকানো।"
     },
     "Finance": {
       "title": "অর্থ",
