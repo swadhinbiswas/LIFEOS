@@ -70,6 +70,7 @@ import {
 } from "@/server/boards/comments";
 import {
   addAttachment,
+  addFileAttachment,
   listAttachments,
   removeAttachment,
   type CardAttachment,
@@ -79,6 +80,8 @@ import { revertMove, revertUpdate } from "@/server/boards/revert";
 import { listTrash, purgeCard, purgeTrash } from "@/server/boards/trash";
 import type { Card } from "@/server/boards";
 import { getServerSession } from "@/server/auth/session";
+import { newId } from "@/lib/id";
+import { deleteAttachmentBytes, ATTACHMENT_MAX_BYTES } from "@/server/storage/attachments";
 import type { Board } from "@/server/boards";
 import { getTimeZone } from "@/server/settings";
 
@@ -209,6 +212,48 @@ export async function listAttachmentsAction(
 export async function addAttachmentAction(input: unknown): Promise<ActionResult<CardAttachment[]>> {
   const { cardId, url, name } = addAttachmentInput.parse(input);
   return run((userId) => addAttachment(userId, cardId, { url, name }));
+}
+
+export async function uploadAttachmentAction(
+  formData: FormData,
+): Promise<ActionResult<CardAttachment>> {
+  const session = await getServerSession();
+  if (!session) return { ok: false, code: "unauthorized", message: "you are signed out" };
+
+  const cardId = formData.get("cardId");
+  const file = formData.get("file");
+  if (typeof cardId !== "string" || !(file instanceof File)) {
+    return { ok: false, code: "invalid", message: "missing card or file" };
+  }
+
+  if (file.size === 0) return { ok: false, code: "invalid", message: "empty file" };
+  if (file.size > ATTACHMENT_MAX_BYTES) {
+    return { ok: false, code: "invalid", message: "file too large (10 MiB max)" };
+  }
+
+  const { buildStorageKey, saveAttachmentBytes, safeFileName } =
+    await import("@/server/storage/attachments");
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const id = newId();
+  const key = buildStorageKey(id, file.name);
+  try {
+    await saveAttachmentBytes(key, bytes);
+  } catch {
+    return { ok: false, code: "invalid", message: "could not store the file" };
+  }
+
+  try {
+    const row = await addFileAttachment(session.user.id, cardId, {
+      name: safeFileName(file.name),
+      size: file.size,
+      storageKey: key,
+    });
+    return { ok: true, data: row };
+  } catch (error) {
+    // Roll back the bytes if the row insert failed, so we don't leak files.
+    await deleteAttachmentBytes(key).catch(() => undefined);
+    return { ok: false, code: "invalid", message: "could not save the attachment" };
+  }
 }
 
 export async function removeAttachmentAction(

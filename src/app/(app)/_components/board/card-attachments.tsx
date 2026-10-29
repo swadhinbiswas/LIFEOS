@@ -9,6 +9,7 @@ import {
   addAttachmentAction,
   listAttachmentsAction,
   removeAttachmentAction,
+  uploadAttachmentAction,
 } from "@/server/boards/actions";
 import type { CardAttachment } from "@/server/boards/attachments";
 
@@ -27,6 +28,7 @@ export function CardAttachments({ cardId }: { cardId: string }) {
   const t = useTranslations("Pages.Board");
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
+  const [file, setFile] = useState<File | null>(null);
 
   const attachments = useQuery({
     queryKey: attachmentsKey(cardId),
@@ -56,6 +58,24 @@ export function CardAttachments({ cardId }: { cardId: string }) {
     },
   });
 
+  const upload = useMutation({
+    mutationFn: async () => {
+      if (!file) throw new Error("no file");
+      const form = new FormData();
+      form.set("cardId", cardId);
+      form.set("file", file);
+      const result = await uploadAttachmentAction(form);
+      if (!result.ok) throw new Error(result.message);
+      return result.data;
+    },
+    onSuccess: (data) => {
+      setFile(null);
+      // Append to the cached list rather than refetching.
+      queryClient.setQueryData(attachmentsKey(cardId), (old: CardAttachment[] | undefined) =>
+        old ? [...old, data] : [data],
+      );
+    },
+  });
   const remove = useMutation({
     mutationFn: async (attachmentId: string) => {
       const result = await removeAttachmentAction({ attachmentId });
@@ -81,14 +101,28 @@ export function CardAttachments({ cardId }: { cardId: string }) {
               data-slot="attachment"
               className="flex items-center gap-2 font-mono text-xs"
             >
-              <a
-                href={attachment.url ?? "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="min-w-0 flex-1 truncate text-primary hover:underline"
-              >
-                {attachment.name?.trim() ? attachment.name : (attachment.url ?? "")}
-              </a>
+              {attachment.kind === "file" ? (
+                <a
+                  href={`/api/attachments/${attachment.id}`}
+                  className="min-w-0 flex-1 truncate text-primary hover:underline"
+                >
+                  {attachment.name ?? "file"}
+                  {attachment.size ? (
+                    <span className="ml-2 text-muted-foreground">
+                      ({Math.round(attachment.size / 1024)} KiB)
+                    </span>
+                  ) : null}
+                </a>
+              ) : (
+                <a
+                  href={attachment.url ?? "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="min-w-0 flex-1 truncate text-primary hover:underline"
+                >
+                  {attachment.name?.trim() ? attachment.name : (attachment.url ?? "")}
+                </a>
+              )}
               <button
                 type="button"
                 aria-label={t("removeAttachment")}
@@ -140,6 +174,40 @@ export function CardAttachments({ cardId }: { cardId: string }) {
         >
           {t("addAttachment")}
         </Button>
+      </form>
+
+      <form
+        method="post"
+        className="flex flex-col gap-1"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (!file) return;
+          upload.mutate();
+        }}
+      >
+        <label className="sr-only" htmlFor="card-attachment-file">
+          {t("attachmentFile")}
+        </label>
+        <input
+          id="card-attachment-file"
+          type="file"
+          onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+          className="min-h-7 w-full border border-border bg-background px-2 py-1 font-mono text-xs"
+        />
+        <Button
+          type="submit"
+          variant="outline"
+          size="sm"
+          className="self-start"
+          disabled={upload.isPending || !file}
+        >
+          {upload.isPending ? t("uploading") : t("uploadFile")}
+        </Button>
+        {upload.isError ? (
+          <span role="alert" className="text-destructive">
+            {upload.error instanceof Error ? upload.error.message : t("uploadFailed")}
+          </span>
+        ) : null}
       </form>
     </div>
   );

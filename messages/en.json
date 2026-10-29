@@ -1004,7 +1004,11 @@
       "attachmentName": "display name",
       "attachmentNamePlaceholder": "optional name",
       "addAttachment": "add link",
-      "removeAttachment": "remove attachment"
+      "removeAttachment": "remove attachment",
+      "attachmentFile": "file",
+      "uploadFile": "upload file",
+      "uploading": "uploading…",
+      "uploadFailed": "upload failed"
     },
     "Boards": {
       "title": "Boards",

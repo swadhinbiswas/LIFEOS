@@ -26,6 +26,9 @@ const envSchema = z
     // ADR-020: file:.data/lifeos.db for dev/test, libsql://… (+ token) for Turso
     DATABASE_URL: z.string().min(1),
     TURSO_AUTH_TOKEN: z.string().min(1).optional(),
+    // Where uploaded attachment bytes live. Defaults to /data/attachments, beside the database,
+    // so a single volume backs up both (ADR-140). Override for S3-compatible storage later.
+    ATTACHMENTS_DIR: z.string().min(1).optional(),
     // ADR-030: required always — dev/.env gets a locally generated value, CI generates per run
     BETTER_AUTH_SECRET: z.string().min(16),
     BETTER_AUTH_URL: z.url().optional(),

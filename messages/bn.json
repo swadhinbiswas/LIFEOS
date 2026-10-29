@@ -1004,7 +1004,11 @@
       "attachmentName": "প্রদর্শিত নাম",
       "attachmentNamePlaceholder": "ঐচ্ছিক নাম",
       "addAttachment": "লিংক যোগ করো",
-      "removeAttachment": "সংযুক্তি সরাও"
+      "removeAttachment": "সংযুক্তি সরাও",
+      "attachmentFile": "ফাইল",
+      "uploadFile": "ফাইল আপলোড",
+      "uploading": "আপলোড হচ্ছে…",
+      "uploadFailed": "আপলোড ব্যর্থ"
     },
     "Boards": {
       "title": "বোর্ড",
